@@ -696,7 +696,7 @@
 /* Tablet Portrait - 969px CRITICAL BREAKPOINT (YouTube-style: content pastga to'li, scroll) */
 @media (max-width: 969px) {
   .trailer-modal-overlay {
-    padding: 0.8rem;
+    padding: 0;
   }
   
   .trailer-modal {

@@ -69,15 +69,20 @@ const SimilarTrailers = ({
     );
   }
 
+  const playingKey = getTrailerKey?.(selectedTrailer) ?? null;
+
   return (
     <div className="similar-trailers-container">
       <h4 className="similar-trailers-title">{t('detail.similarTrailers')}</h4>
       <VerticalScroll className="similar-trailers-scroll-wrapper">
         <div className="similar-trailers-list">
-          {similarTrailers.map((trailer) => (
+          {similarTrailers.map((trailer) => {
+            const itemKey = getTrailerKey?.(trailer);
+            const isPlaying = Boolean(playingKey && itemKey && itemKey === playingKey);
+            return (
             <div
               key={`${trailer.movieId}-${trailer.id}`}
-              className="similar-trailer-item"
+              className={`similar-trailer-item${isPlaying ? ' active' : ''}`}
               onClick={() => onTrailerSelect(trailer)}
             >
               <div className="similar-trailer-video">
@@ -85,7 +90,7 @@ const SimilarTrailers = ({
                   src={trailer.trailers?.[contentLang] || trailer.trailers?.uz || trailer.trailers?.ru || ''}
                   muted
                   playsInline
-                  preload="none"
+                  preload="metadata"
                   className="similar-trailer-video-element"
                 />
                 <div className="similar-trailer-play">
@@ -129,7 +134,8 @@ const SimilarTrailers = ({
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </VerticalScroll>
     </div>

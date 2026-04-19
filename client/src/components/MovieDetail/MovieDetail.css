@@ -1190,10 +1190,6 @@
     font-size: 0.9rem;
   }
 
-
-
-
-
   .movie-detail-actor-item {
     width: 75px;
   }
@@ -1202,11 +1198,12 @@
     height: 65px;
   }
 
-
-
-
-
-
+  .movie-detail-description-modal-close {
+    width: 35px;
+    height: 35px;
+    top: 20%
+  }
+  
 }
 
 /* Small mobile version */

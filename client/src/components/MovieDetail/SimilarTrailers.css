@@ -73,12 +73,11 @@
   transition: all 0.3s ease;
 }
 
-.similar-trailer-item:hover {
-  border-color: #7b4edd;
-}
 
 .similar-trailer-item.active {
-  border-color: #7b4edd;
+  border-color: #9d4edd;
+  box-shadow: 0 0 0 1px rgba(157, 78, 221, 0.45), 0 4px 20px rgba(123, 78, 221, 0.25);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--bg-card) 85%, #7b4edd), var(--bg-card));
 }
 
 /* Video Section - Left Side */
@@ -87,16 +86,18 @@
   width: 145px;
   min-width: 145px;
   height: 75px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--bg-body) 88%, black), var(--bg-card));
+  background: #000;
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .similar-trailer-video-element {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  background: #000;
   transition: transform 0.3s ease;
 }
 
@@ -108,6 +109,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
+  z-index: 1;
   transform: translate(-50%, -50%);
   color: #ffffff;
   background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
@@ -142,6 +144,10 @@
   font-weight: 600;
   line-height: 1.3;
   margin: 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .similar-trailer-text {
@@ -149,10 +155,10 @@
   font-size: 12px;
   line-height: 1.4;
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Actions - Like and Dislike */
@@ -235,7 +241,6 @@
 
   .similar-trailer-text {
     font-size: 11px;
-    -webkit-line-clamp: 2;
   }
 
   .similar-trailer-actions {
@@ -301,17 +306,16 @@
 
   .similar-trailer-video {
     width: 100px;
-    min-width: 100px;
-    height: 65px;
+    min-width: 130px;
+    height: 80px;
   }
 
   .similar-trailer-title {
-    font-size: 11px;
+    font-size: 14px;
   }
 
   .similar-trailer-text {
-    font-size: 10px;
-    -webkit-line-clamp: 1;
+    font-size: 12px;
   }
 
   .similar-trailer-actions {

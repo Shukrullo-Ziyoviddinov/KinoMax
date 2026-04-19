@@ -74,11 +74,11 @@
 }
 
 .similar-trailer-item:hover {
-  border-color: #bd02bd;
+  border-color: #7b4edd;
 }
 
 .similar-trailer-item.active {
-  border-color: #bd02bd;
+  border-color: #7b4edd;
 }
 
 /* Video Section - Left Side */
@@ -110,7 +110,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   color: #ffffff;
-  background: linear-gradient(135deg, #bd02bd 0%, #8b008b 100%);
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   backdrop-filter: blur(10px);
   border-radius: 50%;
   width: 40px;

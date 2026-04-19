@@ -89,7 +89,7 @@
 .movies-item-image-wrapper {
   position: relative;
   width: 100%;
-  padding-top: 150%;
+  padding-top: 140%;
   overflow: hidden;
   border-radius: 8px;
   background-color: rgba(255, 255, 255, 0.1);
@@ -235,7 +235,7 @@
 
   .movies-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
+    gap: 0.7rem;
   }
 
   .movies-header {
@@ -272,6 +272,10 @@
   .more-btn {
     font-size: 0.7rem;
     padding: 0.3rem 1.1rem;
+}
+
+.movies-item-image-wrapper {
+  padding-top: 135%;
 }
 
 }

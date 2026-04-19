@@ -81,9 +81,9 @@
   /* position: absolute; */
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, rgba(189, 2, 189, 0.3), rgba(139, 0, 139, 0.3));
+  background: linear-gradient(135deg, #7b4edd53, #692cbf5d);
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(189, 2, 189, 0.6);
+  border: 2px solid rgba(117, 2, 189, 0.6);
   border-radius: 50%;
   color: #ffffff;
   font-size: 28px;
@@ -98,8 +98,8 @@
 }
 
 .trailer-modal-close:hover {
-  background: linear-gradient(135deg, #bd02bd 0%, #8b008b 100%);
-  border-color: #bd02bd;
+  background: linear-gradient(135deg, #7b4edd, #692cbf);
+  border-color: #7b4edd;
   transform: scale(1.1) rotate(90deg);
 }
 
@@ -194,9 +194,9 @@
   height: 56px;
   min-width: 56px;
   min-height: 56px;
-  background: linear-gradient(135deg, rgba(189, 2, 189, 0.4), rgba(139, 0, 139, 0.4));
+  background: linear-gradient(135deg, rgba(83, 2, 189, 0.4), rgba(65, 0, 139, 0.4));
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(189, 2, 189, 0.8);
+  border: 2px solid #7d4de6d7;
   border-radius: 50%;
   color: #ffffff;
   cursor: pointer;
@@ -209,7 +209,7 @@
 }
 
 .trailer-modal-control-btn:hover {
-  background: linear-gradient(135deg, #bd02bd, #8b008b);
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   transform: scale(1.1);
 }
 
@@ -352,7 +352,7 @@
 
 .trailer-modal-progress-filled {
   height: 100%;
-  background: linear-gradient(135deg, #bd02bd 0%, #8b008b 100%); 
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   border-radius: 6px;
   transition: width 0.1s linear;
   position: relative;
@@ -365,7 +365,7 @@
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  background: linear-gradient(135deg, #bd02bd 0%, #8b008b 100%); 
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   border-radius: 50%;
   border: 3px solid #ffffff;
   transition: all 0.2s ease;
@@ -380,7 +380,7 @@
   position: absolute;
   top: -50px;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #bd02bd 0%, #8b008b 100%);
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   backdrop-filter: blur(10px);
   padding: 0.6rem 1rem;
   border-radius: 10px;
@@ -404,7 +404,7 @@
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid #bd02bd;
+  border-top: 8px solid #7b4edd ;
 }
 
 /* Controls Bar Layout */
@@ -447,8 +447,8 @@
 }
 
 .trailer-modal-icon-btn:hover {
-  background: linear-gradient(135deg, #bd02bd 0%, #8b008b 100%);
-  border-color: #bd02bd;
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
+  border-color: #7b4edd;
   transform: scale(1.05);
 }
 
@@ -457,7 +457,7 @@
   width: 100px;
   height: 6px;
   cursor: pointer;
-  accent-color: #bd02bd;
+  accent-color: #7b4edd ;
   background: transparent;
   outline: none;
 }
@@ -475,10 +475,10 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #bd02bd, #8b008b);
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   cursor: pointer;
   border: 3px solid #ffffff;
-  box-shadow: 0 0 10px rgba(189, 2, 189, 0.7);
+  box-shadow: 0 0 10px rgba(117, 2, 189, 0.7);
   margin-top: -5px;
 }
 
@@ -493,10 +493,10 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #bd02bd, #8b008b);
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   cursor: pointer;
   border: 3px solid #ffffff;
-  box-shadow: 0 0 10px rgba(189, 2, 189, 0.7);
+  box-shadow: 0 0 10px rgba(117, 2, 189, 0.7);
 }
 
 /* Time Display */
@@ -514,7 +514,7 @@
 }
 
 .trailer-modal-time-current {
-  color: #bd02bd;
+  color: #7b4edd ;
   font-weight: 700;
 }
 
@@ -571,7 +571,7 @@
 }
 
 .trailer-modal-speed-option.active {
-  background: linear-gradient(135deg, #bd02bd 0%, #8b008b 100%); 
+  background: linear-gradient(135deg, #7b4edd 0%, #692cbf 100%);
   font-weight: 700;
 }
 
@@ -672,7 +672,7 @@
   width: 50px;
   height: 6px;
   cursor: pointer;
-  accent-color: #bd02bd;
+  accent-color: #7b4edd ;
   background: transparent;
   outline: none;
 }

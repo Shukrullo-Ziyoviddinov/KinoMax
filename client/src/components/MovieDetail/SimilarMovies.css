@@ -46,7 +46,7 @@
 .similar-movies-item-image-wrapper {
   position: relative;
   width: 100%;
-  padding-top: 150%;
+  padding-top: 140%;
   overflow: hidden;
   border-radius: 8px;
   background-color: rgba(255, 255, 255, 0.1);

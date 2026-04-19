@@ -27,7 +27,7 @@
 /* Track - flex qator, transform bilan harakatlanadi */
 .horizontal-scroll-track {
   display: flex;
-  gap: 0.8rem;
+  gap: 0.7rem;
   padding: 0.5rem 0;
   width: max-content;
   will-change: transform;

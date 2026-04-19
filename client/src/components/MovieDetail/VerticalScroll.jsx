@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import './VerticalScroll.css';
 
 const VerticalScroll = ({ children, className = '' }) => {
@@ -8,22 +8,38 @@ const VerticalScroll = ({ children, className = '' }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [showScrollbar, setShowScrollbar] = useState(false);
+  const scrollableRef = useRef(false);
 
-  useEffect(() => {
+  const updateThumbAndScrollable = useCallback(() => {
     const container = containerRef.current;
-    if (!container) return;
+    const scrollbar = scrollRef.current;
+    const track = trackRef.current;
+    if (!container || !scrollbar || !track) return;
 
-    const checkScrollable = () => {
-      const hasScroll = container.scrollHeight > container.clientHeight;
-      setShowScrollbar(hasScroll);
-    };
+    const scrollHeight = container.scrollHeight;
+    const clientHeight = container.clientHeight;
+    const scrollTop = container.scrollTop;
+    const maxScroll = scrollHeight - clientHeight;
+    const scrollable = maxScroll > 0;
 
-    checkScrollable();
-    const resizeObserver = new ResizeObserver(checkScrollable);
-    resizeObserver.observe(container);
+    if (scrollable !== scrollableRef.current) {
+      scrollableRef.current = scrollable;
+      setShowScrollbar(scrollable);
+    }
 
-    return () => resizeObserver.disconnect();
-  }, [children]);
+    if (!scrollable) {
+      scrollbar.style.display = 'none';
+      return;
+    }
+
+    scrollbar.style.display = 'block';
+    const trackHeight = track.offsetHeight;
+    const thumbHeight = Math.max(20, (clientHeight / scrollHeight) * trackHeight);
+    const scrollPercent = maxScroll > 0 ? scrollTop / maxScroll : 0;
+    const maxThumbTop = trackHeight - thumbHeight;
+    scrollbar.style.top = `${scrollPercent * maxThumbTop}px`;
+    scrollbar.style.height = `${thumbHeight}px`;
+  }, []);
 
   const handleMouseDown = (e) => {
     if (!scrollRef.current || !trackRef.current) return;
@@ -68,39 +84,9 @@ const VerticalScroll = ({ children, className = '' }) => {
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const handleScroll = () => {
-    if (!containerRef.current || !scrollRef.current || !trackRef.current) return;
-    const container = containerRef.current;
-    const scrollbar = scrollRef.current;
-    const track = trackRef.current;
-    const scrollHeight = container.scrollHeight;
-    const clientHeight = container.clientHeight;
-    const scrollTop = container.scrollTop;
-    const maxScroll = scrollHeight - clientHeight;
-
-    if (maxScroll <= 0) {
-      scrollbar.style.display = 'none';
-      setShowScrollbar(false);
-      return;
-    }
-
-    setShowScrollbar(true);
-    scrollbar.style.display = 'block';
-    const trackHeight = track.offsetHeight;
-    const thumbHeight = Math.max(20, (clientHeight / scrollHeight) * trackHeight);
-    const scrollPercent = scrollTop / maxScroll;
-    const maxThumbTop = trackHeight - thumbHeight;
-    scrollbar.style.top = `${scrollPercent * maxThumbTop}px`;
-    scrollbar.style.height = `${thumbHeight}px`;
-  };
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    const updateScroll = () => {
-      handleScroll();
-    };
 
     const handleWheel = (e) => {
       if (container.scrollHeight > container.clientHeight) {
@@ -109,35 +95,37 @@ const VerticalScroll = ({ children, className = '' }) => {
       }
     };
 
-    container.addEventListener('scroll', updateScroll);
+    container.addEventListener('scroll', updateThumbAndScrollable, { passive: true });
     container.addEventListener('wheel', handleWheel, { passive: false });
-    const resizeObserver = new ResizeObserver(updateScroll);
+    const resizeObserver = new ResizeObserver(() => updateThumbAndScrollable());
     resizeObserver.observe(container);
-    
-    // Initial update
-    setTimeout(updateScroll, 100);
+
+    requestAnimationFrame(() => updateThumbAndScrollable());
 
     return () => {
-      container.removeEventListener('scroll', updateScroll);
+      container.removeEventListener('scroll', updateThumbAndScrollable);
       container.removeEventListener('wheel', handleWheel);
       resizeObserver.disconnect();
     };
-  }, [children]);
+  }, [updateThumbAndScrollable]);
 
-  if (!showScrollbar) {
-    return (
-      <div className={`vertical-scroll-container ${className}`} ref={containerRef}>
-        {children}
-      </div>
-    );
-  }
+  useLayoutEffect(() => {
+    updateThumbAndScrollable();
+  }, [showScrollbar, updateThumbAndScrollable]);
 
   return (
-    <div className={`vertical-scroll-wrapper ${className}`}>
+    <div
+      className={`vertical-scroll-wrapper ${className} ${showScrollbar ? '' : 'vertical-scroll-wrapper--no-track'}`}
+    >
       <div className="vertical-scroll-container" ref={containerRef}>
         {children}
       </div>
-      <div className="vertical-scrollbar-track" ref={trackRef}>
+      <div
+        className="vertical-scrollbar-track"
+        ref={trackRef}
+        aria-hidden={!showScrollbar}
+        style={{ display: showScrollbar ? undefined : 'none' }}
+      >
         <div
           className="vertical-scrollbar-thumb"
           ref={scrollRef}

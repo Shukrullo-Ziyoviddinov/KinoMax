@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { allMovies } from '../../data/moviesCatalog';
@@ -22,24 +22,26 @@ const SimilarTrailers = ({
   const { t } = useTranslation();
   const { contentLang } = useContentLanguage();
 
-  // Get the typeTrailers from the current movie's trailer
-  const currentTypeTrailers = selectedTrailer?.typeTrailers || '';
+  const similarTrailers = useMemo(() => {
+    const currentTypeTrailers = selectedTrailer?.typeTrailers || '';
+    if (!currentTypeTrailers) return [];
 
-  // Filter all trailers from all movies that match the typeTrailers
-  const similarTrailers = allMovies
-    .flatMap(movie => 
-      (movie.trailersVideo || []).map(trailer => ({
-        ...trailer,
-        movieId: movie.id,
-        movieTitle: movie.title
-      }))
-    )
-    .filter(trailer => {
-      // Match typeTrailers and exclude current movie's trailer
-      const isSameType = trailer.typeTrailers === currentTypeTrailers;
-      const isNotCurrent = !(trailer.movieId === currentMovie?.id && trailer.id === selectedTrailer?.id);
-      return isSameType && isNotCurrent && currentTypeTrailers !== '';
-    });
+    return allMovies
+      .flatMap((movie) =>
+        (movie.trailersVideo || []).map((trailer) => ({
+          ...trailer,
+          movieId: movie.id,
+          movieTitle: movie.title
+        }))
+      )
+      .filter((trailer) => {
+        const isSameType = trailer.typeTrailers === currentTypeTrailers;
+        const isNotCurrent = !(
+          trailer.movieId === currentMovie?.id && trailer.id === selectedTrailer?.id
+        );
+        return isSameType && isNotCurrent;
+      });
+  }, [selectedTrailer?.typeTrailers, selectedTrailer?.id, currentMovie?.id]);
 
   if (trailerLoading) {
     return (
@@ -82,6 +84,8 @@ const SimilarTrailers = ({
                 <video
                   src={trailer.trailers?.[contentLang] || trailer.trailers?.uz || trailer.trailers?.ru || ''}
                   muted
+                  playsInline
+                  preload="none"
                   className="similar-trailer-video-element"
                 />
                 <div className="similar-trailer-play">

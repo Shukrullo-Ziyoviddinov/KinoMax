@@ -353,17 +353,17 @@
   }
 
   .similar-trailer-video {
-    width: 90px;
-    min-width: 90px;
-    height: 55px;
+    width: 100px;
+    min-width: 150px;
+    height: 90px;
   }
 
   .similar-trailer-title {
-    font-size: 10px;
+    font-size: 14px;
   }
 
   .similar-trailer-text {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .similar-trailer-play {

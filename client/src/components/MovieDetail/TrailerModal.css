@@ -996,7 +996,7 @@
 /* Small Mobile - 480px */
 @media (max-width: 480px) {
   .trailer-modal-close {
-    margin-top: 40px;
+    margin-top: 10px;
     margin-bottom: 5px;
     width: 100px;
     height: 27px;

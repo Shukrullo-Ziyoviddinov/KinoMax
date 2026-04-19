@@ -79,28 +79,35 @@
 /* ==================== CLOSE BUTTON ==================== */
 .trailer-modal-close {
   /* position: absolute; */
-  width: 44px;
-  height: 44px;
+  margin-top: 20px;
+  width: 100px;
+  height: 20px;
+  padding: 0;
   background: linear-gradient(135deg, #7b4edd53, #692cbf5d);
   backdrop-filter: blur(10px);
   border: 2px solid rgba(117, 2, 189, 0.6);
-  border-radius: 50%;
+  border-radius: 10%;
   color: #ffffff;
-  font-size: 28px;
-  font-weight: 300;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2100;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  line-height: 1;
+  line-height: 0;
+}
+
+.trailer-modal-close-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 
 .trailer-modal-close:hover {
   background: linear-gradient(135deg, #7b4edd, #692cbf);
   border-color: #7b4edd;
-  transform: scale(1.1) rotate(90deg);
+  transform: scale(1.08) translateX(-2px);
 }
 
 /* ==================== CONTENT WRAPPER ==================== */
@@ -714,7 +721,11 @@
     right: 1rem;
     width: 48px;
     height: 48px;
-    font-size: 26px;
+  }
+
+  .trailer-modal-close .trailer-modal-close-icon {
+    width: 24px;
+    height: 24px;
   }
   
   /* Video yuqorida, sidebar pastda – scroll faqat .similar-trailers-scroll-wrapper ichida */
@@ -857,7 +868,11 @@
   .trailer-modal-close {
     width: 40px;
     height: 40px;
-    font-size: 24px;
+  }
+
+  .trailer-modal-close .trailer-modal-close-icon {
+    width: 20px;
+    height: 20px;
   }
   
   .trailer-modal-video-wrapper {
@@ -981,13 +996,15 @@
 /* Small Mobile - 480px */
 @media (max-width: 480px) {
   .trailer-modal-close {
-    margin-top: 30px;
-    margin-bottom: 10px;
-    /* top: 0.75rem;
-    right: 0.75rem; */
-    width: 37px;
-    height: 37px;
-    font-size: 22px;
+    margin-top: 40px;
+    margin-bottom: 5px;
+    width: 100px;
+    height: 27px;
+  }
+
+  .trailer-modal-close .trailer-modal-close-icon {
+    width: 19px;
+    height: 19px;
   }
   
   .trailer-modal-controls-center {
@@ -1171,7 +1188,11 @@
     right: 0.6rem;
     width: 38px;
     height: 38px;
-    font-size: 20px;
+  }
+
+  .trailer-modal-close .trailer-modal-close-icon {
+    width: 20px;
+    height: 20px;
   }
   
   .trailer-modal-controls-center {

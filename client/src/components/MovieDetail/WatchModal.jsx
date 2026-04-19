@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { adsData } from '../../data/adsData';
@@ -158,21 +158,21 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
     showControlsRef.current = showControls;
   }, [showControls]);
 
-  const clearHideTimeout = () => {
+  const clearHideTimeout = useCallback(() => {
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current);
       hideControlsTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const startHideTimeout = () => {
+  const startHideTimeout = useCallback(() => {
     clearHideTimeout();
     hideControlsTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
       showControlsRef.current = false;
       setShowSpeedMenu(false);
     }, 4000);
-  };
+  }, [clearHideTimeout]);
 
   // Swipe gesture handlers
   const handleTouchStart = (e) => {
@@ -396,7 +396,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
       showControlsRef.current = true;
       clearHideTimeout();
     }
-  }, [isPlaying]);
+  }, [isPlaying, startHideTimeout, clearHideTimeout]);
 
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -407,7 +407,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       clearHideTimeout();
     };
-  }, []);
+  }, [clearHideTimeout]);
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;

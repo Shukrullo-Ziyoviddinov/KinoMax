@@ -15,7 +15,6 @@ const ShareButton = ({ movie }) => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
-  const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [modalTranslateY, setModalTranslateY] = useState(0);
@@ -106,7 +105,6 @@ const ShareButton = ({ movie }) => {
   const handleTouchStart = (e) => {
     if (!isMobileView) return;
     const y = e.touches[0].clientY;
-    setTouchStart(y);
     setTouchEnd(y);
     touchStartRef.current = y;
   };
@@ -123,7 +121,6 @@ const ShareButton = ({ movie }) => {
     } else {
       setIsDragging(false);
       setModalTranslateY(0);
-      setTouchStart(null);
       setTouchEnd(null);
       touchStartRef.current = null;
     }
@@ -135,7 +132,6 @@ const ShareButton = ({ movie }) => {
     if (distance <= DRAG_THRESHOLD) {
       setIsDragging(false);
       setModalTranslateY(0);
-      setTouchStart(null);
       setTouchEnd(null);
       return;
     }
@@ -146,7 +142,6 @@ const ShareButton = ({ movie }) => {
     }
     setIsDragging(false);
     setModalTranslateY(0);
-    setTouchStart(null);
     setTouchEnd(null);
     touchStartRef.current = null;
   };

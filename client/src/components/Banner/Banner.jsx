@@ -12,7 +12,6 @@ const Banner = () => {
     const navigate = useNavigate();
     const { contentLang } = useContentLanguage();
     const { bannerLoading, setLoading } = useLoading();
-    const currentBanners = bannerImages[contentLang] || bannerImages.uz || bannerImages.ru || [];
 
     useEffect(() => {
       setLoading('banner', true);
@@ -21,6 +20,7 @@ const Banner = () => {
     }, [setLoading]);
 
     const images = useMemo(() => {
+        const currentBanners = bannerImages[contentLang] || bannerImages.uz || bannerImages.ru || [];
         return currentBanners.map((banner) => {
             const movie = allMovies.find((m) => m.id === banner.movieId);
             const movieImg = movie?.homeImg?.[contentLang] || movie?.homeImg?.uz || movie?.homeImg?.ru;
@@ -31,7 +31,7 @@ const Banner = () => {
                 link: banner.movieId ? `/movie/${banner.movieId}` : null
             };
         }).filter((img) => img.src);
-    }, [currentBanners, contentLang]);
+    }, [contentLang]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [dragOffset, setDragOffset] = useState(0);
@@ -46,6 +46,13 @@ const Banner = () => {
     const wasDragRef = useRef(false);
 
     // Auto-play funksiyalari
+    const stopAutoPlay = useCallback(() => {
+        if (autoPlayIntervalRef.current) {
+            clearInterval(autoPlayIntervalRef.current);
+            autoPlayIntervalRef.current = null;
+        }
+    }, []);
+
     const startAutoPlay = useCallback(() => {
         stopAutoPlay();
         autoPlayIntervalRef.current = setInterval(() => {
@@ -53,14 +60,7 @@ const Banner = () => {
                 setCurrentIndex(prev => (prev + 1) % images.length);
             }
         }, 5000);
-    }, [images.length, isUserInteracting]);
-
-    const stopAutoPlay = useCallback(() => {
-        if (autoPlayIntervalRef.current) {
-            clearInterval(autoPlayIntervalRef.current);
-            autoPlayIntervalRef.current = null;
-        }
-    }, []);
+    }, [images.length, isUserInteracting, stopAutoPlay]);
 
     const resetAutoPlay = useCallback(() => {
         stopAutoPlay();
@@ -102,13 +102,13 @@ const Banner = () => {
     };
 
     // Drag harakati
-    const handleDragMove = (clientX) => {
+    const handleDragMove = useCallback((clientX) => {
         if (!isDragging) return;
         currentXRef.current = clientX;
         const diff = clientX - startXRef.current;
         if (Math.abs(diff) > 10) wasDragRef.current = true;
         setDragOffset(diff);
-    };
+    }, [isDragging]);
 
     const handleSlideClick = (image) => {
         if (wasDragRef.current || !image?.link) return;
@@ -116,7 +116,7 @@ const Banner = () => {
     };
 
     // Drag tugashi
-    const handleDragEnd = () => {
+    const handleDragEnd = useCallback(() => {
         if (!isDragging) return;
 
         const diff = currentXRef.current - startXRef.current;
@@ -139,7 +139,7 @@ const Banner = () => {
         setIsDragging(false);
         setIsUserInteracting(false);
         resetAutoPlay();
-    };
+    }, [isDragging, nextSlide, prevSlide, resetAutoPlay]);
 
     // Mouse drag
     const handleMouseDown = (e) => {
@@ -179,7 +179,7 @@ const Banner = () => {
             document.removeEventListener('mousemove', handleDocumentMouseMove);
             document.removeEventListener('mouseup', handleDocumentMouseUp);
         };
-    }, [isDragging]);
+    }, [isDragging, handleDragMove, handleDragEnd]);
 
     // Keyboard navigation
     useEffect(() => {

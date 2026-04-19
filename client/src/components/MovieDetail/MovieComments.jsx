@@ -85,7 +85,7 @@ const EMOJI_LIST = [
 const VL_EMOJI_IMG = '/img/photo_2026-02-16_20-30-31_preview_rev_1.png';
 
 const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const [comments, setComments] = useState([]);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [inputValue, setInputValue] = useState('');

@@ -1,7 +1,7 @@
 
 
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { formatActionCount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
@@ -207,21 +207,21 @@ const TrailerModal = ({ movie, onClose }) => {
     showControlsRef.current = showControls;
   }, [showControls]);
 
-  const clearHideTimeout = () => {
+  const clearHideTimeout = useCallback(() => {
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current);
       hideControlsTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const startHideTimeout = () => {
+  const startHideTimeout = useCallback(() => {
     clearHideTimeout();
     hideControlsTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
       showControlsRef.current = false;
       setShowSpeedMenu(false);
     }, 4000);
-  };
+  }, [clearHideTimeout]);
 
   const handlePlayPause = () => {
     if (videoRef.current) {
@@ -389,7 +389,7 @@ const TrailerModal = ({ movie, onClose }) => {
       showControlsRef.current = true;
       clearHideTimeout();
     }
-  }, [isPlaying]);
+  }, [isPlaying, startHideTimeout, clearHideTimeout]);
 
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -400,7 +400,7 @@ const TrailerModal = ({ movie, onClose }) => {
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       clearHideTimeout();
     };
-  }, []);
+  }, [clearHideTimeout]);
 
   useEffect(() => {
     if (!selectedTrailer) return;
@@ -430,7 +430,7 @@ const TrailerModal = ({ movie, onClose }) => {
       clearInterval(checkDuration);
       if (video) video.pause();
     };
-  }, [selectedTrailer?.trailers?.[contentLang], playbackSpeed]);
+  }, [selectedTrailer, contentLang, playbackSpeed]);
 
   // Mobil: video ustiga bosilganda controls toggle
   const videoTapRef = useRef({ x: 0, y: 0, time: 0 });

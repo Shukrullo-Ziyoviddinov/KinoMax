@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import './VerticalScroll.css';
 
 const VerticalScroll = ({ children, className = '' }) => {
@@ -33,7 +33,7 @@ const VerticalScroll = ({ children, className = '' }) => {
     setStartY(e.clientY - rect.top - scrollRef.current.offsetTop);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isDragging || !containerRef.current || !scrollRef.current || !trackRef.current) return;
     e.preventDefault();
 
@@ -51,11 +51,11 @@ const VerticalScroll = ({ children, className = '' }) => {
     const scrollbarTop = Math.max(0, Math.min(y - startY, trackHeight - scrollbarHeight));
     const scrollPercent = scrollbarTop / (trackHeight - scrollbarHeight);
     container.scrollTop = scrollPercent * maxScroll;
-  };
+  }, [isDragging, startY]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (isDragging) {
@@ -66,7 +66,7 @@ const VerticalScroll = ({ children, className = '' }) => {
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, startY]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleScroll = () => {
     if (!containerRef.current || !scrollRef.current || !trackRef.current) return;

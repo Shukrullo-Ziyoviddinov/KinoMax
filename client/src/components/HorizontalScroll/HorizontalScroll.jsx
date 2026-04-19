@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import './HorizontalScroll.css';
 
 // Carousel drag: sekin + foizga yetmasa → joyiga qaytadi, yetganda yoki tez surganda → keyingiga
@@ -33,24 +33,24 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const updateTranslate = (value) => {
+  const updateTranslate = useCallback((value) => {
     if (!trackRef.current || !wrapperRef.current) return;
     const maxScroll = Math.max(0, trackRef.current.scrollWidth - wrapperRef.current.clientWidth);
     translateX.current = Math.max(-maxScroll, Math.min(0, value));
     trackRef.current.style.transform = `translateX(${translateX.current}px)`;
-  };
+  }, []);
 
   // Bitta element (kartochka) kengligi + gap
-  const getItemWidth = () => {
+  const getItemWidth = useCallback(() => {
     if (!trackRef.current?.children?.[0]) return scrollAmount;
     const first = trackRef.current.children[0];
     const style = window.getComputedStyle(trackRef.current);
     const gap = parseFloat(style.gap) || 12;
     return first.offsetWidth + gap;
-  };
+  }, [scrollAmount]);
 
   // translateX ni eng yaqin to'liq element chegarasiga snap qilish
-  const snapToItemBoundary = (value) => {
+  const snapToItemBoundary = useCallback((value) => {
     const itemWidth = getItemWidth();
     if (itemWidth <= 0) return value;
     const maxScroll = trackRef.current && wrapperRef.current
@@ -60,15 +60,15 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
     const index = Math.round(-value / itemWidth);
     const snapped = index >= maxIndex ? -maxScroll : -Math.min(index * itemWidth, maxScroll);
     return Math.max(-maxScroll, Math.min(0, snapped));
-  };
+  }, [getItemWidth]);
 
-  const checkScrollability = () => {
+  const checkScrollability = useCallback(() => {
     if (!wrapperRef.current || !trackRef.current) return;
     const maxScroll = Math.max(0, trackRef.current.scrollWidth - wrapperRef.current.clientWidth);
     const tx = translateX.current;
     setCanScrollLeft(tx < -1);
     setCanScrollRight(tx > -maxScroll + 1);
-  };
+  }, []);
 
   useEffect(() => {
     const runCheck = () => {
@@ -87,7 +87,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
       };
     }
     return () => clearTimeout(t);
-  }, [children]);
+  }, [children, checkScrollability]);
 
   const handleScroll = (direction, e) => {
     e.preventDefault();
@@ -105,7 +105,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
     animateTo(target);
   };
 
-  const animateTo = (target) => {
+  const animateTo = useCallback((target) => {
     if (!wrapperRef.current || !trackRef.current) return;
     const snapped = snapToItemBoundary(target);
     trackRef.current.style.transition = 'transform 0.3s ease-out';
@@ -114,7 +114,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
       if (trackRef.current) trackRef.current.style.transition = '';
       checkScrollability();
     }, 300);
-  };
+  }, [snapToItemBoundary, updateTranslate, checkScrollability]);
 
   // ========== MOUSE DRAG (Desktop) ==========
   const handleMouseDown = (e) => {
@@ -129,15 +129,15 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
     if (trackRef.current) trackRef.current.style.transition = '';
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isDragging) return;
     lastPointX.current = e.clientX;
     const delta = dragStartX.current - e.clientX;
     updateTranslate(dragStartTranslate.current - delta);
     checkScrollability();
-  };
+  }, [isDragging, updateTranslate, checkScrollability]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
 
@@ -169,7 +169,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
 
     animateTo(targetTranslate);
     setTimeout(() => { justFinishedDrag.current = false; }, 150);
-  };
+  }, [isDragging, animateTo, getItemWidth, snapToItemBoundary]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -181,7 +181,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [isDragging]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // ========== TOUCH DRAG (Mobile) — TUZATILGAN ==========
   const handleTouchStart = (e) => {
@@ -197,7 +197,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
     if (trackRef.current) trackRef.current.style.transition = '';
   };
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = useCallback((e) => {
     if (!isDraggingRef.current) return;
 
     const currentX = e.touches[0].clientX;
@@ -228,7 +228,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
     lastPointX.current = currentX;
     const delta = dragStartX.current - currentX;
     updateTranslate(dragStartTranslate.current - delta);
-  };
+  }, [updateTranslate]);
 
   const handleTouchEnd = () => {
     if (!isDraggingRef.current && isHorizontalDrag.current !== true) {
@@ -280,7 +280,7 @@ const HorizontalScroll = ({ children, scrollAmount = 400 }) => {
     return () => {
       el.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [isMobile]);
+  }, [isMobile, handleTouchMove]);
 
   const handleContainerClick = (e) => {
     if (justFinishedDrag.current) {

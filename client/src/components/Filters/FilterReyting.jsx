@@ -42,7 +42,7 @@ const FilterReyting = ({
   )].sort((a, b) => Number(b) - Number(a));
 
   const getRatingCount = (rating) => {
-    return movies.filter(m => m[ratingTypeField] == rating).length;
+    return movies.filter(m => m[ratingTypeField] === rating).length;
   };
 
   const closeModal = () => setIsModalOpen(false);

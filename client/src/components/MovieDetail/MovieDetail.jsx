@@ -52,7 +52,7 @@ const MovieDetail = () => {
 
   useEffect(() => {
     if (movie) addMovie(movie);
-  }, [movie?.id, addMovie]);
+  }, [movie, addMovie]);
 
   // Backend: setLoading('detail', true) fetch boshlanganda, setLoading('detail', false) tugaganda
   // Demo: qisqa skeleton ko'rsatish (backend ulanganda shu o'rniga API fetch qo'yiladi)
@@ -133,7 +133,8 @@ const MovieDetail = () => {
     const lang = contentLang;
     // movies.js title.uz / title.ru — to'g'ri ishlatiladi
     const pageTitle = movie.title?.[lang] || movie.title?.uz || movie.title?.ru || '';
-    const pageDesc = getDescriptionText();
+    const descSource = movie.description?.[lang] || movie.description?.uz || movie.description?.ru || movie.description;
+    const pageDesc = typeof descSource === 'object' && descSource?.text ? descSource.text : (descSource || '');
     const imgUrl = movie.titleImg?.[lang] || movie.titleImg?.uz || movie.titleImg?.ru
       || movie.homeImg?.[lang] || movie.homeImg?.uz || movie.homeImg?.ru;
     const fullImgUrl = imgUrl ? `${window.location.origin}${imgUrl}` : '';

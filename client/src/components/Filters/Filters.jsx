@@ -13,7 +13,7 @@ import './FilterAge.css';
 const getRatingFilter = (movie, selectedRatingType, selectedRating) => {
   if (selectedRating === null) return true;
   const val = movie[selectedRatingType];
-  return val != null && val !== '' && val !== 'none' && (val == selectedRating || Number(val) === Number(selectedRating));
+  return val != null && val !== '' && val !== 'none' && (val === selectedRating || Number(val) === Number(selectedRating));
 };
 
 const Filters = ({

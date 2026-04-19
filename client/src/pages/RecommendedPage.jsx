@@ -25,7 +25,7 @@ const getRatingFilter = (movie, selectedRatingType, selectedRating) => {
   // Anonslar VL (rating) filteriga aralashmaydi - VL tanlanganda anonslar chiqmaydi, boshqa reytinglarda qatnashadi
   if (selectedRatingType === 'rating' && movie.category === 'anonslar') return false;
   const val = movie[selectedRatingType];
-  return val != null && val !== '' && val !== 'none' && (val == selectedRating || Number(val) === Number(selectedRating));
+  return val != null && val !== '' && val !== 'none' && (val === selectedRating || Number(val) === Number(selectedRating));
 };
 
 const getSimilarMovies = (currentMovie, movies) => {
@@ -129,7 +129,7 @@ const RecommendedPage = () => {
       setSelectedRatingType('ratingImdb');
       setSelectedRating(null);
     }
-  }, [hideVlFilter]);
+  }, [hideVlFilter, selectedRatingType]);
 
   let filteredMovies = categoryFiltered;
   if (selectedRating !== null) {

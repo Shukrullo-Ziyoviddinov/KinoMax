@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { allMovies } from '../../data/moviesCatalog';
@@ -21,6 +21,7 @@ const SimilarTrailers = ({
 }) => {
   const { t } = useTranslation();
   const { contentLang } = useContentLanguage();
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
 
   const similarTrailers = useMemo(() => {
     const currentTypeTrailers = selectedTrailer?.typeTrailers || '';
@@ -51,7 +52,7 @@ const SimilarTrailers = ({
         seen.add(uniqueSignature);
         return true;
       })
-      .slice(0, 24);
+      .slice(0, 12);
   }, [selectedTrailer?.typeTrailers, selectedTrailer?.id, currentMovie?.id, contentLang]);
 
   if (trailerLoading) {
@@ -90,6 +91,7 @@ const SimilarTrailers = ({
           {similarTrailers.map((trailer, index) => {
             const itemKey = getTrailerKey?.(trailer);
             const isPlaying = Boolean(playingKey && itemKey && itemKey === playingKey);
+            const isActivePreview = index === activePreviewIndex;
             const trailerSrc =
               trailer.trailers?.[contentLang] ||
               trailer.trailers?.uz ||
@@ -100,15 +102,16 @@ const SimilarTrailers = ({
               key={`${itemKey || `${trailer.movieId}-${trailer.id}`}-${index}`}
               className={`similar-trailer-item${isPlaying ? ' active' : ''}`}
               onClick={() => onTrailerSelect(trailer)}
+              onMouseEnter={() => setActivePreviewIndex(index)}
             >
               <div className="similar-trailer-video">
                 <video
                   src={trailerSrc}
                   muted
                   playsInline
-                  autoPlay
-                  loop
-                  preload="metadata"
+                  autoPlay={isActivePreview}
+                  loop={isActivePreview}
+                  preload={isActivePreview ? 'metadata' : 'none'}
                   className="similar-trailer-video-element"
                 />
                 <div className="similar-trailer-play">

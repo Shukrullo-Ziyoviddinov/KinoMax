@@ -22,6 +22,14 @@ function App() {
     if (!tg) {
       return;
     }
+    const isTelegramClient =
+      /Telegram/i.test(window.navigator?.userAgent || '') ||
+      Boolean(tg.initData);
+
+    if (!isTelegramClient) {
+      return;
+    }
+
     setIsTelegramWebApp(true);
 
     const requestTelegramFullscreen = () => {

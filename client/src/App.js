@@ -84,7 +84,7 @@ function App() {
         <ContentLanguageProvider>
         <LoadingProvider>
         <div className="App">
-          {!isTelegramWebApp && <Navbar />}
+          <Navbar />
           <main className="App-main">
             <Routes>
               <Route path="/" element={<Home />} />

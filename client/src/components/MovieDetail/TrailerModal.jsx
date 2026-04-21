@@ -181,6 +181,7 @@ const TrailerModal = ({ movie, onClose }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const playbackSpeedRef = useRef(1);
 
   const speedOptions = [1, 1.5, 2];
 
@@ -219,6 +220,10 @@ const TrailerModal = ({ movie, onClose }) => {
   useEffect(() => {
     showControlsRef.current = showControls;
   }, [showControls]);
+
+  useEffect(() => {
+    playbackSpeedRef.current = playbackSpeed;
+  }, [playbackSpeed]);
 
   const clearHideTimeout = useCallback(() => {
     if (hideControlsTimeoutRef.current) {
@@ -432,7 +437,9 @@ const TrailerModal = ({ movie, onClose }) => {
       attempts++;
       if (video.duration && !isNaN(video.duration)) {
         setDuration(video.duration);
-        if (video.playbackRate !== playbackSpeed) video.playbackRate = playbackSpeed;
+        if (video.playbackRate !== playbackSpeedRef.current) {
+          video.playbackRate = playbackSpeedRef.current;
+        }
         clearInterval(checkDuration);
       } else if (attempts >= maxAttempts) {
         clearInterval(checkDuration);

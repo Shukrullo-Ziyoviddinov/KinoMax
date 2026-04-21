@@ -52,7 +52,6 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
 
   const videoRef = useRef(null);
   const videoWrapperRef = useRef(null);
-  const modalRef = useRef(null);
   const adVideoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(true);
@@ -93,11 +92,6 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
     lastAdAtVideoTimeRef.current = -1;
   };
   
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
-  const [isDraggingModal, setIsDraggingModal] = useState(false);
-  const [modalTranslateY, setModalTranslateY] = useState(0);
-
   const speedOptions = [1, 1.5, 2];
 
   const activeAd = adsData.find((ad) => ad.isActive) || adsData[0];
@@ -175,62 +169,6 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
     }, 4000);
   }, [clearHideTimeout]);
 
-  // Swipe gesture handlers
-  const handleTouchStart = (e) => {
-    if (e.target.closest('.watch-modal-bottom-controls') || e.target.closest('.watch-modal-controls-overlay')) return;
-    setTouchStart(e.touches[0].clientY);
-    setTouchEnd(null);
-  };
-
-  const handleTouchMove = (e) => {
-    if (touchStart === null) return;
-    const currentTouch = e.touches[0].clientY;
-    const diff = currentTouch - touchStart;
-    if (diff > 0) {
-      setIsDraggingModal(true);
-      setModalTranslateY(diff);
-      setTouchEnd(currentTouch);
-    } else if (diff < 0) {
-      setIsDraggingModal(false);
-      setModalTranslateY(0);
-      setTouchStart(null);
-      setTouchEnd(null);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchStart === null) {
-      setIsDraggingModal(false);
-      setModalTranslateY(0);
-      return;
-    }
-    if (touchEnd === null) {
-      setIsDraggingModal(false);
-      setModalTranslateY(0);
-      setTouchStart(null);
-      setTouchEnd(null);
-      return;
-    }
-    const distance = touchEnd - touchStart;
-    if (distance <= 0) {
-      setIsDraggingModal(false);
-      setModalTranslateY(0);
-      setTouchStart(null);
-      setTouchEnd(null);
-      return;
-    }
-    const modalHeight = modalRef.current ? modalRef.current.offsetHeight : window.innerHeight;
-    const closeThreshold = modalHeight * 0.35;
-    if (distance > closeThreshold) {
-      onClose();
-    } else {
-      setModalTranslateY(0);
-    }
-    setIsDraggingModal(false);
-    setTouchStart(null);
-    setTouchEnd(null);
-  };
-
   const handleBack10 = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10);
@@ -243,15 +181,6 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
       videoRef.current.currentTime = Math.min(videoRef.current.duration, videoRef.current.currentTime + 10);
     }
     showControlsWithDelay();
-  };
-
-  const handleVolumeChange = (e) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      setIsMuted(newVolume === 0);
-    }
   };
 
   const toggleMute = () => {
@@ -593,18 +522,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
 
   return (
     <div className="watch-modal-overlay" onClick={handleOverlayClick}>
-      <div 
-        ref={modalRef}
-        className="watch-modal" 
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          transform: `translateY(${modalTranslateY}px)`,
-          transition: isDraggingModal ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
-      >
+      <div className="watch-modal" onClick={(e) => e.stopPropagation()}>
         <button className="watch-modal-close" onClick={onClose} aria-label="Close">×</button>
         
         <div className="watch-modal-content">
@@ -711,16 +629,6 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
                         )}
                       </svg>
                     </button>
-
-                    <input
-                      type="range" min="0" max="1" step="0.01"
-                      value={isMuted ? 0 : volume}
-                      onChange={(e) => { e.stopPropagation(); handleVolumeChange(e); }}
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onMouseUp={(e) => e.stopPropagation()}
-                      className="watch-modal-volume-slider"
-                    />
 
                     <div className="watch-modal-time-display">
                       <span className="watch-modal-time-current">{formatTime(currentTime)}</span>

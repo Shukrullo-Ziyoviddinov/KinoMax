@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar/Navbar';
 import NavbarMobile from './components/Navbar/NavbarMobile';
@@ -15,8 +15,6 @@ import { LoadingProvider } from './context/LoadingContext';
 import './App.css';
 
 function App() {
-  const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
-
   useEffect(() => {
     const tg = window?.Telegram?.WebApp;
     if (!tg) {
@@ -29,8 +27,6 @@ function App() {
     if (!isTelegramClient) {
       return;
     }
-
-    setIsTelegramWebApp(true);
 
     const requestTelegramFullscreen = () => {
       tg.expand();

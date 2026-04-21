@@ -110,6 +110,10 @@
   transform: scale(1.08) translateX(-2px);
 }
 
+.trailer-modal-drag-handle {
+  display: none;
+}
+
 /* ==================== CONTENT WRAPPER ==================== */
 .trailer-modal-content {
   display: flex;
@@ -885,9 +889,58 @@
 
 /* Mobile - 768px */
 @media (max-width: 768px) {
+  .trailer-modal-overlay {
+    top: 80px;
+    bottom: 0;
+    z-index: 2000;
+    /* Surilganda orqa qora emas, sahifa UI ko‘rinsin */
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .trailer-modal {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+  }
+
+  .trailer-modal-drag-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-height: 32px;
+    padding: 0.35rem 0 0.3rem;
+    width: 100%;
+    flex-shrink: 0;
+    touch-action: none;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .trailer-modal-drag-handle-bar {
+    width: 46px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+  }
+
+  .trailer-modal-drag-handle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    flex-shrink: 0;
+  }
+
+  .trailer-modal-drag-handle-icon svg {
+    display: block;
+  }
+
   .trailer-modal-close {
-    width: 40px;
-    height: 40px;
+    display: none;
   }
 
   .trailer-modal-close .trailer-modal-close-icon {
@@ -1199,7 +1252,8 @@
 
   .trailer-modal {
     max-width: 100%;
-    height: 100vh;
+    height: 100%;
+    max-height: 100%;
     border-radius: 20px;
 }
 

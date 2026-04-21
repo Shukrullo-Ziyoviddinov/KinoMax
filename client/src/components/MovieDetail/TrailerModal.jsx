@@ -157,9 +157,13 @@ const TrailerModal = ({ movie, onClose }) => {
 
   const videoRef = useRef(null);
   const videoWrapperRef = useRef(null);
+  const modalRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [trailerLoading, setTrailerLoading] = useState(true);
+  const [isDraggingModal, setIsDraggingModal] = useState(false);
+  const [modalTranslateY, setModalTranslateY] = useState(0);
+  const modalDragStartYRef = useRef(null);
 
   useEffect(() => {
     setTrailerLoading(true);
@@ -602,10 +606,58 @@ const TrailerModal = ({ movie, onClose }) => {
     handlePlayPause();
   };
 
+  const handleModalTouchStart = (e) => {
+    if (!('ontouchstart' in window)) return;
+    if (!e.target.closest('.trailer-modal-drag-handle')) return;
+    modalDragStartYRef.current = e.touches[0].clientY;
+    setIsDraggingModal(true);
+  };
+
+  const handleModalTouchMove = (e) => {
+    if (!isDraggingModal || modalDragStartYRef.current === null) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - modalDragStartYRef.current;
+    setModalTranslateY(Math.max(0, diff));
+  };
+
+  const handleModalTouchEnd = () => {
+    if (!isDraggingModal) return;
+    const modalHeight = modalRef.current ? modalRef.current.offsetHeight : window.innerHeight;
+    const closeThreshold = modalHeight * 0.2;
+
+    if (modalTranslateY > closeThreshold) {
+      onClose();
+      return;
+    }
+
+    setModalTranslateY(0);
+    setIsDraggingModal(false);
+    modalDragStartYRef.current = null;
+  };
+
   if (!trailers || trailers.length === 0) {
     return (
       <div className="trailer-modal-overlay" onClick={onClose}>
-        <div className="trailer-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          ref={modalRef}
+          className="trailer-modal"
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={handleModalTouchStart}
+          onTouchMove={handleModalTouchMove}
+          onTouchEnd={handleModalTouchEnd}
+          style={{
+            transform: `translateY(${modalTranslateY}px)`,
+            transition: isDraggingModal ? 'none' : 'transform 0.25s ease-out'
+          }}
+        >
+          <div className="trailer-modal-drag-handle" aria-hidden="true">
+            <span className="trailer-modal-drag-handle-bar" />
+            <span className="trailer-modal-drag-handle-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
+              </svg>
+            </span>
+          </div>
           <button type="button" className="trailer-modal-close" onClick={onClose} aria-label="Close">
             <TrailerModalBackIcon />
           </button>
@@ -623,7 +675,26 @@ const TrailerModal = ({ movie, onClose }) => {
 
   return (
     <div className="trailer-modal-overlay" onClick={handleOverlayClick}>
-      <div className="trailer-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={modalRef}
+        className="trailer-modal"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleModalTouchStart}
+        onTouchMove={handleModalTouchMove}
+        onTouchEnd={handleModalTouchEnd}
+        style={{
+          transform: `translateY(${modalTranslateY}px)`,
+          transition: isDraggingModal ? 'none' : 'transform 0.25s ease-out'
+        }}
+      >
+        <div className="trailer-modal-drag-handle" aria-hidden="true">
+          <span className="trailer-modal-drag-handle-bar" />
+          <span className="trailer-modal-drag-handle-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
+            </svg>
+          </span>
+        </div>
         {trailerLoading ? (
           <LoaderSkeleton variant="trailer-modal-close" className="trailer-modal-close-skeleton" />
         ) : (

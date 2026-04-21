@@ -650,6 +650,26 @@
   object-fit: contain;
 }
 
+.trailer-modal-video-wrapper.trailer-modal-video-wrapper--pseudo-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+  flex: none !important;
+  background: #000 !important;
+}
+
+.trailer-modal-video-wrapper.trailer-modal-video-wrapper--pseudo-fullscreen .trailer-modal-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 
 /* ==================== RESPONSIVE DESIGN ==================== */
 

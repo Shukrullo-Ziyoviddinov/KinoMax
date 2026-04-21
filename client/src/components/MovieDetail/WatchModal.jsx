@@ -72,6 +72,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [previewTime, setPreviewTime] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -282,19 +283,94 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
 
   const handleFullscreen = () => {
     if (!videoWrapperRef.current) return;
-    try {
-      if (!document.fullscreenElement) {
-        if (videoWrapperRef.current.requestFullscreen) videoWrapperRef.current.requestFullscreen();
-        else if (videoWrapperRef.current.webkitRequestFullscreen) videoWrapperRef.current.webkitRequestFullscreen();
-        else if (videoWrapperRef.current.mozRequestFullScreen) videoWrapperRef.current.mozRequestFullScreen();
-      } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+
+    const isNativeFullscreen = () => Boolean(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+
+    const requestNativeFullscreen = async () => {
+      const wrapper = videoWrapperRef.current;
+      const video = videoRef.current;
+
+      try {
+        if (wrapper.requestFullscreen) {
+          await wrapper.requestFullscreen();
+          return true;
+        }
+        if (wrapper.webkitRequestFullscreen) {
+          wrapper.webkitRequestFullscreen();
+          return true;
+        }
+        if (wrapper.mozRequestFullScreen) {
+          wrapper.mozRequestFullScreen();
+          return true;
+        }
+        if (wrapper.msRequestFullscreen) {
+          wrapper.msRequestFullscreen();
+          return true;
+        }
+        if (video && video.webkitEnterFullscreen) {
+          video.webkitEnterFullscreen();
+          return true;
+        }
+      } catch (_) {
+        return false;
       }
-    } catch (error) {
+
+      return false;
+    };
+
+    const exitNativeFullscreen = async () => {
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+          return true;
+        }
+        if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+          return true;
+        }
+        if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+          return true;
+        }
+        if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+          return true;
+        }
+      } catch (_) {
+        return false;
+      }
+
+      return false;
+    };
+
+    const toggleFullscreen = async () => {
+      if (isNativeFullscreen()) {
+        const exited = await exitNativeFullscreen();
+        if (!exited) setIsPseudoFullscreen(false);
+        return;
+      }
+
+      if (isPseudoFullscreen) {
+        setIsPseudoFullscreen(false);
+        return;
+      }
+
+      const entered = await requestNativeFullscreen();
+      if (!entered) {
+        // Telegram WebApp kabi brauzerlarda Fullscreen API bloklansa fallback.
+        setIsPseudoFullscreen(true);
+      }
+    };
+
+    toggleFullscreen().catch((error) => {
       console.error('Error toggling fullscreen:', error);
-    }
+      setIsPseudoFullscreen((prev) => !prev);
+    });
   };
 
   const formatTime = (seconds) => {
@@ -399,15 +475,45 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
   }, [isPlaying, startHideTimeout, clearHideTimeout]);
 
   useEffect(() => {
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const handleFullscreenChange = () => {
+      const nativeActive = Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      setIsFullscreen(nativeActive || isPseudoFullscreen);
+    };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    handleFullscreenChange();
+
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
       clearHideTimeout();
     };
-  }, [clearHideTimeout]);
+  }, [clearHideTimeout, isPseudoFullscreen]);
+
+  useEffect(() => {
+    if (!isPseudoFullscreen) return undefined;
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsPseudoFullscreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isPseudoFullscreen]);
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -505,7 +611,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
           <div className="watch-modal-video-section">
             <div 
               ref={videoWrapperRef}
-              className="watch-modal-video-wrapper"
+              className={`watch-modal-video-wrapper ${isPseudoFullscreen ? 'watch-modal-video-wrapper--pseudo-fullscreen' : ''}`}
               onMouseMove={('ontouchstart' in window) ? undefined : () => showControlsWithDelay()}
               onMouseLeave={('ontouchstart' in window) ? undefined : () => isPlaying && setShowControls(false)}
               onTouchStart={handleVideoWrapperTouchStart}

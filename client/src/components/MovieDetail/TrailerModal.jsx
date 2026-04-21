@@ -271,15 +271,6 @@ const TrailerModal = ({ movie, onClose }) => {
     showControlsWithDelay();
   };
 
-  const handleVolumeChange = (e) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      setIsMuted(newVolume === 0);
-    }
-  };
-
   const toggleMute = () => {
     if (videoRef.current) {
       const newMuted = !isMuted;
@@ -674,7 +665,10 @@ const TrailerModal = ({ movie, onClose }) => {
   };
 
   return (
-    <div className="trailer-modal-overlay" onClick={handleOverlayClick}>
+    <div
+      className={`trailer-modal-overlay${isPseudoFullscreen ? ' trailer-modal-overlay--pseudo-fs-active' : ''}`}
+      onClick={handleOverlayClick}
+    >
       <div
         ref={modalRef}
         className="trailer-modal"
@@ -683,7 +677,7 @@ const TrailerModal = ({ movie, onClose }) => {
         onTouchMove={handleModalTouchMove}
         onTouchEnd={handleModalTouchEnd}
         style={{
-          transform: `translateY(${modalTranslateY}px)`,
+          transform: isPseudoFullscreen ? 'none' : `translateY(${modalTranslateY}px)`,
           transition: isDraggingModal ? 'none' : 'transform 0.25s ease-out'
         }}
       >
@@ -824,16 +818,6 @@ const TrailerModal = ({ movie, onClose }) => {
                           )}
                         </svg>
                       </button>
-
-                      <input
-                        type="range" min="0" max="1" step="0.01"
-                        value={isMuted ? 0 : volume}
-                        onChange={(e) => { e.stopPropagation(); handleVolumeChange(e); }}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onMouseUp={(e) => e.stopPropagation()}
-                        className="trailer-modal-volume-slider"
-                      />
 
                       <div className="trailer-modal-time-display">
                         <span className="trailer-modal-time-current">{formatTime(currentTime)}</span>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { allMovies } from '../../data/moviesCatalog';
@@ -7,9 +7,9 @@ import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import VerticalScroll from './VerticalScroll';
 import './SimilarTrailers.css';
 
-const SimilarTrailers = ({ 
-  currentMovie, 
-  selectedTrailer, 
+const SimilarTrailers = ({
+  currentMovie,
+  selectedTrailer,
   onTrailerSelect,
   trailerReactions,
   getTrailerKey,
@@ -21,7 +21,6 @@ const SimilarTrailers = ({
 }) => {
   const { t } = useTranslation();
   const { contentLang } = useContentLanguage();
-  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
 
   const similarTrailers = useMemo(() => {
     const currentTypeTrailers = selectedTrailer?.typeTrailers || '';
@@ -34,8 +33,7 @@ const SimilarTrailers = ({
         (movie.trailersVideo || []).map((trailer) => ({
           ...trailer,
           movieId: movie.id,
-          movieTitle: movie.title,
-          movieHomeImg: movie.homeImg
+          movieTitle: movie.title
         }))
       )
       .filter((trailer) => {
@@ -91,7 +89,6 @@ const SimilarTrailers = ({
           {similarTrailers.map((trailer, index) => {
             const itemKey = getTrailerKey?.(trailer);
             const isPlaying = Boolean(playingKey && itemKey && itemKey === playingKey);
-            const isActivePreview = index === activePreviewIndex;
             const trailerSrc =
               trailer.trailers?.[contentLang] ||
               trailer.trailers?.uz ||
@@ -102,16 +99,13 @@ const SimilarTrailers = ({
               key={`${itemKey || `${trailer.movieId}-${trailer.id}`}-${index}`}
               className={`similar-trailer-item${isPlaying ? ' active' : ''}`}
               onClick={() => onTrailerSelect(trailer)}
-              onMouseEnter={() => setActivePreviewIndex(index)}
             >
               <div className="similar-trailer-video">
                 <video
                   src={trailerSrc}
                   muted
                   playsInline
-                  autoPlay={isActivePreview}
-                  loop={isActivePreview}
-                  preload={isActivePreview ? 'metadata' : 'none'}
+                  preload="metadata"
                   className="similar-trailer-video-element"
                 />
                 <div className="similar-trailer-play">
@@ -128,7 +122,7 @@ const SimilarTrailers = ({
                   {trailer.text?.[contentLang] || trailer.text?.uz || trailer.text?.ru || ''}
                 </div>
                 <div className="similar-trailer-actions">
-                  <div 
+                  <div
                     className={`similar-trailer-like ${getUserReaction && getUserReaction(trailer) === 'like' ? 'active' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -140,7 +134,7 @@ const SimilarTrailers = ({
                     </svg>
                     <span>{formatActionCount(getReactionCounts ? getReactionCounts(trailer).like : (trailer.like || '0'))}</span>
                   </div>
-                  <div 
+                  <div
                     className={`similar-trailer-dislike ${getUserReaction && getUserReaction(trailer) === 'dislike' ? 'active' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation();

@@ -443,7 +443,7 @@ const TrailerModal = ({ movie, onClose }) => {
       clearInterval(checkDuration);
       if (video) video.pause();
     };
-  }, [selectedTrailer, contentLang, playbackSpeed]);
+  }, [selectedTrailer, contentLang]);
 
   // Mobil: video ustiga bosilganda controls toggle
   const videoTapRef = useRef({ x: 0, y: 0, time: 0 });
@@ -536,6 +536,8 @@ const TrailerModal = ({ movie, onClose }) => {
                   <video
                     ref={videoRef}
                     src={selectedTrailer?.trailers?.[contentLang] || selectedTrailer?.trailers?.uz || selectedTrailer?.trailers?.ru || ''}
+                    preload="auto"
+                    playsInline
                     className="trailer-modal-video"
                     onPlay={() => setIsPlaying(true)}
                     onPause={() => setIsPlaying(false)}

@@ -78,9 +78,13 @@ function buildCaption(movie, language) {
 function buildMovieInlineKeyboard(movie, language) {
   const movieCode = movie?.movieCode;
   const movieId = movie?.id;
-  const shareTarget = movieId
-    ? `${WEB_APP_URL}movie/${movieId}`
-    : `${WEB_APP_URL}?code=${movieCode}`;
+  const websiteBase = WEB_APP_URL.endsWith("/")
+    ? WEB_APP_URL.slice(0, -1)
+    : WEB_APP_URL;
+  const movieTargetUrl = movieId
+    ? `${websiteBase}/movie/${movieId}`
+    : `${websiteBase}?code=${movieCode}`;
+  const shareTarget = movieTargetUrl;
   const shareText =
     language === "ru"
       ? `Смотри фильм в Kino Max (${movieCode})`
@@ -95,13 +99,15 @@ function buildMovieInlineKeyboard(movie, language) {
         {
           text:
             language === "ru"
-              ? "📺 Смотреть в Telegram"
+              ? "📺 Смотреть через Telegram"
               : "📺 Telegram orqali tomosha",
           callback_data: `${TELEGRAM_WATCH_CALLBACK_PREFIX}${movieCode}`,
         },
+      ],
+      [
         {
           text: language === "ru" ? "🌐 Смотреть онлайн" : "🌐 Online tomosha",
-          web_app: { url: WEB_APP_URL },
+          web_app: { url: movieTargetUrl },
         },
       ],
       [
@@ -121,6 +127,31 @@ function resolveVideoPath(videoSrc) {
 
   const normalized = videoSrc.startsWith("/") ? videoSrc.slice(1) : videoSrc;
   return path.join(clientPublicPath, normalized);
+}
+
+function resolveVideoSource(videoSrc) {
+  if (!videoSrc || typeof videoSrc !== "string") {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(videoSrc)) {
+    return {
+      cacheKey: videoSrc,
+      localPath: null,
+      publicUrl: videoSrc,
+    };
+  }
+
+  const normalized = videoSrc.startsWith("/") ? videoSrc : `/${videoSrc}`;
+  const websiteBase = WEB_APP_URL.endsWith("/")
+    ? WEB_APP_URL.slice(0, -1)
+    : WEB_APP_URL;
+
+  return {
+    cacheKey: normalized,
+    localPath: resolveVideoPath(normalized),
+    publicUrl: `${websiteBase}${normalized}`,
+  };
 }
 
 function getCurrentLanguage(msg) {
@@ -195,24 +226,24 @@ async function createStatusTracker(bot, chatId, language, code) {
 async function sendVideoWithCache(
   bot,
   chatId,
-  videoPath,
-  videoSrc,
+  videoInput,
+  cacheKey,
   caption,
   options = {}
 ) {
-  const cachedFileId = telegramVideoCache.get(videoSrc);
+  const cachedFileId = telegramVideoCache.get(cacheKey);
   if (cachedFileId) {
     await bot.sendVideo(chatId, cachedFileId, { caption, ...options });
     return;
   }
 
-  const sentMessage = await bot.sendVideo(chatId, videoPath, {
+  const sentMessage = await bot.sendVideo(chatId, videoInput, {
     caption,
     ...options,
   });
   const fileId = sentMessage?.video?.file_id;
   if (fileId) {
-    telegramVideoCache.set(videoSrc, fileId);
+    telegramVideoCache.set(cacheKey, fileId);
   }
 }
 
@@ -222,12 +253,36 @@ async function sendMovieVideo(bot, chatId, movie, language) {
   const fallbackSrc = movie?.movieMedia?.[fallbackLanguage]?.video?.src;
 
   const videoSrc = primarySrc || fallbackSrc;
-  const videoPath = resolveVideoPath(videoSrc);
+  const source = resolveVideoSource(videoSrc);
   const caption = buildCaption(movie, language);
   const reply_markup = buildMovieInlineKeyboard(movie, language);
 
-  if (videoPath && fs.existsSync(videoPath)) {
-    await sendVideoWithCache(bot, chatId, videoPath, videoSrc, caption, {
+  if (!source) {
+    await bot.sendMessage(chatId, `${caption}\n\n${t(language, "videoNotFound")}`);
+    return;
+  }
+
+  try {
+    // Telegram URL orqali olganda birinchi yuborish tezroq bo'ladi.
+    await sendVideoWithCache(
+      bot,
+      chatId,
+      source.publicUrl,
+      source.cacheKey,
+      caption,
+      {
+        reply_markup,
+      }
+    );
+    return;
+  } catch (error) {
+    if (!source.localPath || !fs.existsSync(source.localPath)) {
+      throw error;
+    }
+  }
+
+  if (source.localPath && fs.existsSync(source.localPath)) {
+    await sendVideoWithCache(bot, chatId, source.localPath, source.cacheKey, caption, {
       reply_markup,
     });
   } else {
@@ -294,5 +349,7 @@ module.exports = {
   buildCaption,
   buildMovieInlineKeyboard,
   clientPublicPath,
+  resolveVideoSource,
   sendVideoWithCache,
+  WEB_APP_URL,
 };

@@ -1,17 +1,28 @@
 const fs = require("fs");
-const path = require("path");
 const { getMovieByCode } = require("../../services/movieService");
 const { getUserLanguage, setUserLanguage } = require("../../utils/userState");
 const { normalizeLanguage, t } = require("../../utils/i18n");
 const {
   buildCaption,
   buildMovieInlineKeyboard,
-  clientPublicPath,
+  resolveVideoSource,
   sendVideoWithCache,
 } = require("./messageHandler");
 
 const LANGUAGE_CALLBACK_PREFIX = "set_lang:";
 const TELEGRAM_WATCH_CALLBACK_PREFIX = "watch_telegram:";
+
+function buildWatchSources(movie, language) {
+  const fallbackLanguage = language === "ru" ? "uz" : "ru";
+  const candidates = [
+    movie?.watchVideo?.[language],
+    movie?.watchVideo?.[fallbackLanguage],
+    movie?.movieMedia?.[language]?.video?.src,
+    movie?.movieMedia?.[fallbackLanguage]?.video?.src,
+  ].filter(Boolean);
+
+  return [...new Set(candidates)];
+}
 
 function buildLanguageKeyboard() {
   return {
@@ -81,25 +92,43 @@ async function callbackHandler(bot, query) {
       return;
     }
 
-    const primarySrc = movie?.watchVideo?.[language];
-    const fallbackSrc = movie?.watchVideo?.uz || movie?.watchVideo?.ru || null;
-    const watchSrc = primarySrc || fallbackSrc;
-    const normalized = watchSrc?.startsWith("/") ? watchSrc.slice(1) : watchSrc;
-    const watchVideoPath = normalized ? path.join(clientPublicPath, normalized) : null;
+    const videoSources = buildWatchSources(movie, language);
+    const caption = buildCaption(movie, language);
+    const keyboard = buildMovieInlineKeyboard(movie, language);
 
-    if (!watchVideoPath || !fs.existsSync(watchVideoPath)) {
-      await bot.sendMessage(chatId, t(language, "videoNotFound"));
-      return;
+    for (const src of videoSources) {
+      const source = resolveVideoSource(src);
+      if (!source) {
+        continue;
+      }
+
+      try {
+        await sendVideoWithCache(bot, chatId, source.publicUrl, source.cacheKey, caption, {
+          reply_markup: keyboard,
+        });
+        return;
+      } catch (error) {
+        if (!source.localPath || !fs.existsSync(source.localPath)) {
+          continue;
+        }
+
+        try {
+          await sendVideoWithCache(
+            bot,
+            chatId,
+            source.localPath,
+            source.cacheKey,
+            caption,
+            { reply_markup: keyboard }
+          );
+          return;
+        } catch (localError) {
+          continue;
+        }
+      }
     }
 
-    await sendVideoWithCache(
-      bot,
-      chatId,
-      watchVideoPath,
-      watchSrc,
-      buildCaption(movie, language),
-      { reply_markup: buildMovieInlineKeyboard(movie, language) }
-    );
+    await bot.sendMessage(chatId, t(language, "videoNotFound"));
     return;
   }
 

@@ -54,7 +54,10 @@ const Navbar = () => {
   useEffect(() => {
     setLoading('navbar', true);
     const timer = setTimeout(() => setLoading('navbar', false), 400);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setLoading('navbar', false);
+    };
   }, [setLoading]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar/Navbar';
 import NavbarMobile from './components/Navbar/NavbarMobile';
@@ -15,17 +15,58 @@ import { LoadingProvider } from './context/LoadingContext';
 import './App.css';
 
 function App() {
+  const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
+
   useEffect(() => {
     const tg = window?.Telegram?.WebApp;
     if (!tg) {
       return;
     }
+    setIsTelegramWebApp(true);
+
+    const requestTelegramFullscreen = () => {
+      tg.expand();
+      const canRequestFullscreen =
+        typeof tg.requestFullscreen === 'function' &&
+        (typeof tg.isVersionAtLeast !== 'function' || tg.isVersionAtLeast('8.0'));
+
+      if (canRequestFullscreen) {
+        try {
+          tg.requestFullscreen();
+        } catch (error) {
+          // Telegram can throw on some clients despite exposing the method.
+        }
+      }
+    };
+
+    const handleViewportChanged = () => {
+      tg.expand();
+    };
 
     tg.ready();
-    tg.expand();
+    requestTelegramFullscreen();
     if (typeof tg.disableVerticalSwipes === 'function') {
       tg.disableVerticalSwipes();
     }
+    if (typeof tg.setHeaderColor === 'function') {
+      tg.setHeaderColor('#0b0b0f');
+    }
+    if (typeof tg.setBackgroundColor === 'function') {
+      tg.setBackgroundColor('#0b0b0f');
+    }
+    if (typeof tg.onEvent === 'function') {
+      tg.onEvent('viewportChanged', handleViewportChanged);
+    }
+    window.addEventListener('click', requestTelegramFullscreen, { once: true });
+    window.addEventListener('touchstart', requestTelegramFullscreen, { once: true });
+
+    return () => {
+      if (typeof tg.offEvent === 'function') {
+        tg.offEvent('viewportChanged', handleViewportChanged);
+      }
+      window.removeEventListener('click', requestTelegramFullscreen);
+      window.removeEventListener('touchstart', requestTelegramFullscreen);
+    };
   }, []);
 
   return (
@@ -35,7 +76,7 @@ function App() {
         <ContentLanguageProvider>
         <LoadingProvider>
         <div className="App">
-          <Navbar />
+          {!isTelegramWebApp && <Navbar />}
           <main className="App-main">
             <Routes>
               <Route path="/" element={<Home />} />

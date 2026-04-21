@@ -42,9 +42,10 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
   const isHorizontal = (sectionType === 'recommended' || sectionType === 'topRated' || sectionType === 'koreaDrama' || sectionType === 'kinolar' || sectionType === 'actionMovies' || sectionType === 'horrorMovies' || sectionType === 'anime' || sectionType === 'adventureMovies' || sectionType === 'romanceMovies' || sectionType === 'retroMovies' || sectionType === 'uzbekMovies' || sectionType === 'worldMovies' || sectionType === 'animations' || sectionType === 'turkishSeries' || sectionType === 'russianMovies' || sectionType === 'tvSeries') && showHorizontalScroll;
   const isWideLayout = false;
 
-  const renderMovieItem = (movie) => (
+  const renderMovieItem = (movie, index) => (
+    // Dataset can contain duplicate numeric ids, so include index to keep keys unique.
     <div
-      key={movie.id}
+      key={`${movie.id}-${index}`}
       className={`movies-item ${isHorizontal ? 'movies-item-horizontal' : ''} ${isWideLayout ? 'movies-item-wide' : ''}`}
       onClick={() => !isLoading && handleMovieClick(movie.id)}
     >
@@ -117,11 +118,11 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
         <div className="movies-content-wrapper">
           {isHorizontal && shouldShowLimit ? (
             <HorizontalScroll>
-              {displayMovies.map((movie) => renderMovieItem(movie))}
+              {displayMovies.map((movie, index) => renderMovieItem(movie, index))}
             </HorizontalScroll>
           ) : (
             <div className="movies-grid">
-              {displayMovies.map((movie) => renderMovieItem(movie))}
+              {displayMovies.map((movie, index) => renderMovieItem(movie, index))}
             </div>
           )}
         </div>

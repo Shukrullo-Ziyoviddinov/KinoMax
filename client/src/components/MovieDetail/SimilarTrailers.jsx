@@ -26,12 +26,15 @@ const SimilarTrailers = ({
     const currentTypeTrailers = selectedTrailer?.typeTrailers || '';
     if (!currentTypeTrailers) return [];
 
+    const seen = new Set();
+
     return allMovies
       .flatMap((movie) =>
         (movie.trailersVideo || []).map((trailer) => ({
           ...trailer,
           movieId: movie.id,
-          movieTitle: movie.title
+          movieTitle: movie.title,
+          movieHomeImg: movie.homeImg
         }))
       )
       .filter((trailer) => {
@@ -40,8 +43,16 @@ const SimilarTrailers = ({
           trailer.movieId === currentMovie?.id && trailer.id === selectedTrailer?.id
         );
         return isSameType && isNotCurrent;
-      });
-  }, [selectedTrailer?.typeTrailers, selectedTrailer?.id, currentMovie?.id]);
+      })
+      .filter((trailer) => {
+        const src = trailer.trailers?.[contentLang] || trailer.trailers?.uz || trailer.trailers?.ru || '';
+        const uniqueSignature = `${trailer.movieId}|${trailer.id}|${src}|${trailer.title?.uz || trailer.title?.ru || ''}`;
+        if (seen.has(uniqueSignature)) return false;
+        seen.add(uniqueSignature);
+        return true;
+      })
+      .slice(0, 24);
+  }, [selectedTrailer?.typeTrailers, selectedTrailer?.id, currentMovie?.id, contentLang]);
 
   if (trailerLoading) {
     return (
@@ -76,20 +87,27 @@ const SimilarTrailers = ({
       <h4 className="similar-trailers-title">{t('detail.similarTrailers')}</h4>
       <VerticalScroll className="similar-trailers-scroll-wrapper">
         <div className="similar-trailers-list">
-          {similarTrailers.map((trailer) => {
+          {similarTrailers.map((trailer, index) => {
             const itemKey = getTrailerKey?.(trailer);
             const isPlaying = Boolean(playingKey && itemKey && itemKey === playingKey);
+            const trailerSrc =
+              trailer.trailers?.[contentLang] ||
+              trailer.trailers?.uz ||
+              trailer.trailers?.ru ||
+              '';
             return (
             <div
-              key={`${trailer.movieId}-${trailer.id}`}
+              key={`${itemKey || `${trailer.movieId}-${trailer.id}`}-${index}`}
               className={`similar-trailer-item${isPlaying ? ' active' : ''}`}
               onClick={() => onTrailerSelect(trailer)}
             >
               <div className="similar-trailer-video">
                 <video
-                  src={trailer.trailers?.[contentLang] || trailer.trailers?.uz || trailer.trailers?.ru || ''}
+                  src={trailerSrc}
                   muted
                   playsInline
+                  autoPlay
+                  loop
                   preload="metadata"
                   className="similar-trailer-video-element"
                 />

@@ -1,5 +1,6 @@
 .App {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-body);
 
 
@@ -46,6 +47,7 @@ body::-webkit-scrollbar {
 
 .App-main {
   min-height: calc(100vh - 80px);
+  min-height: calc(100dvh - 80px);
 }
 
 @media (max-width: 768px) {

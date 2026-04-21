@@ -2,8 +2,16 @@ const translations = {
   uz: {
     chooseLanguage:
       "Bot tilini tanlash uchun qo'yidagilardan birini tanlang.\n\nВыберите один из вариантов ниже, чтобы выбрать язык бота.",
-    askCode: "Kino kodini yuboring. Masalan: 100",
+    askCode:
+      "🎬 Kino kodini kiriting...\n🍿 Sevimli filmingizni topish uchun uning maxsus kodini yuboring.\n💡 Masalan: 100 yoki 55\n━━━━━━━━━━━━━━\n🔎 Qidiruv tizimi 24/7 faol",
     askCodeNumber: "Kod raqam ko'rinishida yuborilsin. Masalan: 100",
+    statusSteps: [
+      "🔎 Kod qabul qilindi",
+      "🗂 Bazadan qidirilmoqda",
+      "✅ Film topildi",
+      "📤 Video yuborilmoqda",
+      "🎉 Yuborildi",
+    ],
     movieNotFound: (code) => `${code} raqamiga mos kino topilmadi.`,
     videoNotFound: "Video topilmadi.",
     sendError: "Kinoni yuborishda xatolik yuz berdi. Keyinroq urinib ko'ring.",
@@ -12,8 +20,16 @@ const translations = {
   ru: {
     chooseLanguage:
       "Bot tilini tanlash uchun qo'yidagilardan birini tanlang.\n\nВыберите один из вариантов ниже, чтобы выбрать язык бота.",
-    askCode: "Отправьте код фильма. Например: 100",
+    askCode:
+      "🎬 Введите код фильма...\n🍿 Чтобы найти любимый фильм, отправьте его специальный код.\n💡 Например: 100 или 55\n━━━━━━━━━━━━━━\n🔎 Поиск работает 24/7",
     askCodeNumber: "Код должен быть числом. Например: 100",
+    statusSteps: [
+      "🔎 Код получен",
+      "🗂 Поиск в базе",
+      "✅ Фильм найден",
+      "📤 Отправка видео",
+      "🎉 Отправлено",
+    ],
     movieNotFound: (code) => `Фильм по коду ${code} не найден.`,
     videoNotFound: "Видео не найдено.",
     sendError:

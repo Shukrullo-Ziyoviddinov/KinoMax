@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar/Navbar';
 import NavbarMobile from './components/Navbar/NavbarMobile';
@@ -15,6 +15,19 @@ import { LoadingProvider } from './context/LoadingContext';
 import './App.css';
 
 function App() {
+  useEffect(() => {
+    const tg = window?.Telegram?.WebApp;
+    if (!tg) {
+      return;
+    }
+
+    tg.ready();
+    tg.expand();
+    if (typeof tg.disableVerticalSwipes === 'function') {
+      tg.disableVerticalSwipes();
+    }
+  }, []);
+
   return (
     <WishlistProvider>
       <ViewedMoviesProvider>

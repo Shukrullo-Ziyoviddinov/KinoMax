@@ -1,7 +1,17 @@
-const { setUserLanguage } = require("../../utils/userState");
+const fs = require("fs");
+const path = require("path");
+const { getMovieByCode } = require("../../services/movieService");
+const { getUserLanguage, setUserLanguage } = require("../../utils/userState");
 const { normalizeLanguage, t } = require("../../utils/i18n");
+const {
+  buildCaption,
+  buildMovieInlineKeyboard,
+  clientPublicPath,
+  sendVideoWithCache,
+} = require("./messageHandler");
 
 const LANGUAGE_CALLBACK_PREFIX = "set_lang:";
+const TELEGRAM_WATCH_CALLBACK_PREFIX = "watch_telegram:";
 
 function buildLanguageKeyboard() {
   return {
@@ -20,10 +30,78 @@ async function sendLanguageSelector(bot, chatId) {
   });
 }
 
+async function clearLanguageSelectorMessage(bot, query) {
+  const chatId = query?.message?.chat?.id;
+  const messageId = query?.message?.message_id;
+
+  if (!chatId || typeof messageId !== "number") {
+    return;
+  }
+
+  try {
+    await bot.deleteMessage(chatId, messageId);
+    return;
+  } catch (error) {
+    console.warn("Til tanlash xabarini o'chirib bo'lmadi:", error.message);
+  }
+
+  try {
+    await bot.editMessageReplyMarkup(
+      { inline_keyboard: [] },
+      { chat_id: chatId, message_id: messageId }
+    );
+  } catch (error) {
+    console.warn("Til tanlash tugmalarini o'chirib bo'lmadi:", error.message);
+  }
+}
+
 async function callbackHandler(bot, query) {
   const callbackData = query?.data || "";
   const userId = query?.from?.id;
   const chatId = query?.message?.chat?.id;
+
+  if (callbackData.startsWith(TELEGRAM_WATCH_CALLBACK_PREFIX)) {
+    const selectedLanguage = getUserLanguage(userId);
+    const language = normalizeLanguage(selectedLanguage);
+    const codeValue = callbackData.replace(TELEGRAM_WATCH_CALLBACK_PREFIX, "");
+    const movieCode = Number(codeValue);
+    const movie = Number.isNaN(movieCode) ? null : getMovieByCode(movieCode);
+
+    await bot.answerCallbackQuery(query.id, {
+      text:
+        language === "ru"
+          ? "Видео отправляется в Telegram..."
+          : "Video Telegram orqali yuborilmoqda...",
+    });
+
+    if (!chatId || !movie) {
+      if (chatId) {
+        await bot.sendMessage(chatId, t(language, "movieNotFound", codeValue));
+      }
+      return;
+    }
+
+    const primarySrc = movie?.watchVideo?.[language];
+    const fallbackSrc = movie?.watchVideo?.uz || movie?.watchVideo?.ru || null;
+    const watchSrc = primarySrc || fallbackSrc;
+    const normalized = watchSrc?.startsWith("/") ? watchSrc.slice(1) : watchSrc;
+    const watchVideoPath = normalized ? path.join(clientPublicPath, normalized) : null;
+
+    if (!watchVideoPath || !fs.existsSync(watchVideoPath)) {
+      await bot.sendMessage(chatId, t(language, "videoNotFound"));
+      return;
+    }
+
+    await sendVideoWithCache(
+      bot,
+      chatId,
+      watchVideoPath,
+      watchSrc,
+      buildCaption(movie, language),
+      { reply_markup: buildMovieInlineKeyboard(movie, language) }
+    );
+    return;
+  }
 
   if (!callbackData.startsWith(LANGUAGE_CALLBACK_PREFIX)) {
     return;
@@ -38,6 +116,7 @@ async function callbackHandler(bot, query) {
   });
 
   if (chatId) {
+    await clearLanguageSelectorMessage(bot, query);
     await bot.sendMessage(chatId, t(language, "askCode"));
   }
 }

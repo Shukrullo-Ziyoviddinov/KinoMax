@@ -182,33 +182,41 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
   const messageText = [title, buildMovieSummary(movie, language)].filter(Boolean).join("\n");
 
-  const result = {
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        {
+          text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
+          web_app: { url: movieUrl },
+        },
+      ],
+    ],
+  };
+
+  // Rasm mavjud bo'lsa chatga inline tanlovdan keyin photo + caption + button yuboriladi.
+  if (thumbnailUrl) {
+    return {
+      type: "photo",
+      id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
+      photo_url: thumbnailUrl,
+      thumbnail_url: thumbnailUrl,
+      title,
+      description: buildMovieSummary(movie, language),
+      caption: messageText,
+      reply_markup: replyMarkup,
+    };
+  }
+
+  return {
     type: "article",
-    // Telegram inline results id (<=64 bayt) har bir javob ichida noyob bo'lishi kerak.
     id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
     title,
     description: buildMovieSummary(movie, language),
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
-            web_app: { url: movieUrl },
-          },
-        ],
-      ],
-    },
+    reply_markup: replyMarkup,
     input_message_content: {
       message_text: messageText,
     },
   };
-
-  if (thumbnailUrl) {
-    result.thumbnail_url = thumbnailUrl;
-    result.thumb_url = thumbnailUrl;
-  }
-
-  return result;
 }
 
 async function inlineQueryHandler(bot, query) {

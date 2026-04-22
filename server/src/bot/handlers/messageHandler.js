@@ -6,7 +6,6 @@ const { normalizeLanguage, t } = require("../../utils/i18n");
 
 const clientPublicPath = path.resolve(__dirname, "../../../../client/public");
 const telegramVideoCache = new Map();
-const STATUS_DONE_DELAY_MS = 600;
 const DESCRIPTION_MAX_LINES = 5;
 const DESCRIPTION_APPROX_LINE_WIDTH = 36;
 const DESCRIPTION_PREVIEW_MAX_CHARS =
@@ -219,65 +218,6 @@ function getCurrentLanguage(msg) {
   return telegramLanguage.toLowerCase().startsWith("ru") ? "ru" : "uz";
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function buildStatusMessage(language, code, currentStep) {
-  const steps = t(language, "statusSteps");
-  if (!Array.isArray(steps) || steps.length === 0) {
-    return `📥 Kod: ${code}`;
-  }
-
-  const endIndex = Math.min(currentStep + 1, steps.length);
-  const visibleSteps = steps.slice(0, endIndex);
-  return [`📥 Kod: ${code}`, "━━━━━━━━━━━━━━", ...visibleSteps].join("\n");
-}
-
-async function createStatusTracker(bot, chatId, language, code) {
-  let messageId = null;
-
-  try {
-    const sent = await bot.sendMessage(
-      chatId,
-      buildStatusMessage(language, code, 0)
-    );
-    messageId = sent?.message_id || null;
-  } catch (error) {
-    return null;
-  }
-
-  const update = async (stepIndex) => {
-    if (!messageId) {
-      return;
-    }
-
-    try {
-      await bot.editMessageText(buildStatusMessage(language, code, stepIndex), {
-        chat_id: chatId,
-        message_id: messageId,
-      });
-    } catch (error) {
-      // Xabar o'zgartirib bo'lmasa ham asosiy oqimni to'xtatmaymiz.
-    }
-  };
-
-  return {
-    update,
-    remove: async () => {
-      if (!messageId) {
-        return;
-      }
-
-      try {
-        await bot.deleteMessage(chatId, messageId);
-      } catch (error) {
-        // Xabar allaqachon o'chgan bo'lishi mumkin.
-      }
-    },
-  };
-}
-
 async function sendVideoWithCache(
   bot,
   chatId,
@@ -286,7 +226,10 @@ async function sendVideoWithCache(
   caption,
   options = {}
 ) {
-  const videoOptions = { ...options };
+  const videoOptions = {
+    supports_streaming: true,
+    ...options,
+  };
   if (caption != null && caption !== "") {
     videoOptions.caption = caption;
   }
@@ -388,41 +331,18 @@ async function messageHandler(bot, msg) {
   }
 
   const code = Number(text);
-  const status = await createStatusTracker(bot, chatId, language, code);
-  if (status) {
-    await status.update(1);
-  }
-
   const movie = getMovieByCode(code);
 
   if (!movie) {
-    if (status) {
-      await status.remove();
-    }
-
     await bot.sendMessage(chatId, t(language, "movieNotFound", code));
     return;
   }
 
   try {
-    if (status) {
-      await status.update(2);
-      await status.update(3);
-    }
-
     await bot.sendChatAction(chatId, "upload_video");
     await sendMovieVideo(bot, chatId, movie, language);
-
-    if (status) {
-      await status.update(4);
-      await sleep(STATUS_DONE_DELAY_MS);
-      await status.remove();
-    }
   } catch (error) {
     console.error("Xabarni qayta ishlashda xatolik:", error.message);
-    if (status) {
-      await status.remove();
-    }
     await bot.sendMessage(chatId, t(language, "sendError"));
   }
 }

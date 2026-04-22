@@ -193,28 +193,22 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
     ],
   };
 
-  // Rasm mavjud bo'lsa chatga inline tanlovdan keyin photo + caption + button yuboriladi.
-  if (thumbnailUrl) {
-    return {
-      type: "photo",
-      id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
-      photo_url: thumbnailUrl,
-      thumbnail_url: thumbnailUrl,
-      title,
-      description: buildMovieSummary(movie, language),
-      caption: messageText,
-      reply_markup: replyMarkup,
-    };
-  }
-
   return {
     type: "article",
     id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
     title,
     description: buildMovieSummary(movie, language),
+    ...(thumbnailUrl
+      ? {
+          thumbnail_url: thumbnailUrl,
+          thumb_url: thumbnailUrl,
+        }
+      : {}),
     reply_markup: replyMarkup,
     input_message_content: {
-      message_text: messageText,
+      // Rasm havolasi birinchi qatorda bo'lsa chatda preview chiqadi.
+      message_text: thumbnailUrl ? `${thumbnailUrl}\n${messageText}` : messageText,
+      disable_web_page_preview: false,
     },
   };
 }

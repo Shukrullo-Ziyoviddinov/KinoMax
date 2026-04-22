@@ -338,6 +338,12 @@ async function messageHandler(bot, msg) {
     return;
   }
 
+  // Inline qidiruvdan tanlangan natija chatga yuborilganda bu xabarni qayta ishlamaymiz.
+  // Aks holda "kod raqam yuboring" degan noto'g'ri prompt chiqib qoladi.
+  if (msg?.via_bot) {
+    return;
+  }
+
   if (isLanguageButton(text)) {
     await sendLanguageSelector(bot, chatId);
     return;

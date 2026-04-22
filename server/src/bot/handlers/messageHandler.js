@@ -240,7 +240,17 @@ async function sendVideoWithCache(
     return;
   }
 
-  const sentMessage = await bot.sendVideo(chatId, videoInput, videoOptions);
+  const isLocalPath =
+    typeof videoInput === "string" && fs.existsSync(videoInput) && path.isAbsolute(videoInput);
+  const fileInput = isLocalPath ? fs.createReadStream(videoInput) : videoInput;
+  const fileOptions = isLocalPath
+    ? {
+        filename: path.basename(videoInput),
+        contentType: "video/mp4",
+      }
+    : undefined;
+
+  const sentMessage = await bot.sendVideo(chatId, fileInput, videoOptions, fileOptions);
   const fileId = sentMessage?.video?.file_id;
   if (fileId) {
     telegramVideoCache.set(cacheKey, fileId);

@@ -135,20 +135,6 @@ function buildMovieSummary(movie, language) {
   return `${year} • ${country} • ${duration} ${durationUnit}\n${genreText}`;
 }
 
-function toAbsoluteAssetUrl(assetPath) {
-  if (!assetPath || typeof assetPath !== "string") {
-    return null;
-  }
-
-  if (/^https?:\/\//i.test(assetPath)) {
-    return assetPath;
-  }
-
-  const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
-  const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
-  return `${base}${normalizedPath}`;
-}
-
 function filterMovies(movies, queryText, language) {
   const needle = normalize(queryText);
   const onlySymbols = !/[a-zA-Z0-9\u0400-\u04FF\u0600-\u06FF]/.test(needle);
@@ -175,24 +161,17 @@ function filterMovies(movies, queryText, language) {
 
 function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
-  const thumbnail =
-    movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
-  const thumbnailUrl = toAbsoluteAssetUrl(thumbnail);
-  const details =
-    movie?.description?.[language] || movie?.description?.uz || movie?.description?.ru || {};
   const movieId = movie?.id;
   const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
   const messageText = [title, buildMovieSummary(movie, language)].filter(Boolean).join("\n");
 
-  const result = {
+  return {
     type: "article",
     // Telegram inline results id (<=64 bayt) har bir javob ichida noyob bo'lishi kerak.
     id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
     title,
     description: buildMovieSummary(movie, language),
-    url: movieUrl,
-    hide_url: true,
     reply_markup: {
       inline_keyboard: [
         [
@@ -207,14 +186,6 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
       message_text: messageText,
     },
   };
-
-  if (thumbnailUrl) {
-    result.thumbnail_url = thumbnailUrl;
-    // Telegram clientlarning ayrim versiyalari hali thumb_url ishlatadi.
-    result.thumb_url = thumbnailUrl;
-  }
-
-  return result;
 }
 
 async function inlineQueryHandler(bot, query) {
@@ -238,15 +209,40 @@ async function inlineQueryHandler(bot, query) {
       next_offset: nextOffset,
     });
   } catch (error) {
-    console.error("Inline query javobida xatolik:", error.message);
+    console.error("Inline query javobida xatolik:", error?.response?.body || error?.message || error);
     try {
-      await bot.answerInlineQuery(query.id, [], {
+      const fallbackResults = page.map((movie, index) => {
+        const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
+        const movieId = movie?.id;
+        const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+        const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
+        return {
+          type: "article",
+          id: `fallback-${language}-${offset + index}`.slice(0, 64),
+          title,
+          description: buildMovieSummary(movie, language),
+          input_message_content: {
+            message_text: `${title}\n${movieUrl}`,
+          },
+        };
+      });
+
+      await bot.answerInlineQuery(query.id, fallbackResults, {
         cache_time: 0,
         is_personal: true,
-        next_offset: "",
+        next_offset,
       });
     } catch (fallbackError) {
-      console.error("Inline query fallback xatoligi:", fallbackError.message);
+      console.error("Inline query fallback xatoligi:", fallbackError?.response?.body || fallbackError?.message || fallbackError);
+      try {
+        await bot.answerInlineQuery(query.id, [], {
+          cache_time: 0,
+          is_personal: true,
+          next_offset: "",
+        });
+      } catch (emptyError) {
+        console.error("Inline query empty fallback xatoligi:", emptyError?.response?.body || emptyError?.message || emptyError);
+      }
     }
   }
 }

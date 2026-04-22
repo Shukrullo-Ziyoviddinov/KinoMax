@@ -12,8 +12,9 @@ function buildSearchActionsKeyboard(language) {
       [
         {
           text: isRu ? "🤖 Поиск через бота" : "🤖 Bot orqali qidirish",
-          // Bo'sh query bilan ham inline list ochilsin (foydalanuvchi yozmasdan ko'radi).
-          switch_inline_query_current_chat: "",
+          // Telegram ba'zi klientlarda bo'sh string bilan query yubormaydi.
+          // Bitta bo'sh joy inline qatorni ishga tushiradi, handler esa trim qilib hammasini qaytaradi.
+          switch_inline_query_current_chat: " ",
         },
       ],
       [

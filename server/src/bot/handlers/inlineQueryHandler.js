@@ -135,6 +135,20 @@ function buildMovieSummary(movie, language) {
   return `${year} • ${country} • ${duration} ${durationUnit}\n${genreText}`;
 }
 
+function toAbsoluteAssetUrl(assetPath) {
+  if (!assetPath || typeof assetPath !== "string") {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(assetPath)) {
+    return assetPath;
+  }
+
+  const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+  const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
+  return `${base}${normalizedPath}`;
+}
+
 function filterMovies(movies, queryText, language) {
   const needle = normalize(queryText);
   const onlySymbols = !/[a-zA-Z0-9\u0400-\u04FF\u0600-\u06FF]/.test(needle);
@@ -161,12 +175,14 @@ function filterMovies(movies, queryText, language) {
 
 function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
+  const thumbnail = movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
+  const thumbnailUrl = toAbsoluteAssetUrl(thumbnail);
   const movieId = movie?.id;
   const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
   const messageText = [title, buildMovieSummary(movie, language)].filter(Boolean).join("\n");
 
-  return {
+  const result = {
     type: "article",
     // Telegram inline results id (<=64 bayt) har bir javob ichida noyob bo'lishi kerak.
     id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
@@ -186,6 +202,13 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
       message_text: messageText,
     },
   };
+
+  if (thumbnailUrl) {
+    result.thumbnail_url = thumbnailUrl;
+    result.thumb_url = thumbnailUrl;
+  }
+
+  return result;
 }
 
 async function inlineQueryHandler(bot, query) {

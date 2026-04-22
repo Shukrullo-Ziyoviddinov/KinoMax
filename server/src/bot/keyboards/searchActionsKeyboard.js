@@ -12,7 +12,8 @@ function buildSearchActionsKeyboard(language) {
       [
         {
           text: isRu ? "🤖 Поиск через бота" : "🤖 Bot orqali qidirish",
-          switch_inline_query_current_chat: "",
+          // Bo'sh query bilan inline list darhol ochilishi uchun bitta bo'shliq yuboramiz.
+          switch_inline_query_current_chat: " ",
         },
       ],
       [

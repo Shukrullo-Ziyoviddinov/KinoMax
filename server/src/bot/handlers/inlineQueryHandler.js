@@ -190,6 +190,8 @@ function mapInlineResult(movie, language) {
 
   if (thumbnailUrl) {
     result.thumbnail_url = thumbnailUrl;
+    // Telegram clientlarning ayrim versiyalari hali thumb_url ishlatadi.
+    result.thumb_url = thumbnailUrl;
   }
 
   return result;
@@ -209,10 +211,14 @@ async function inlineQueryHandler(bot, query) {
     });
   } catch (error) {
     console.error("Inline query javobida xatolik:", error.message);
-    await bot.answerInlineQuery(query.id, [], {
-      cache_time: 0,
-      is_personal: true,
-    });
+    try {
+      await bot.answerInlineQuery(query.id, [], {
+        cache_time: 0,
+        is_personal: true,
+      });
+    } catch (fallbackError) {
+      console.error("Inline query fallback xatoligi:", fallbackError.message);
+    }
   }
 }
 

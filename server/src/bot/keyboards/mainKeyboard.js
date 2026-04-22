@@ -6,8 +6,6 @@ const PROFILE_BUTTON_UZ = "👤 Profil";
 const PROFILE_BUTTON_RU = "👤 Профиль";
 const WISHLIST_BUTTON_UZ = "💾 Saqlanganlar";
 const WISHLIST_BUTTON_RU = "💾 Сохраненные";
-const OPEN_APP_BUTTON_UZ = "📱 Ilovani ochish";
-const OPEN_APP_BUTTON_RU = "📱 Открыть приложение";
 const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
 
 function buildMainReplyKeyboard(language) {
@@ -27,12 +25,6 @@ function buildMainReplyKeyboard(language) {
         {
           text: isRu ? WISHLIST_BUTTON_RU : WISHLIST_BUTTON_UZ,
           web_app: { url: `${baseUrl}/wishlist` },
-        },
-      ],
-      [
-        {
-          text: isRu ? OPEN_APP_BUTTON_RU : OPEN_APP_BUTTON_UZ,
-          web_app: { url: baseUrl },
         },
       ],
     ],

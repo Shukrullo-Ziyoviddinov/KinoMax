@@ -10,6 +10,7 @@ const { inlineQueryHandler } = require("./handlers/inlineQueryHandler");
 dotenv.config();
 
 const token = process.env.BOT_TOKEN;
+const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
 
 let bot = null;
 
@@ -17,6 +18,18 @@ if (!token) {
   console.warn("BOT_TOKEN topilmadi. Telegram bot ishga tushmadi.");
 } else {
   bot = new TelegramBot(token, { polling: true });
+  const baseUrl = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+  bot
+    .setChatMenuButton({
+      menu_button: {
+        type: "web_app",
+        text: "KinoMax",
+        web_app: { url: baseUrl },
+      },
+    })
+    .catch((error) => {
+      console.error("Menu button sozlashda xatolik:", error?.message || error);
+    });
   bot.on("polling_error", (error) => {
     console.error("Polling xatoligi:", error?.message || error);
   });

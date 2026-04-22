@@ -30,7 +30,11 @@ if (!token) {
       const payload = chatId
         ? { chat_id: chatId, menu_button: menuButton }
         : { menu_button: menuButton };
-      await bot.setChatMenuButton(payload);
+      if (typeof bot.setChatMenuButton === "function") {
+        await bot.setChatMenuButton(payload);
+      } else {
+        await bot._request("setChatMenuButton", { form: payload });
+      }
       if (chatId) configuredMenuChats.add(chatId);
     } catch (error) {
       console.error("Menu button sozlashda xatolik:", error?.response?.body || error?.message || error);

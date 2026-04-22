@@ -1,5 +1,6 @@
 const { setUserLanguage } = require("../../utils/userState");
 const { normalizeLanguage, t } = require("../../utils/i18n");
+const { sendMainMenu } = require("./menuHandler");
 
 const LANGUAGE_CALLBACK_PREFIX = "set_lang:";
 
@@ -64,7 +65,7 @@ async function callbackHandler(bot, query) {
 
   if (chatId) {
     await clearLanguageSelectorMessage(bot, query);
-    await bot.sendMessage(chatId, t(language, "askCode"));
+    await sendMainMenu(bot, chatId, language);
   }
 }
 

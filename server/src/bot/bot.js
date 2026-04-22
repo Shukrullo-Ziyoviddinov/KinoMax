@@ -5,6 +5,7 @@ const {
   callbackHandler,
   sendLanguageSelector,
 } = require("./handlers/callbackHandlers");
+const { inlineQueryHandler } = require("./handlers/inlineQueryHandler");
 
 dotenv.config();
 
@@ -21,6 +22,9 @@ if (!token) {
   });
   bot.on("callback_query", async (query) => {
     await callbackHandler(bot, query);
+  });
+  bot.on("inline_query", async (query) => {
+    await inlineQueryHandler(bot, query);
   });
   bot.on("message", async (msg) => {
     if ((msg?.text || "").trim() === "/start") {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
@@ -28,6 +29,29 @@ const NavbarMobile = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('openSearch') !== '1') {
+      return;
+    }
+
+    if (window.innerWidth > 768) {
+      return;
+    }
+
+    setShowSearch(true);
+    params.delete('openSearch');
+    params.delete('source');
+    const nextSearch = params.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : '',
+      },
+      { replace: true }
+    );
+  }, [location.pathname, location.search, navigate]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import LanguageModal from './LanguageModal';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import SearchModalGenre from '../SearchModalGenre/SearchModalGenre';
@@ -14,6 +14,7 @@ const Navbar = () => {
   const { t, i18n } = useTranslation();
   const { navbarLoading, setLoading } = useLoading();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -103,6 +104,29 @@ const Navbar = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [showSearchModal]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('openSearch') !== '1') {
+      return;
+    }
+
+    if (window.innerWidth <= 768) {
+      return;
+    }
+
+    setShowSearchModal(true);
+    params.delete('openSearch');
+    params.delete('source');
+    const nextSearch = params.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : '',
+      },
+      { replace: true }
+    );
+  }, [location.pathname, location.search, navigate]);
 
   const handleLanguageChange = (langCode) => {
     if (langCode === 'uz' || langCode === 'ru') {

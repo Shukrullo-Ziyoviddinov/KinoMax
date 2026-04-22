@@ -15,7 +15,10 @@ const translations = {
     movieNotFound: (code) => `${code} raqamiga mos kino topilmadi.`,
     videoNotFound: "Video topilmadi.",
     sendError: "Kinoni yuborishda xatolik yuz berdi. Keyinroq urinib ko'ring.",
-    languageSaved: "O'zbek tili tanlandi. Endi kino kodini yuboring.",
+    languageSaved: "O'zbek tili tanlandi.",
+    menuPrompt:
+      "Botdan foydalanish uchun qo'yidagilardan birini tanlang va o'zingizga kerakli kinoni qidiring.",
+    searchPrompt: "Filterlash uchun kerakli tugmani tanlang.",
   },
   ru: {
     chooseLanguage:
@@ -34,7 +37,10 @@ const translations = {
     videoNotFound: "Видео не найдено.",
     sendError:
       "Произошла ошибка при отправке фильма. Попробуйте еще раз позже.",
-    languageSaved: "Выбран русский язык. Теперь отправьте код фильма.",
+    languageSaved: "Выбран русский язык.",
+    menuPrompt:
+      "Чтобы пользоваться ботом, выберите один из пунктов ниже и найдите нужный фильм.",
+    searchPrompt: "Выберите нужную кнопку для фильтрации.",
   },
 };
 

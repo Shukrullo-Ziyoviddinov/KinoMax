@@ -12,10 +12,24 @@ const FilterCountry = ({ movies = [], selectedCountry, onCountrySelect }) => {
   const [modalTranslateY, setModalTranslateY] = useState(0);
   const modalRef = useRef(null);
 
-  const uniqueCountries = [...new Set(movies.map(m => m.filterCountry).filter(Boolean))].sort();
+  const normalizeFilterValue = (value) =>
+    String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[’ʻʼ`]/g, "'");
+
+  const uniqueCountries = Array.from(
+    new Map(
+      movies
+        .map((m) => m.filterCountry)
+        .filter(Boolean)
+        .map((country) => [normalizeFilterValue(country), country])
+    ).values()
+  ).sort();
 
   const getCountryCount = (country) => {
-    return movies.filter(m => m.filterCountry === country).length;
+    const normalizedCountry = normalizeFilterValue(country);
+    return movies.filter((m) => normalizeFilterValue(m.filterCountry) === normalizedCountry).length;
   };
 
   const closeModal = () => setIsModalOpen(false);

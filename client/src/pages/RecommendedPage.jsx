@@ -20,6 +20,12 @@ const CATEGORY_GENRE_MAP = {
   fantastika: ['Fantastika'],
 };
 
+const normalizeFilterValue = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[’ʻʼ`]/g, "'");
+
 const getRatingFilter = (movie, selectedRatingType, selectedRating) => {
   if (selectedRating === null) return true;
   // Anonslar VL (rating) filteriga aralashmaydi - VL tanlanganda anonslar chiqmaydi, boshqa reytinglarda qatnashadi
@@ -138,11 +144,17 @@ const RecommendedPage = () => {
     );
   }
   if (selectedCountry !== null) {
-    filteredMovies = filteredMovies.filter(movie => movie.filterCountry === selectedCountry);
+    const normalizedSelectedCountry = normalizeFilterValue(selectedCountry);
+    filteredMovies = filteredMovies.filter(
+      (movie) => normalizeFilterValue(movie.filterCountry) === normalizedSelectedCountry
+    );
   }
   if (selectedGenres.length > 0) {
-    filteredMovies = filteredMovies.filter(movie =>
-      (movie.filterGenre || []).some(g => selectedGenres.includes(g))
+    const normalizedSelectedGenres = selectedGenres.map(normalizeFilterValue);
+    filteredMovies = filteredMovies.filter((movie) =>
+      (movie.filterGenre || []).some((g) =>
+        normalizedSelectedGenres.includes(normalizeFilterValue(g))
+      )
     );
   }
   if (selectedAge !== null) {

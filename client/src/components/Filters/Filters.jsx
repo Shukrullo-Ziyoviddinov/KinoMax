@@ -16,6 +16,18 @@ const getRatingFilter = (movie, selectedRatingType, selectedRating) => {
   return val != null && val !== '' && val !== 'none' && (val === selectedRating || Number(val) === Number(selectedRating));
 };
 
+const normalizeFilterValue = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[’ʻʼ`]/g, "'");
+
+const hasSelectedGenre = (movie, normalizedSelectedGenres) =>
+  normalizedSelectedGenres.length === 0 ||
+  (movie.filterGenre || []).some((g) =>
+    normalizedSelectedGenres.includes(normalizeFilterValue(g))
+  );
+
 const Filters = ({
   isLoading = false,
   movies = [],
@@ -31,28 +43,45 @@ const Filters = ({
   onAgeSelect,
   hideVlFilter = false
 }) => {
-  const moviesForRating = selectedCountry
-    ? movies.filter(m => m.filterCountry === selectedCountry)
-    : movies;
-  const moviesForCountry = selectedRating !== null
-    ? movies.filter(m => getRatingFilter(m, selectedRatingType, selectedRating))
-    : movies;
+  const normalizedSelectedCountry = selectedCountry ? normalizeFilterValue(selectedCountry) : null;
+  const normalizedSelectedGenres = selectedGenres.map(normalizeFilterValue);
+  const hasSelectedCountry = (movie) =>
+    !normalizedSelectedCountry || normalizeFilterValue(movie.filterCountry) === normalizedSelectedCountry;
+  const hasSelectedRating = (movie) =>
+    selectedRating === null || getRatingFilter(movie, selectedRatingType, selectedRating);
+  const hasSelectedAge = (movie) =>
+    selectedAge === null || movie.ageRestriction === selectedAge;
+
+  const moviesForRating = movies.filter(
+    (movie) =>
+      hasSelectedCountry(movie) &&
+      hasSelectedGenre(movie, normalizedSelectedGenres) &&
+      hasSelectedAge(movie)
+  );
+
+  const moviesForCountry = movies.filter(
+    (movie) =>
+      hasSelectedRating(movie) &&
+      hasSelectedGenre(movie, normalizedSelectedGenres) &&
+      hasSelectedAge(movie)
+  );
+
   const moviesForGenre = (() => {
-    let m = selectedRating !== null
-      ? movies.filter(movie => getRatingFilter(movie, selectedRatingType, selectedRating))
-      : movies;
-    m = selectedCountry ? m.filter(movie => movie.filterCountry === selectedCountry) : m;
-    return m;
+    return movies.filter(
+      (movie) =>
+        hasSelectedRating(movie) &&
+        hasSelectedCountry(movie) &&
+        hasSelectedAge(movie)
+    );
   })();
+
   const moviesForAge = (() => {
-    let m = selectedRating !== null
-      ? movies.filter(movie => getRatingFilter(movie, selectedRatingType, selectedRating))
-      : movies;
-    m = selectedCountry ? m.filter(movie => movie.filterCountry === selectedCountry) : m;
-    m = selectedGenres.length > 0
-      ? m.filter(movie => (movie.filterGenre || []).some(g => selectedGenres.includes(g)))
-      : m;
-    return m;
+    return movies.filter(
+      (movie) =>
+        hasSelectedRating(movie) &&
+        hasSelectedCountry(movie) &&
+        hasSelectedGenre(movie, normalizedSelectedGenres)
+    );
   })();
 
   return (

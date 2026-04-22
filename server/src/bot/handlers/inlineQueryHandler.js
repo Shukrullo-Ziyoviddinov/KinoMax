@@ -173,7 +173,7 @@ function filterMovies(movies, queryText, language) {
   return scored.map((item) => item.movie);
 }
 
-function mapInlineResult(movie, language) {
+function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
   const thumbnail =
     movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
@@ -187,7 +187,8 @@ function mapInlineResult(movie, language) {
 
   const result = {
     type: "article",
-    id: `${movie.id || movie.movieCode}-${language}`,
+    // Telegram inline results id (<=64 bayt) har bir javob ichida noyob bo'lishi kerak.
+    id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
     title,
     description: buildMovieSummary(movie, language),
     url: movieUrl,
@@ -224,7 +225,9 @@ async function inlineQueryHandler(bot, query) {
   const movies = getAllMovies();
   const filtered = filterMovies(movies, queryText, language);
   const page = filtered.slice(offset, offset + pageSize);
-  const results = page.map((movie) => mapInlineResult(movie, language));
+  const results = page.map((movie, index) =>
+    mapInlineResult(movie, language, offset + index)
+  );
   const nextOffset =
     offset + pageSize < filtered.length ? String(offset + pageSize) : "";
 

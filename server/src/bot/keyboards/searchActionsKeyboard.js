@@ -12,8 +12,8 @@ function buildSearchActionsKeyboard(language) {
       [
         {
           text: isRu ? "🤖 Поиск через бота" : "🤖 Bot orqali qidirish",
-          // Inline resultlar darhol ko'rinishi uchun boshlang'ich query beramiz.
-          switch_inline_query_current_chat: ".",
+          // Bo'sh query bilan ham inline list ochilsin (foydalanuvchi yozmasdan ko'radi).
+          switch_inline_query_current_chat: "",
         },
       ],
       [

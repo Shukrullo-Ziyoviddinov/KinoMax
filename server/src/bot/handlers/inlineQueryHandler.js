@@ -130,9 +130,9 @@ function buildMovieSummary(movie, language) {
   const year = details?.year ?? "-";
   const country = details?.country || "-";
   const duration = details?.duration ?? "-";
-  const durationUnit = language === "ru" ? "мин" : "daq";
+  const durationUnit = language === "ru" ? "мин" : "daqiqa";
 
-  return `${genreText} • ${year} • ${country} • ${duration} ${durationUnit}`;
+  return `${year} • ${country} • ${duration} ${durationUnit}\n${genreText}`;
 }
 
 function toAbsoluteAssetUrl(assetPath) {
@@ -151,7 +151,7 @@ function toAbsoluteAssetUrl(assetPath) {
 
 function filterMovies(movies, queryText, language) {
   const needle = normalize(queryText);
-  if (!needle) {
+  if (!needle || needle === "*") {
     return movies;
   }
 
@@ -177,14 +177,30 @@ function mapInlineResult(movie, language) {
   const thumbnail =
     movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
   const thumbnailUrl = toAbsoluteAssetUrl(thumbnail);
+  const details =
+    movie?.description?.[language] || movie?.description?.uz || movie?.description?.ru || {};
+  const movieId = movie?.id;
+  const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+  const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
+  const messageText = [title, buildMovieSummary(movie, language)].filter(Boolean).join("\n");
 
   const result = {
     type: "article",
     id: `${movie.id || movie.movieCode}-${language}`,
     title,
     description: buildMovieSummary(movie, language),
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
+            web_app: { url: movieUrl },
+          },
+        ],
+      ],
+    },
     input_message_content: {
-      message_text: String(movie.movieCode),
+      message_text: messageText,
     },
   };
 
@@ -199,7 +215,7 @@ function mapInlineResult(movie, language) {
 
 async function inlineQueryHandler(bot, query) {
   const language = resolveLanguage(query);
-  const queryText = query?.query || "";
+  const queryText = (query?.query || "").trim();
   const movies = getAllMovies();
   const filtered = filterMovies(movies, queryText, language).slice(0, 50);
   const results = filtered.map((movie) => mapInlineResult(movie, language));

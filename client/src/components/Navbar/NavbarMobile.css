@@ -66,11 +66,11 @@
 
   .navbar-mobile-item-active span {
     font-weight: 700;
-    color: #e7fb08;
+    color: #7b4edd;
   }
 
   .navbar-mobile-item-active svg {
-    color: #e7fb08;
+    color: #7b4edd
   }
 
   .navbar-mobile-item svg {

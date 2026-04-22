@@ -11,7 +11,6 @@ const DESCRIPTION_MAX_LINES = 5;
 const DESCRIPTION_APPROX_LINE_WIDTH = 36;
 const DESCRIPTION_PREVIEW_MAX_CHARS =
   DESCRIPTION_MAX_LINES * DESCRIPTION_APPROX_LINE_WIDTH;
-const TELEGRAM_WATCH_CALLBACK_PREFIX = "watch_telegram:";
 const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
 const SHARE_BASE_URL = "https://t.me/share/url";
 
@@ -75,6 +74,74 @@ function buildCaption(movie, language) {
   ].join("\n");
 }
 
+const SHARE_TEXT_MAX_CHARS = 3800;
+
+function buildShareText(movie, language, movieTargetUrl) {
+  const lang = normalizeLanguage(language);
+  const title = movie?.title?.[lang] || movie?.title?.uz || movie?.title?.ru || "";
+  const localizedDetails =
+    movie?.description?.[lang] || movie?.description?.uz || movie?.description?.ru || {};
+  const fullDescription = (localizedDetails?.text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const year = localizedDetails?.year ?? "-";
+  const country = localizedDetails?.country || "-";
+  const duration = localizedDetails?.duration ?? "-";
+  const genres =
+    localizedDetails?.genre ||
+    movie?.genre?.[lang] ||
+    movie?.genre?.uz ||
+    movie?.genre?.ru ||
+    [];
+  const genreText = Array.isArray(genres) && genres.length ? genres.join(", ") : "-";
+  const yearLabel = lang === "ru" ? "Год" : "Yil";
+  const countryLabel = lang === "ru" ? "Страна" : "Davlat";
+  const durationLabel = lang === "ru" ? "Длительность" : "Daqiqa";
+  const genreLabel = lang === "ru" ? "Жанр" : "Janr";
+  const durationUnit = lang === "ru" ? "мин" : "daqiqa";
+  const durationText = duration === "-" ? "-" : `${duration} ${durationUnit}`;
+
+  const lines = [
+    title,
+    fullDescription,
+    `📅 ${yearLabel}: ${year}`,
+    `🌍 ${countryLabel}: ${country}`,
+    `⏱️ ${durationLabel}: ${durationText}`,
+    `🎭 ${genreLabel}: ${genreText}`,
+    `Rating: ${movie.rating ?? "-"}`,
+    `IMDb: ${movie.ratingImdb ?? "-"}`,
+    `Kinopoisk: ${movie.ratingKinopoisk ?? "-"}`,
+    `Netflix: ${movie.ratingNetflix ?? "-"}`,
+  ];
+
+  const fallbackLang = lang === "ru" ? "uz" : "ru";
+  const watchSrc =
+    movie?.watchVideo?.[lang] ||
+    movie?.watchVideo?.[fallbackLang];
+  if (watchSrc) {
+    const source = resolveVideoSource(watchSrc);
+    if (source?.publicUrl) {
+      lines.push(
+        lang === "ru"
+          ? `🎥 Видео: ${source.publicUrl}`
+          : `🎥 Video: ${source.publicUrl}`
+      );
+    }
+  }
+
+  lines.push(
+    lang === "ru"
+      ? `🔗 Смотреть на сайте: ${movieTargetUrl}`
+      : `🔗 Tomosha: ${movieTargetUrl}`
+  );
+
+  let text = lines.filter(Boolean).join("\n");
+  if (text.length > SHARE_TEXT_MAX_CHARS) {
+    text = `${text.slice(0, SHARE_TEXT_MAX_CHARS - 3)}...`;
+  }
+  return text;
+}
+
 function buildMovieInlineKeyboard(movie, language) {
   const movieCode = movie?.movieCode;
   const movieId = movie?.id;
@@ -85,10 +152,7 @@ function buildMovieInlineKeyboard(movie, language) {
     ? `${websiteBase}/movie/${movieId}`
     : `${websiteBase}?code=${movieCode}`;
   const shareTarget = movieTargetUrl;
-  const shareText =
-    language === "ru"
-      ? `Смотри фильм в Kino Max (${movieCode})`
-      : `Kino Maxda filmni tomosha qiling (${movieCode})`;
+  const shareText = buildShareText(movie, language, movieTargetUrl);
   const shareUrl = `${SHARE_BASE_URL}?url=${encodeURIComponent(
     shareTarget
   )}&text=${encodeURIComponent(shareText)}`;
@@ -97,16 +161,7 @@ function buildMovieInlineKeyboard(movie, language) {
     inline_keyboard: [
       [
         {
-          text:
-            language === "ru"
-              ? "📺 Смотреть через Telegram"
-              : "📺 Telegram orqali tomosha",
-          callback_data: `${TELEGRAM_WATCH_CALLBACK_PREFIX}${movieCode}`,
-        },
-      ],
-      [
-        {
-          text: language === "ru" ? "🌐 Смотреть онлайн" : "🌐 Online tomosha",
+          text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
           web_app: { url: movieTargetUrl },
         },
       ],
@@ -231,19 +286,72 @@ async function sendVideoWithCache(
   caption,
   options = {}
 ) {
+  const videoOptions = { ...options };
+  if (caption != null && caption !== "") {
+    videoOptions.caption = caption;
+  }
+
   const cachedFileId = telegramVideoCache.get(cacheKey);
   if (cachedFileId) {
-    await bot.sendVideo(chatId, cachedFileId, { caption, ...options });
+    await bot.sendVideo(chatId, cachedFileId, videoOptions);
     return;
   }
 
-  const sentMessage = await bot.sendVideo(chatId, videoInput, {
-    caption,
-    ...options,
-  });
+  const sentMessage = await bot.sendVideo(chatId, videoInput, videoOptions);
   const fileId = sentMessage?.video?.file_id;
   if (fileId) {
     telegramVideoCache.set(cacheKey, fileId);
+  }
+}
+
+/**
+ * Telegramga video yuborishda avvalo mahalliy faylni ishlatamiz (tez va ishonchli).
+ * URL orqali yuborishda Telegram serverlari uzoqdan katta faylni yuklab olishi kerak — juda sekin yoki muvaffaqiyatsiz bo‘lishi mumkin.
+ */
+async function sendVideoFromResolvedSource(bot, chatId, source, caption, options = {}) {
+  if (!source) {
+    return false;
+  }
+
+  if (source.localPath && fs.existsSync(source.localPath)) {
+    try {
+      await sendVideoWithCache(
+        bot,
+        chatId,
+        source.localPath,
+        source.cacheKey,
+        caption,
+        options
+      );
+      return true;
+    } catch (localError) {
+      console.warn("Mahalliy video yuborilmadi, URL sinanadi:", localError.message);
+    }
+  }
+
+  try {
+    await sendVideoWithCache(
+      bot,
+      chatId,
+      source.publicUrl,
+      source.cacheKey,
+      caption,
+      options
+    );
+    return true;
+  } catch (urlError) {
+    if (source.localPath && fs.existsSync(source.localPath)) {
+      await sendVideoWithCache(
+        bot,
+        chatId,
+        source.localPath,
+        source.cacheKey,
+        caption,
+        options
+      );
+      return true;
+    }
+    throw urlError;
   }
 }
 
@@ -262,32 +370,7 @@ async function sendMovieVideo(bot, chatId, movie, language) {
     return;
   }
 
-  try {
-    // Telegram URL orqali olganda birinchi yuborish tezroq bo'ladi.
-    await sendVideoWithCache(
-      bot,
-      chatId,
-      source.publicUrl,
-      source.cacheKey,
-      caption,
-      {
-        reply_markup,
-      }
-    );
-    return;
-  } catch (error) {
-    if (!source.localPath || !fs.existsSync(source.localPath)) {
-      throw error;
-    }
-  }
-
-  if (source.localPath && fs.existsSync(source.localPath)) {
-    await sendVideoWithCache(bot, chatId, source.localPath, source.cacheKey, caption, {
-      reply_markup,
-    });
-  } else {
-    await bot.sendMessage(chatId, `${caption}\n\n${t(language, "videoNotFound")}`);
-  }
+  await sendVideoFromResolvedSource(bot, chatId, source, caption, { reply_markup });
 }
 
 async function messageHandler(bot, msg) {
@@ -351,5 +434,6 @@ module.exports = {
   clientPublicPath,
   resolveVideoSource,
   sendVideoWithCache,
+  sendVideoFromResolvedSource,
   WEB_APP_URL,
 };

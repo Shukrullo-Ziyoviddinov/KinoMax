@@ -1,6 +1,6 @@
 .wishlist-page {
   min-height: calc(100vh - 200px);
-  padding: 4rem 0;
+  padding: 3rem 0;
 }
 
 .wishlist-page--empty {
@@ -67,4 +67,10 @@
 
 .wishlist-empty-btn-skeleton {
   margin-top: 1rem;
+}
+
+@media (max-width: 720px) {
+  .wishlist-page {
+  padding: 2rem 0;
+}
 }

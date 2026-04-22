@@ -151,7 +151,8 @@ function toAbsoluteAssetUrl(assetPath) {
 
 function filterMovies(movies, queryText, language) {
   const needle = normalize(queryText);
-  if (!needle || needle === "*") {
+  const onlySymbols = !/[a-zA-Z0-9\u0400-\u04FF\u0600-\u06FF]/.test(needle);
+  if (!needle || needle === "*" || needle === "." || onlySymbols) {
     return movies;
   }
 
@@ -189,6 +190,8 @@ function mapInlineResult(movie, language) {
     id: `${movie.id || movie.movieCode}-${language}`,
     title,
     description: buildMovieSummary(movie, language),
+    url: movieUrl,
+    hide_url: true,
     reply_markup: {
       inline_keyboard: [
         [
@@ -216,14 +219,20 @@ function mapInlineResult(movie, language) {
 async function inlineQueryHandler(bot, query) {
   const language = resolveLanguage(query);
   const queryText = (query?.query || "").trim();
+  const offset = Number.parseInt(query?.offset || "0", 10) || 0;
+  const pageSize = 50;
   const movies = getAllMovies();
-  const filtered = filterMovies(movies, queryText, language).slice(0, 50);
-  const results = filtered.map((movie) => mapInlineResult(movie, language));
+  const filtered = filterMovies(movies, queryText, language);
+  const page = filtered.slice(offset, offset + pageSize);
+  const results = page.map((movie) => mapInlineResult(movie, language));
+  const nextOffset =
+    offset + pageSize < filtered.length ? String(offset + pageSize) : "";
 
   try {
     await bot.answerInlineQuery(query.id, results, {
       cache_time: 0,
       is_personal: true,
+      next_offset: nextOffset,
     });
   } catch (error) {
     console.error("Inline query javobida xatolik:", error.message);
@@ -231,6 +240,7 @@ async function inlineQueryHandler(bot, query) {
       await bot.answerInlineQuery(query.id, [], {
         cache_time: 0,
         is_personal: true,
+        next_offset: "",
       });
     } catch (fallbackError) {
       console.error("Inline query fallback xatoligi:", fallbackError.message);

@@ -12,8 +12,8 @@ function buildSearchActionsKeyboard(language) {
       [
         {
           text: isRu ? "🤖 Поиск через бота" : "🤖 Bot orqali qidirish",
-          // Telegram ayrim klientlarida inline result ko'rinishi uchun boshlang'ich query beramiz.
-          switch_inline_query_current_chat: "*",
+          // Inline resultlar darhol ko'rinishi uchun boshlang'ich query beramiz.
+          switch_inline_query_current_chat: ".",
         },
       ],
       [

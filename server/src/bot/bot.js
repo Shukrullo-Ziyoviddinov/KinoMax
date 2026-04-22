@@ -10,8 +10,6 @@ const { inlineQueryHandler } = require("./handlers/inlineQueryHandler");
 dotenv.config();
 
 const token = process.env.BOT_TOKEN;
-const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
-const configuredMenuChats = new Set();
 
 let bot = null;
 
@@ -19,28 +17,6 @@ if (!token) {
   console.warn("BOT_TOKEN topilmadi. Telegram bot ishga tushmadi.");
 } else {
   bot = new TelegramBot(token, { polling: true });
-  const baseUrl = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
-  const menuButton = {
-    type: "web_app",
-    text: "KinoMax",
-    web_app: { url: baseUrl },
-  };
-  const setMenuButton = async (chatId = null) => {
-    try {
-      const payload = chatId
-        ? { chat_id: chatId, menu_button: menuButton }
-        : { menu_button: menuButton };
-      if (typeof bot.setChatMenuButton === "function") {
-        await bot.setChatMenuButton(payload);
-      } else {
-        await bot._request("setChatMenuButton", { form: payload });
-      }
-      if (chatId) configuredMenuChats.add(chatId);
-    } catch (error) {
-      console.error("Menu button sozlashda xatolik:", error?.response?.body || error?.message || error);
-    }
-  };
-  setMenuButton();
   bot.on("polling_error", (error) => {
     console.error("Polling xatoligi:", error?.message || error);
   });
@@ -50,9 +26,6 @@ if (!token) {
 
   bot.onText(/^\/start$/, async (msg) => {
     try {
-      if (msg?.chat?.id) {
-        await setMenuButton(msg.chat.id);
-      }
       await sendLanguageSelector(bot, msg.chat.id);
     } catch (error) {
       console.error("/start handler xatoligi:", error?.message || error);
@@ -78,10 +51,6 @@ if (!token) {
     }
 
     try {
-      const chatId = msg?.chat?.id;
-      if (chatId && !configuredMenuChats.has(chatId)) {
-        await setMenuButton(chatId);
-      }
       await messageHandler(bot, msg);
     } catch (error) {
       console.error("message handler xatoligi:", error?.message || error);

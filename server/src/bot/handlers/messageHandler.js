@@ -221,6 +221,48 @@ function getCurrentLanguage(msg) {
   return telegramLanguage.toLowerCase().startsWith("ru") ? "ru" : "uz";
 }
 
+function buildSearchStatusMessage(code, language, step = "searching") {
+  const isRu = language === "ru";
+
+  if (step === "uploading") {
+    return isRu
+      ? [
+          "🔍 Поиск фильма...",
+          `📥 Код: ${code}`,
+          "⚙️ Статус: Видео отправляется",
+          "🕒 [ ▬▬▬▬▬▬▭▭ ]",
+          "━━━━━━━━━━━━━━",
+          "💜 Пожалуйста, немного подождите...",
+        ].join("\n")
+      : [
+          "🔍 Kino qidirilmoqda...",
+          `📥 Kod: ${code}`,
+          "⚙️ Holat: Video yuborilmoqda",
+          "🕒 [ ▬▬▬▬▬▬▭▭ ]",
+          "━━━━━━━━━━━━━━",
+          "💜 Iltimos, biroz kutib turing...",
+        ].join("\n");
+  }
+
+  return isRu
+    ? [
+        "🔍 Поиск фильма...",
+        `📥 Код: ${code}`,
+        "⚙️ Статус: Поиск в базе данных",
+        "🕒 [ ▬▬▬▭▭▭▭▭▭ ]",
+        "━━━━━━━━━━━━━━",
+        "💜 Пожалуйста, немного подождите...",
+      ].join("\n")
+    : [
+        "🔍 Kino qidirilmoqda...",
+        `📥 Kod: ${code}`,
+        "⚙️ Holat: Ma'lumotlar bazasidan qidirilmoqda",
+        "🕒 [ ▬▬▬▭▭▭▭▭▭ ]",
+        "━━━━━━━━━━━━━━",
+        "💜 Iltimos, biroz kutib turing...",
+      ].join("\n");
+}
+
 async function sendVideoWithCache(
   bot,
   chatId,
@@ -360,18 +402,60 @@ async function messageHandler(bot, msg) {
   }
 
   const code = Number(text);
+  let statusMessageId = null;
+  try {
+    const statusMsg = await bot.sendMessage(
+      chatId,
+      buildSearchStatusMessage(code, language, "searching")
+    );
+    statusMessageId = statusMsg?.message_id || null;
+  } catch (error) {
+    statusMessageId = null;
+  }
+
   const movie = getMovieByCode(code);
 
   if (!movie) {
+    if (statusMessageId) {
+      try {
+        await bot.deleteMessage(chatId, statusMessageId);
+      } catch (error) {
+        // Status xabari o'chmasa ham asosiy oqimni to'xtatmaymiz.
+      }
+    }
     await bot.sendMessage(chatId, t(language, "movieNotFound", code));
     return;
   }
 
   try {
+    if (statusMessageId) {
+      try {
+        await bot.editMessageText(buildSearchStatusMessage(code, language, "uploading"), {
+          chat_id: chatId,
+          message_id: statusMessageId,
+        });
+      } catch (error) {
+        // Edit bo'lmasa ham davom etamiz.
+      }
+    }
     await bot.sendChatAction(chatId, "upload_video");
     await sendMovieVideo(bot, chatId, movie, language);
+    if (statusMessageId) {
+      try {
+        await bot.deleteMessage(chatId, statusMessageId);
+      } catch (error) {
+        // O'chmasa ham davom etamiz.
+      }
+    }
   } catch (error) {
     console.error("Xabarni qayta ishlashda xatolik:", error.message);
+    if (statusMessageId) {
+      try {
+        await bot.deleteMessage(chatId, statusMessageId);
+      } catch (deleteError) {
+        // Ignore
+      }
+    }
     await bot.sendMessage(chatId, t(language, "sendError"));
   }
 }

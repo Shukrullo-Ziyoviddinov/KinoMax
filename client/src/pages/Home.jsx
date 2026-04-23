@@ -5,28 +5,31 @@ import { DEFAULT_LIMIT } from '../components/ShowMoreButton/ShowMoreButton';
 import Banner from '../components/Banner/Banner';
 import Categories from '../components/Categories';
 import Movies from '../components/Movies/Movies';
-import {
-  koreaDrama,
-  kinolar,
-  worldMovies,
-  animations,
-  turkishSeries,
-  russianMovies,
-  tvSeries,
-  actionMovies,
-  horrorMovies,
-  anime,
-  adventureMovies,
-  romanceMovies,
-  retroMovies,
-  uzbekMovies,
-} from '../data/moviesCatalog';
+import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import TopRatedContent from '../components/TopRatedContent/TopRatedContent';
 import './Home.css';
 
 const Home = () => {
   const { t } = useTranslation();
   const { setLoading } = useLoading();
+  const { sections } = useMoviesCatalog();
+
+  const {
+    koreaDrama = [],
+    kinolar = [],
+    worldMovies = [],
+    animations = [],
+    turkishSeries = [],
+    russianMovies = [],
+    tvSeries = [],
+    actionMovies = [],
+    horrorMovies = [],
+    anime = [],
+    adventureMovies = [],
+    romanceMovies = [],
+    retroMovies = [],
+    uzbekMovies = [],
+  } = sections || {};
   useEffect(() => {
     setLoading('movies', true);
     const timer = setTimeout(() => setLoading('movies', false), 500);

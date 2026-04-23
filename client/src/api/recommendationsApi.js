@@ -3,7 +3,6 @@
  * Backend tayyor bo'lganda REACT_APP_RECOMMENDATIONS_API_URL ni o'rnating
  * va fetchRecommendations ichida API ga so'rov yuboring
  */
-import { allMovies } from '../data/moviesCatalog';
 import { getRecommendations } from '../utils/getRecommendations';
 
 const API_URL = process.env.REACT_APP_RECOMMENDATIONS_API_URL;
@@ -14,7 +13,7 @@ const API_URL = process.env.REACT_APP_RECOMMENDATIONS_API_URL;
  * @param {number} limit - maksimal soni
  * @returns {Promise<Array>} - tavsiya qilingan kinolar
  */
-export const fetchRecommendations = async (viewedItems, limit = 12) => {
+export const fetchRecommendations = async (viewedItems, limit = 12, movies = []) => {
   if (API_URL) {
     try {
       const res = await fetch(`${API_URL}?limit=${limit}`, {
@@ -39,5 +38,5 @@ export const fetchRecommendations = async (viewedItems, limit = 12) => {
       console.warn('Recommendations API error, using local:', e);
     }
   }
-  return getRecommendations(allMovies, viewedItems, limit);
+  return getRecommendations(movies, viewedItems, limit);
 };

@@ -7,7 +7,7 @@ import { useLoading } from '../context/LoadingContext';
 import ProfileLanguageModal from '../components/Profile/ProfileLanguageModal';
 import ProfileContactModal from '../components/Profile/ProfileContactModal';
 import ProfileSocialModal from '../components/Profile/ProfileSocialModal';
-import { APP_STORE_LINKS } from '../data/socialLinks';
+import { fetchSocialLinks } from '../api/socialLinksApi';
 import './ProfilePage.css';
 
 const PROFILE_STORAGE_KEY = 'violet_profile';
@@ -47,6 +47,11 @@ const ProfilePage = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage);
+  const [socialData, setSocialData] = useState({
+    contact: {},
+    social: {},
+    appStore: {},
+  });
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
@@ -57,6 +62,26 @@ const ProfilePage = () => {
     const timer = setTimeout(() => setLoading('profile', false), 500);
     return () => clearTimeout(timer);
   }, [setLoading]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSocialData = async () => {
+      try {
+        const data = await fetchSocialLinks();
+        if (isMounted) setSocialData(data);
+      } catch (_error) {
+        if (isMounted) {
+          setSocialData({ contact: {}, social: {}, appStore: {} });
+        }
+      }
+    };
+
+    loadSocialData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -265,22 +290,26 @@ const ProfilePage = () => {
               </>
             ) : (
             <>
-            <a
-              href={APP_STORE_LINKS.android.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="profile-app-store-link"
-            >
-              <img src={APP_STORE_LINKS.android.icon} alt="Google Play" className="profile-app-store-img" />
-            </a>
-            <a
-              href={APP_STORE_LINKS.ios.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="profile-app-store-link"
-            >
-              <img src={APP_STORE_LINKS.ios.icon} alt="App Store" className="profile-app-store-img" />
-            </a>
+            {socialData.appStore?.android?.link && (
+              <a
+                href={socialData.appStore.android.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="profile-app-store-link"
+              >
+                <img src={socialData.appStore.android.icon} alt="Google Play" className="profile-app-store-img" />
+              </a>
+            )}
+            {socialData.appStore?.ios?.link && (
+              <a
+                href={socialData.appStore.ios.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="profile-app-store-link"
+              >
+                <img src={socialData.appStore.ios.icon} alt="App Store" className="profile-app-store-img" />
+              </a>
+            )}
             </>
             )}
           </div>
@@ -304,11 +333,17 @@ const ProfilePage = () => {
       )}
 
       {showContactModal && (
-        <ProfileContactModal onClose={() => setShowContactModal(false)} />
+        <ProfileContactModal
+          onClose={() => setShowContactModal(false)}
+          contactData={socialData.contact}
+        />
       )}
 
       {showSocialModal && (
-        <ProfileSocialModal onClose={() => setShowSocialModal(false)} />
+        <ProfileSocialModal
+          onClose={() => setShowSocialModal(false)}
+          socialLinks={socialData.social}
+        />
       )}
     </div>
   );

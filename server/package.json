@@ -5,7 +5,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon src/server.js",
+    "seed:banner": "node src/seed/seedBanner.js",
+    "seed:actors": "node src/seed/seedActors.js",
+    "seed:genres": "node src/seed/seedGenres.js",
+    "seed:social": "node src/seed/seedSocialLink.js",
+    "seed:movies": "node src/seed/seedMoviesCatalog.js"
   },
   "keywords": [],
   "author": "",

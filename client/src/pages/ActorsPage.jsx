@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getActorById } from '../data/actors';
-import { allMovies } from '../data/moviesCatalog';
+import { fetchActorById } from '../api/actorsApi';
+import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import { useContentLanguage } from '../context/ContentLanguageContext';
 import LoaderSkeleton from '../components/LoaderSkeleton/LoaderSkeleton';
 import Movies from '../components/Movies/Movies';
@@ -13,18 +13,33 @@ const ActorsPage = () => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const { contentLang } = useContentLanguage();
+  const { allMovies } = useMoviesCatalog();
   const [actorsLoading, setActorsLoading] = useState(true);
-
-  const actor = getActorById(id);
+  const [actor, setActor] = useState(null);
 
   useEffect(() => {
-    setActorsLoading(true);
-    const timer = setTimeout(() => setActorsLoading(false), 500);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    const loadActor = async () => {
+      try {
+        setActorsLoading(true);
+        const data = await fetchActorById(id);
+        if (isMounted) setActor(data);
+      } catch (_error) {
+        if (isMounted) setActor(null);
+      } finally {
+        if (isMounted) setActorsLoading(false);
+      }
+    };
+
+    loadActor();
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   const actorMovies = actor
-    ? allMovies.filter(movie => movie.actors?.includes(actor.id))
+    ? allMovies.filter(movie => movie.actors?.includes(actor.actorId))
     : [];
 
   if (!actor) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { recommendedMovies, allMovies } from '../../data/moviesCatalog';
+import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useLoading } from '../../context/LoadingContext';
@@ -16,6 +16,7 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { contentLang } = useContentLanguage();
   const { moviesLoading } = useLoading();
+  const { allMovies, recommendedMovies } = useMoviesCatalog();
   const isLoading = isLoadingProp ?? moviesLoading;
 
   let allMoviesData = filteredMovies || allMovies;

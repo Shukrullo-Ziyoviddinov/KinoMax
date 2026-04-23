@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
-import { genres } from '../../data/genres';
+import { fetchGenres } from '../../api/genresApi';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import './SearchModalGenre.css';
 
@@ -10,6 +10,25 @@ const SearchModalGenre = ({ onGenreClick }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { contentLang } = useContentLanguage();
+  const [genres, setGenres] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadGenres = async () => {
+      try {
+        const data = await fetchGenres();
+        if (isMounted) setGenres(data);
+      } catch (_error) {
+        if (isMounted) setGenres([]);
+      }
+    };
+
+    loadGenres();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const getGenreTitle = (genre) => {
     if (genre.title && typeof genre.title === 'object') {
@@ -22,7 +41,9 @@ const SearchModalGenre = ({ onGenreClick }) => {
     if (onGenreClick) {
       onGenreClick();
     }
-    const filterValue = Array.isArray(genre.filterGenre) ? genre.filterGenre[0] : genre.filterGenre;
+    const filterValue = Array.isArray(genre.filterGenre)
+      ? genre.filterGenre[0]
+      : genre.filterGenre;
     navigate(`/recommended?genre=${encodeURIComponent(filterValue)}`);
   };
 
@@ -32,7 +53,7 @@ const SearchModalGenre = ({ onGenreClick }) => {
       <HorizontalScroll scrollAmount={320}>
         {genres.map((genre) => (
           <div
-            key={genre.id}
+            key={genre.genreId}
             className="search-modal-genre-item"
             onClick={() => handleGenreClick(genre)}
           >

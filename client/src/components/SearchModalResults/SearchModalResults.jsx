@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
+import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { searchMoviesByQuery } from '../../utils/searchMovies';
 import './SearchModalResults.css';
 
@@ -9,8 +10,9 @@ const SearchModalResults = ({ query, onMovieClick }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { contentLang } = useContentLanguage();
+  const { allMovies } = useMoviesCatalog();
 
-  const results = searchMoviesByQuery(query, contentLang, 20);
+  const results = searchMoviesByQuery(allMovies, query, contentLang, 20);
 
   const getTitle = (m) => {
     if (m?.title && typeof m.title === 'object') {

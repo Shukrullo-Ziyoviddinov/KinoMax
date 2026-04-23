@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SOCIAL_LINKS } from '../../data/socialLinks';
 import './ProfileSheetModal.css';
 
-const ProfileSocialModal = ({ onClose }) => {
+const ProfileSocialModal = ({ onClose, socialLinks }) => {
   const { t } = useTranslation();
   const [dragY, setDragY] = useState(0);
   const startYRef = useRef(0);
@@ -33,12 +32,9 @@ const ProfileSocialModal = ({ onClose }) => {
     };
   }, []);
 
-  const socialItems = [
-    { key: 'telegram', ...SOCIAL_LINKS.telegram },
-    { key: 'instagram', ...SOCIAL_LINKS.instagram },
-    { key: 'youtube', ...SOCIAL_LINKS.youtube },
-    { key: 'tiktok', ...SOCIAL_LINKS.tiktok },
-  ];
+  const socialItems = Object.entries(socialLinks || {})
+    .map(([key, value]) => ({ key, ...value }))
+    .filter((item) => item.link);
 
   return (
     <>

@@ -1,9 +1,8 @@
 /**
  * title bo'yicha qidiruv + o'xshashlar (filterGenre, filterCountry, typeCategory)
  * So'zma-so'z va imlo xatolariga chidamli (fuzzy)
- * Backend qo'shilganda API ga almashtiriladi
+ * Backenddan olingan movies list bilan ishlaydi
  */
-import { allMovies } from '../data/moviesCatalog';
 
 const normalize = (s) => (s || '').toLowerCase().trim();
 
@@ -77,7 +76,7 @@ const titleMatchScore = (movie, q, queryWords) => {
   return 0;
 };
 
-export const searchMoviesByQuery = (query, contentLang = 'uz', limit = 20) => {
+export const searchMoviesByQuery = (movies, query, contentLang = 'uz', limit = 20) => {
   const q = normalize(query);
   if (!q) return [];
 
@@ -86,7 +85,7 @@ export const searchMoviesByQuery = (query, contentLang = 'uz', limit = 20) => {
   const byTitle = [];
   const byMeta = [];
 
-  for (const m of allMovies) {
+  for (const m of movies || []) {
     const score = titleMatchScore(m, q, queryWords);
     if (score > 0) byTitle.push({ movie: m, score });
     else if (metaMatchesQuery(m, queryWords)) byMeta.push(m);

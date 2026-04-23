@@ -12,6 +12,7 @@ import { WishlistProvider } from './context/WishlistContext';
 import { ViewedMoviesProvider } from './context/ViewedMoviesContext';
 import { ContentLanguageProvider } from './context/ContentLanguageContext';
 import { LoadingProvider } from './context/LoadingContext';
+import { MoviesCatalogProvider } from './context/MoviesCatalogContext';
 import './App.css';
 
 function App() {
@@ -79,6 +80,7 @@ function App() {
       <Router>
         <ContentLanguageProvider>
         <LoadingProvider>
+        <MoviesCatalogProvider>
         <div className="App">
           <Navbar />
           <main className="App-main">
@@ -95,6 +97,7 @@ function App() {
           </main>
           <NavbarMobile />
         </div>
+        </MoviesCatalogProvider>
         </LoadingProvider>
         </ContentLanguageProvider>
       </Router>

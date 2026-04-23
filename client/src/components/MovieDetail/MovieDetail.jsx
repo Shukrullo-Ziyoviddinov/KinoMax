@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { allMovies } from '../../data/moviesCatalog';
-import { getActorsByIds } from '../../data/actors';
+import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
+import { fetchActorsByIds } from '../../api/actorsApi';
 import { useWishlist } from '../../context/WishlistContext';
 import { useViewedMovies } from '../../context/ViewedMoviesContext';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
@@ -24,6 +24,7 @@ const MovieDetail = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addMovie } = useViewedMovies();
   const { detailLoading, setLoading } = useLoading();
+  const { allMovies } = useMoviesCatalog();
   const [showTrailerModal, setShowTrailerModal] = useState(false);
   const [showWatchModal, setShowWatchModal] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
@@ -44,6 +45,7 @@ const MovieDetail = () => {
   const modalRef = React.useRef(null);
   const commentsModalRef = useRef(null);
   const [commentsCount, setCommentsCount] = useState(0);
+  const [movieActors, setMovieActors] = useState([]);
   const modalHeaderRef = React.useRef(null);
   const isDraggingRef = React.useRef(false);
   const modalStartYRef = React.useRef(0);
@@ -67,6 +69,29 @@ const MovieDetail = () => {
   useEffect(() => {
     setCommentsCount(0);
   }, [movie?.id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadActors = async () => {
+      if (!movie?.actors?.length) {
+        if (isMounted) setMovieActors([]);
+        return;
+      }
+
+      try {
+        const actors = await fetchActorsByIds(movie.actors);
+        if (isMounted) setMovieActors(actors);
+      } catch (_error) {
+        if (isMounted) setMovieActors([]);
+      }
+    };
+
+    loadActors();
+    return () => {
+      isMounted = false;
+    };
+  }, [movie]);
 
   useEffect(() => {
     if (!movie?.seasons?.length) {
@@ -797,7 +822,6 @@ const MovieDetail = () => {
               })()}
 
               {movie?.actors?.length > 0 && (() => {
-                const movieActors = getActorsByIds(movie.actors);
                 if (movieActors.length === 0) return null;
                 return (
                   <div className="movie-detail-actors">
@@ -808,12 +832,12 @@ const MovieDetail = () => {
                       <ScrollTouch className="movie-detail-actors-scroll-inner">
                       {movieActors.map((actor) => (
                         <div
-                          key={actor.id}
+                          key={actor.actorId}
                           className="movie-detail-actor-item"
-                          onClick={() => navigate(`/actor/${actor.id}`)}
+                          onClick={() => navigate(`/actor/${actor.actorId}`)}
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && navigate(`/actor/${actor.id}`)}
+                          onKeyDown={(e) => e.key === 'Enter' && navigate(`/actor/${actor.actorId}`)}
                         >
                           <div className="movie-detail-actor-image">
                             <img src={actor.image} alt={actor.name[contentLang] || actor.name.uz} />

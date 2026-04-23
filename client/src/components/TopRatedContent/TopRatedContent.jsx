@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { allMovies } from '../../data/moviesCatalog';
+import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import Movies from '../Movies/Movies';
 import { DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
 
@@ -24,7 +24,8 @@ export const getTopRatedMovies = (movies) => {
 
 const TopRatedContent = ({ limit = DEFAULT_LIMIT, showHorizontalScroll = true, moreTo = '/category/topRated' }) => {
   const { t } = useTranslation();
-  const topRatedMovies = React.useMemo(() => getTopRatedMovies(allMovies), []);
+  const { allMovies } = useMoviesCatalog();
+  const topRatedMovies = React.useMemo(() => getTopRatedMovies(allMovies), [allMovies]);
 
   return (
     <Movies

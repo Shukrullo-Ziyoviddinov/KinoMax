@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useWishlist } from '../../context/WishlistContext';
-import { allMovies } from '../../data/moviesCatalog';
+import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import ShowMoreButton, { getDisplayItems, DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
 import './SimilarMovies.css';
@@ -13,6 +13,7 @@ const SimilarMovies = ({ currentMovie }) => {
   const navigate = useNavigate();
   const { contentLang } = useContentLanguage();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { allMovies } = useMoviesCatalog();
 
   if (!currentMovie) return null;
 

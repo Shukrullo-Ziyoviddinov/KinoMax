@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, useSearchParams } from 'react-router-dom';
-import { allMovies, recommendedMovies } from '../data/moviesCatalog';
-import { genres as genresConfig } from '../data/genres';
+import { useMoviesCatalog } from '../context/MoviesCatalogContext';
+import { fetchGenres } from '../api/genresApi';
 import { getTopRatedMovies } from '../components/TopRatedContent/TopRatedContent';
 import { useLoading } from '../context/LoadingContext';
 import Filters from '../components/Filters';
@@ -70,18 +70,20 @@ const getSimilarMovies = (currentMovie, movies) => {
 const RecommendedPage = () => {
   const { categoryId, movieId } = useParams();
   const location = useLocation();
+  const { allMovies, recommendedMovies } = useMoviesCatalog();
   const [searchParams] = useSearchParams();
   const genreFromUrl = searchParams.get('genre');
-  const getGenresFromUrl = (g) => {
+  const [genresConfig, setGenresConfig] = useState([]);
+  const getGenresFromUrl = useCallback((g) => {
     if (!g) return [];
     const genreConfig = genresConfig.find(
-      (c) => c.filterGenre === g || (Array.isArray(c.filterGenre) && c.filterGenre.includes(g))
+      (c) => Array.isArray(c.filterGenre) && c.filterGenre.includes(g)
     );
     if (genreConfig) {
-      return Array.isArray(genreConfig.filterGenre) ? [...genreConfig.filterGenre] : [genreConfig.filterGenre];
+      return [...genreConfig.filterGenre];
     }
     return [g];
-  };
+  }, [genresConfig]);
   const { recommendedLoading, setLoading } = useLoading();
   const [selectedRatingType, setSelectedRatingType] = useState('rating');
   const [selectedRating, setSelectedRating] = useState(null);
@@ -94,6 +96,24 @@ const RecommendedPage = () => {
   const [selectedAge, setSelectedAge] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadGenres = async () => {
+      try {
+        const data = await fetchGenres();
+        if (isMounted) setGenresConfig(data);
+      } catch (_error) {
+        if (isMounted) setGenresConfig([]);
+      }
+    };
+
+    loadGenres();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (genreFromUrl) {
       setSelectedGenres(getGenresFromUrl(genreFromUrl));
     } else if (categoryId && CATEGORY_GENRE_MAP[categoryId]) {
@@ -101,7 +121,7 @@ const RecommendedPage = () => {
     } else {
       setSelectedGenres([]);
     }
-  }, [genreFromUrl, categoryId]);
+  }, [genreFromUrl, categoryId, getGenresFromUrl]);
 
   const isSimilarMoviesPage = location.pathname.startsWith('/similar-movies/');
 

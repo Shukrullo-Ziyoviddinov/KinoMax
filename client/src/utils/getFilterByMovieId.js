@@ -1,11 +1,9 @@
 /**
  * movieId -> filterGenre, filterCountry
- * Hamma bo'limlardan: movies, koreaDrama, worldMovies, russianMovies va boshqalar
+ * Backenddan olingan allMovies list bilan ishlaydi
  */
-import { allMovies } from '../data/moviesCatalog';
-
-export const getFilterByMovieId = (movieId) => {
-  const movie = allMovies.find((m) => m.id === movieId);
+export const getFilterByMovieId = (allMovies, movieId) => {
+  const movie = (allMovies || []).find((m) => m.id === movieId);
   if (!movie) return { filterGenre: ['Drama'], filterCountry: 'USA' };
 
   let filterGenre = movie.filterGenre;

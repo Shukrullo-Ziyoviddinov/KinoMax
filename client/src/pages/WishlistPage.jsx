@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useWishlist } from '../context/WishlistContext';
 import { useLoading } from '../context/LoadingContext';
-import { allMovies } from '../data/moviesCatalog';
+import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import Movies from '../components/Movies/Movies';
 import LoaderSkeleton from '../components/LoaderSkeleton/LoaderSkeleton';
 import './WishlistPage.css';
@@ -13,6 +13,7 @@ const WishlistPage = () => {
   const { t } = useTranslation();
   const { wishlistIds } = useWishlist();
   const { wishlistLoading, setLoading } = useLoading();
+  const { allMovies } = useMoviesCatalog();
 
   const wishlistMovies = allMovies.filter((m) => wishlistIds.includes(m.id));
   const isEmpty = wishlistMovies.length === 0;

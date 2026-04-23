@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useLoading } from '../../context/LoadingContext';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
-import { bannerImages } from '../../data/banners';
-import { allMovies } from '../../data/moviesCatalog';
+import { BASE_URL } from '../../config/api';
 import { normalizeImagePath } from '../../utils/utils';
 import './Banner.css';
 
@@ -13,25 +12,51 @@ const Banner = () => {
     const { contentLang } = useContentLanguage();
     const { bannerLoading, setLoading } = useLoading();
 
+    const [banners, setBanners] = useState([]);
+
     useEffect(() => {
-      setLoading('banner', true);
-      const timer = setTimeout(() => setLoading('banner', false), 400);
-      return () => clearTimeout(timer);
-    }, [setLoading]);
+        let isMounted = true;
+
+        const loadBanners = async () => {
+            try {
+                setLoading('banner', true);
+                const base = BASE_URL.replace(/\/$/, '');
+                const res = await fetch(`${base}/api/banners/active?lang=${contentLang}`);
+                const json = await res.json();
+                if (!res.ok || !json.ok) {
+                    throw new Error(json.message || 'Bannerlarni olishda xatolik.');
+                }
+
+                if (isMounted) {
+                    setBanners(Array.isArray(json.data) ? json.data : []);
+                }
+            } catch (_error) {
+                if (isMounted) {
+                    setBanners([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading('banner', false);
+                }
+            }
+        };
+
+        loadBanners();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [contentLang, setLoading]);
 
     const images = useMemo(() => {
-        const currentBanners = bannerImages[contentLang] || bannerImages.uz || bannerImages.ru || [];
-        return currentBanners.map((banner) => {
-            const movie = allMovies.find((m) => m.id === banner.movieId);
-            const movieImg = movie?.homeImg?.[contentLang] || movie?.homeImg?.uz || movie?.homeImg?.ru;
-            const src = banner.image || movieImg || '';
-            return {
-                id: banner.id,
-                src,
-                link: banner.movieId ? `/movie/${banner.movieId}` : null
-            };
-        }).filter((img) => img.src);
-    }, [contentLang]);
+        return banners
+            .map((banner) => ({
+                id: banner.bannerId,
+                src: banner.image || '',
+                link: banner.movieId ? `/movie/${banner.movieId}` : null,
+            }))
+            .filter((img) => img.src);
+    }, [banners]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [dragOffset, setDragOffset] = useState(0);

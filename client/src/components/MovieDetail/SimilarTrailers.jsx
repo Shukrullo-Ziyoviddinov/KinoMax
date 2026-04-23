@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
-import { allMovies } from '../../data/moviesCatalog';
+import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { formatActionCount } from '../../utils/utils';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import VerticalScroll from './VerticalScroll';
@@ -21,6 +21,7 @@ const SimilarTrailers = ({
 }) => {
   const { t } = useTranslation();
   const { contentLang } = useContentLanguage();
+  const { allMovies } = useMoviesCatalog();
 
   const similarTrailers = useMemo(() => {
     const currentTypeTrailers = selectedTrailer?.typeTrailers || '';
@@ -51,7 +52,7 @@ const SimilarTrailers = ({
         return true;
       })
       .slice(0, 12);
-  }, [selectedTrailer?.typeTrailers, selectedTrailer?.id, currentMovie?.id, contentLang]);
+  }, [allMovies, selectedTrailer?.typeTrailers, selectedTrailer?.id, currentMovie?.id, contentLang]);
 
   if (trailerLoading) {
     return (

@@ -1,37 +1,18 @@
-require("dotenv").config();
+/**
+ * Avvalgi nom bilan chaqirish uchun qoldirilgan.
+ * Asosiy seed: npm run seed:movies (Movie kolleksiyasi)
+ */
 const mongoose = require("mongoose");
-const connectDB = require("../config/db");
-const MoviesCatalog = require("../models/moviesCatalog");
-const movies = require("../../../client/src/data/movies.json");
-const { buildMoviesCatalog } = require("../utils/moviesCatalogTransform");
+const { runSeed } = require("./seedMovies");
 
-const seedMoviesCatalog = async () => {
+(async () => {
   try {
-    await connectDB();
-    const { allMovies } = buildMoviesCatalog(movies);
-
-    try {
-      await MoviesCatalog.collection.dropIndex("movieId_1");
-    } catch (_error) {
-      // Index bo'lmasa davom etamiz.
-    }
-
-    await MoviesCatalog.deleteMany();
-    await MoviesCatalog.insertMany(
-      allMovies.map((movie) => ({
-        ...movie,
-        movieId: movie.id,
-      }))
-    );
-
-    console.log(`Movies catalog seed qilindi. Jami: ${allMovies.length}`);
+    await runSeed();
   } catch (error) {
-    console.error("Movies catalog seed xatoligi:", error.message);
+    console.error(error);
+    process.exitCode = 1;
   } finally {
     await mongoose.connection.close();
-    process.exit(0);
+    process.exit(process.exitCode || 0);
   }
-};
-
-seedMoviesCatalog();
-  
+})();

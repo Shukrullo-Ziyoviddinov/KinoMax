@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
+import { fetchMovieById } from '../../api/moviesApi';
 import { fetchActorsByIds } from '../../api/actorsApi';
 import { useWishlist } from '../../context/WishlistContext';
 import { useViewedMovies } from '../../context/ViewedMoviesContext';
@@ -24,7 +24,7 @@ const MovieDetail = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addMovie } = useViewedMovies();
   const { detailLoading, setLoading } = useLoading();
-  const { allMovies } = useMoviesCatalog();
+  const [movie, setMovie] = useState(null);
   const [showTrailerModal, setShowTrailerModal] = useState(false);
   const [showWatchModal, setShowWatchModal] = useState(false);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
@@ -50,20 +50,34 @@ const MovieDetail = () => {
   const isDraggingRef = React.useRef(false);
   const modalStartYRef = React.useRef(0);
 
-  const movie = allMovies.find(m => m.id === parseInt(id));
-
   useEffect(() => {
     if (movie) addMovie(movie);
   }, [movie, addMovie]);
 
-  // Backend: setLoading('detail', true) fetch boshlanganda, setLoading('detail', false) tugaganda
-  // Demo: qisqa skeleton ko'rsatish (backend ulanganda shu o'rniga API fetch qo'yiladi)
   useEffect(() => {
-    if (id) {
+    let cancelled = false;
+
+    const loadMovie = async () => {
+      if (!id) {
+        setMovie(null);
+        return;
+      }
+
       setLoading('detail', true);
-      const t = setTimeout(() => setLoading('detail', false), 600);
-      return () => clearTimeout(t);
-    }
+      try {
+        const data = await fetchMovieById(id);
+        if (!cancelled) setMovie(data);
+      } catch (_error) {
+        if (!cancelled) setMovie(null);
+      } finally {
+        if (!cancelled) setLoading('detail', false);
+      }
+    };
+
+    loadMovie();
+    return () => {
+      cancelled = true;
+    };
   }, [id, setLoading]);
 
   useEffect(() => {

@@ -10,7 +10,8 @@
     "seed:actors": "node src/seed/seedActors.js",
     "seed:genres": "node src/seed/seedGenres.js",
     "seed:social": "node src/seed/seedSocialLink.js",
-    "seed:movies": "node src/seed/seedMoviesCatalog.js"
+    "seed:movies": "node src/seed/seedMovies.js",
+    "seed:movies-catalog": "node src/seed/seedMoviesCatalog.js"
   },
   "keywords": [],
   "author": "",

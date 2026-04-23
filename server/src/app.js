@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const bannerRoutes = require("./routes/bannerRoutes");
@@ -11,6 +12,17 @@ require("dotenv").config();
 
 const app = express();
 connectDB();
+
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
+  : true;
+
+app.use(
+  cors({
+    origin: corsOrigins,
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 app.use("/api/banners", bannerRoutes);

@@ -27,6 +27,7 @@ export const MoviesCatalogProvider = ({ children }) => {
         const data = await fetchMoviesCatalog();
         if (isMounted) setCatalog(data);
       } catch (err) {
+        console.error("[MoviesCatalog] API so‘rovi muvaffaqiyatsiz:", err?.message || err);
         if (isMounted) {
           setCatalog(EMPTY_CATALOG);
           setError(err);

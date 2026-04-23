@@ -1,3 +1,5 @@
+const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -40,5 +42,24 @@ app.get("/health", (req, res) => {
     db: dbConnected ? "connected" : "disconnected",
   });
 });
+
+const clientBuildPath = process.env.CLIENT_BUILD_PATH
+  ? path.resolve(process.env.CLIENT_BUILD_PATH)
+  : path.join(__dirname, "../../client/build");
+
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath, { index: false }));
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ ok: false, message: "Endpoint topilmadi" });
+    }
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      return next();
+    }
+    res.sendFile(path.join(clientBuildPath, "index.html"), (err) => {
+      if (err) next(err);
+    });
+  });
+}
 
 module.exports = app;

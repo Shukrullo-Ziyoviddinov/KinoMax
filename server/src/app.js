@@ -10,6 +10,7 @@ const genresRoutes = require("./routes/genresRouts");
 const socialLinkRoutes = require("./routes/socialLinkRouts");
 const moviesCatalogRoutes = require("./routes/moviesCatalogRouts");
 const moviesRoutes = require("./routes/moviesRouts");
+const adsRoutes = require("./routes/adsRouts");
 require("dotenv").config();
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/api/genres", genresRoutes);
 app.use("/api/social-links", socialLinkRoutes);
 app.use("/api/movies-catalog", moviesCatalogRoutes);
 app.use("/api/movies", moviesRoutes);
+app.use("/api/ads", adsRoutes);
 
 app.get("/health", (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;

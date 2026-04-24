@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
-import { adsData } from '../../data/adsData';
+import { fetchActiveAd } from '../../api/adsApi';
 import './WatchModal.css';
 
 const AD_INTERVAL_SECONDS = 900; // 15 daqiqa
@@ -94,7 +94,30 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
   
   const speedOptions = [1, 1.5, 2];
 
-  const activeAd = adsData.find((ad) => ad.isActive) || adsData[0];
+  const [activeAd, setActiveAd] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadActiveAd = async () => {
+      try {
+        const ad = await fetchActiveAd();
+        if (isMounted) {
+          setActiveAd(ad);
+        }
+      } catch (_error) {
+        if (isMounted) {
+          setActiveAd(null);
+        }
+      }
+    };
+
+    loadActiveAd();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleAdEnded = () => {
     setShowAdOverlay(false);

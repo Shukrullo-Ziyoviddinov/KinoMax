@@ -18,11 +18,30 @@ connectDB();
 
 const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
-  : true;
+  : [];
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (!corsOrigins.length) return true;
+
+  return corsOrigins.some((allowedOrigin) => {
+    if (allowedOrigin === origin) return true;
+    if (allowedOrigin.startsWith("*.")) {
+      const suffix = allowedOrigin.slice(1);
+      return origin.endsWith(suffix);
+    }
+    return false;
+  });
+};
 
 app.use(
   cors({
-    origin: corsOrigins,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS: origin ruxsat etilmagan"));
+    },
     credentials: true,
   })
 );

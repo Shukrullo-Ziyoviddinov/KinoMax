@@ -1,43 +1,48 @@
 const express = require("express");
 const Movie = require("../models/movies");
+const { success, fail } = require("../utils/apiResponse");
+const { parsePagination, buildPaginationMeta } = require("../utils/pagination");
+const { applyPagination } = require("../utils/queryOptimizer");
+const { validateIdParam } = require("../middlewares/validateRequest");
 
 const router = express.Router();
 
-router.get("/", async (_req, res) => {
+router.get("/", async (req, res, next) => {
   try {
-    const rows = await Movie.find().sort({ movieId: 1 }).lean();
+    const pagination = parsePagination(req.query);
+    const total = await Movie.countDocuments();
+    const rows = await applyPagination(
+      Movie.find().sort({ movieId: 1 }).select("-__v"),
+      pagination
+    ).lean();
     const data = rows.map(({ _id, movieId, createdAt, updatedAt, ...movie }) => ({
       ...movie,
       id: movie.id ?? movieId,
     }));
-    res.json({ ok: true, data });
+    return success(res, data, "Kinolar ro'yxati", 200, buildPaginationMeta(total, pagination));
   } catch (error) {
-    res.status(500).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", validateIdParam("id"), async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ ok: false, message: "Noto'g'ri id." });
-    }
-
-    const row = await Movie.findOne({ movieId: id }).lean();
+    const row = await Movie.findOne({ movieId: req.params.id }).select("-__v").lean();
     if (!row) {
-      return res.status(404).json({ ok: false, message: "Kino topilmadi." });
+      return fail(res, "Kino topilmadi.", 404);
     }
 
     const { _id, movieId, createdAt, updatedAt, ...movie } = row;
-    return res.json({
-      ok: true,
-      data: {
+    return success(
+      res,
+      {
         ...movie,
         id: movie.id ?? movieId,
       },
-    });
+      "Kino ma'lumoti"
+    );
   } catch (error) {
-    return res.status(500).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 

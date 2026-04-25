@@ -9,10 +9,10 @@
 }
 
 .video-loader__spinner {
-  width: 42px;
-  height: 42px;
+  width: 47px;
+  height: 47px;
   border-radius: 50%;
-  border: 3px solid rgba(123, 78, 221, 0.25);
+  border: 5px solid rgba(123, 78, 221, 0.25);
   border-top-color: #7b4edd;
   border-right-color: #692cbf;
   animation: videoLoaderSpin 0.9s linear infinite;

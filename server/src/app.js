@@ -11,6 +11,8 @@ const socialLinkRoutes = require("./routes/socialLinkRouts");
 const moviesCatalogRoutes = require("./routes/moviesCatalogRouts");
 const moviesRoutes = require("./routes/moviesRouts");
 const adsRoutes = require("./routes/adsRouts");
+const { success, fail } = require("./utils/apiResponse");
+const { notFoundHandler, errorHandler } = require("./middlewares/errorHandler");
 require("dotenv").config();
 
 const app = express();
@@ -57,11 +59,10 @@ app.use("/api/ads", adsRoutes);
 
 app.get("/health", (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
-  res.json({
-    ok: true,
-    message: "Server ishlayapti",
+  return success(res, {
     db: dbConnected ? "connected" : "disconnected",
-  });
+  },
+  "Server ishlayapti");
 });
 
 const clientBuildPath = process.env.CLIENT_BUILD_PATH
@@ -72,7 +73,7 @@ if (fs.existsSync(clientBuildPath)) {
   app.use(express.static(clientBuildPath, { index: false }));
   app.use((req, res, next) => {
     if (req.path.startsWith("/api")) {
-      return res.status(404).json({ ok: false, message: "Endpoint topilmadi" });
+      return fail(res, "Endpoint topilmadi", 404);
     }
     if (req.method !== "GET" && req.method !== "HEAD") {
       return next();
@@ -82,5 +83,8 @@ if (fs.existsSync(clientBuildPath)) {
     });
   });
 }
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 module.exports = app;

@@ -1,9 +1,10 @@
 const express = require("express");
 const SocialLink = require("../models/socialLink");
+const { success } = require("../utils/apiResponse");
 
 const router = express.Router();
 
-router.get("/", async (_req, res) => {
+router.get("/", async (_req, res, next) => {
   try {
     const rows = await SocialLink.find({ isActive: true }).sort({
       type: 1,
@@ -25,9 +26,9 @@ router.get("/", async (_req, res) => {
       };
     });
 
-    return res.json({ ok: true, data: payload });
+    return success(res, payload, "Ijtimoiy linklar");
   } catch (error) {
-    return res.status(500).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 

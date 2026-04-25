@@ -1,6 +1,4 @@
-import { BASE_URL } from '../config/api';
-
-const getBase = () => BASE_URL.replace(/\/$/, '');
+import { apiClient } from '../services/apiClient';
 
 export const fetchActorsByIds = async (ids = []) => {
   const normalized = (Array.isArray(ids) ? ids : [])
@@ -9,14 +7,13 @@ export const fetchActorsByIds = async (ids = []) => {
 
   if (!normalized.length) return [];
 
-  const res = await fetch(`${getBase()}/api/actors/by-ids?ids=${normalized.join(',')}`);
-  const json = await res.json();
-
-  if (!res.ok || !json.ok) {
-    throw new Error(json.message || 'Actorlarni olishda xatolik.');
-  }
-
-  return Array.isArray(json.data) ? json.data : [];
+  const key = normalized.join(',');
+  const data = await apiClient.get(`/api/actors/by-ids?ids=${key}`, {
+    cacheKey: `actors:ids:${key}`,
+    ttlMs: 60 * 1000,
+    dedupeKey: `actors:ids:${key}`,
+  });
+  return Array.isArray(data) ? data : [];
 };
 
 export const fetchActorById = async (id) => {
@@ -25,12 +22,9 @@ export const fetchActorById = async (id) => {
     throw new Error("Noto'g'ri actor id.");
   }
 
-  const res = await fetch(`${getBase()}/api/actors/${actorId}`);
-  const json = await res.json();
-
-  if (!res.ok || !json.ok) {
-    throw new Error(json.message || 'Actor topilmadi.');
-  }
-
-  return json.data;
+  return apiClient.get(`/api/actors/${actorId}`, {
+    cacheKey: `actors:${actorId}`,
+    ttlMs: 60 * 1000,
+    dedupeKey: `actors:${actorId}`,
+  });
 };

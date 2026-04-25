@@ -1,18 +1,26 @@
 const express = require("express");
 const Banner = require("../models/banner");
+const { success, fail } = require("../utils/apiResponse");
+const { parsePagination, buildPaginationMeta } = require("../utils/pagination");
+const { applyPagination } = require("../utils/queryOptimizer");
 
 const router = express.Router();
 
-router.get("/", async (_req, res) => {
+router.get("/", async (req, res, next) => {
   try {
-    const banners = await Banner.find().sort({ sortOrder: 1, bannerId: 1 });
-    res.json({ ok: true, data: banners });
+    const pagination = parsePagination(req.query);
+    const total = await Banner.countDocuments();
+    const banners = await applyPagination(
+      Banner.find().sort({ sortOrder: 1, bannerId: 1 }).select("-__v"),
+      pagination
+    ).lean();
+    return success(res, banners, "Bannerlar ro'yxati", 200, buildPaginationMeta(total, pagination));
   } catch (error) {
-    res.status(500).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 
-router.get("/active", async (req, res) => {
+router.get("/active", async (req, res, next) => {
   try {
     const { lang } = req.query;
     const query = { isActive: true };
@@ -21,23 +29,26 @@ router.get("/active", async (req, res) => {
       query.lang = lang;
     }
 
-    const banners = await Banner.find(query).sort({ sortOrder: 1, bannerId: 1 });
-    res.json({ ok: true, data: banners });
+    const banners = await Banner.find(query)
+      .sort({ sortOrder: 1, bannerId: 1 })
+      .select("-__v")
+      .lean();
+    return success(res, banners, "Aktiv bannerlar");
   } catch (error) {
-    res.status(500).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
     const banner = await Banner.create(req.body);
-    res.status(201).json({ ok: true, data: banner });
+    return success(res, banner, "Banner yaratildi", 201);
   } catch (error) {
-    res.status(400).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const banner = await Banner.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -45,26 +56,26 @@ router.put("/:id", async (req, res) => {
     });
 
     if (!banner) {
-      return res.status(404).json({ ok: false, message: "Banner topilmadi." });
+      return fail(res, "Banner topilmadi.", 404);
     }
 
-    return res.json({ ok: true, data: banner });
+    return success(res, banner, "Banner yangilandi");
   } catch (error) {
-    return res.status(400).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res, next) => {
   try {
     const banner = await Banner.findByIdAndDelete(req.params.id);
 
     if (!banner) {
-      return res.status(404).json({ ok: false, message: "Banner topilmadi." });
+      return fail(res, "Banner topilmadi.", 404);
     }
 
-    return res.json({ ok: true, message: "Banner o'chirildi." });
+    return success(res, null, "Banner o'chirildi.");
   } catch (error) {
-    return res.status(400).json({ ok: false, message: error.message });
+    return next(error);
   }
 });
 

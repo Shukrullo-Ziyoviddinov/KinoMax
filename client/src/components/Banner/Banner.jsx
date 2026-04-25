@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useLoading } from '../../context/LoadingContext';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
-import { BASE_URL } from '../../config/api';
+import { fetchActiveBanners } from '../../api/bannerApi';
 import { normalizeImagePath } from '../../utils/utils';
 import './Banner.css';
 
@@ -20,15 +20,9 @@ const Banner = () => {
         const loadBanners = async () => {
             try {
                 setLoading('banner', true);
-                const base = BASE_URL.replace(/\/$/, '');
-                const res = await fetch(`${base}/api/banners/active?lang=${contentLang}`);
-                const json = await res.json();
-                if (!res.ok || !json.ok) {
-                    throw new Error(json.message || 'Bannerlarni olishda xatolik.');
-                }
-
                 if (isMounted) {
-                    setBanners(Array.isArray(json.data) ? json.data : []);
+                    const data = await fetchActiveBanners(contentLang);
+                    setBanners(data);
                 }
             } catch (_error) {
                 if (isMounted) {

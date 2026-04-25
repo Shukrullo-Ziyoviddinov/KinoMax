@@ -1,19 +1,15 @@
-import { BASE_URL } from '../config/api';
-
-const getBase = () => BASE_URL.replace(/\/$/, '');
+import { apiClient } from '../services/apiClient';
 
 export const fetchSocialLinks = async () => {
-  const res = await fetch(`${getBase()}/api/social-links`);
-  const json = await res.json();
-
-  if (!res.ok || !json.ok) {
-    throw new Error(json.message || "Ijtimoiy linklarni olishda xatolik.");
-  }
-
-  const data = json.data || {};
+  const data = await apiClient.get('/api/social-links', {
+    cacheKey: 'social-links',
+    ttlMs: 5 * 60 * 1000,
+    dedupeKey: 'social-links',
+  });
+  const payload = data || {};
   return {
-    contact: data.contact || {},
-    social: data.social || {},
-    appStore: data.appStore || {},
+    contact: payload.contact || {},
+    social: payload.social || {},
+    appStore: payload.appStore || {},
   };
 };

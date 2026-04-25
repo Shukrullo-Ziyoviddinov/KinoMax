@@ -1,16 +1,12 @@
-import { BASE_URL } from '../config/api';
-
-const getBase = () => BASE_URL.replace(/\/$/, '');
+import { apiClient } from '../services/apiClient';
 
 export const fetchMoviesList = async () => {
-  const res = await fetch(`${getBase()}/api/movies`);
-  const json = await res.json();
-
-  if (!res.ok || !json.ok) {
-    throw new Error(json.message || 'Kinolar ro\'yxatini olishda xatolik.');
-  }
-
-  return Array.isArray(json.data) ? json.data : [];
+  const data = await apiClient.get('/api/movies', {
+    cacheKey: 'movies:list',
+    ttlMs: 30 * 1000,
+    dedupeKey: 'movies:list',
+  });
+  return Array.isArray(data) ? data : [];
 };
 
 export const fetchMovieById = async (id) => {
@@ -19,12 +15,9 @@ export const fetchMovieById = async (id) => {
     throw new Error("Noto'g'ri kino id.");
   }
 
-  const res = await fetch(`${getBase()}/api/movies/${movieId}`);
-  const json = await res.json();
-
-  if (!res.ok || !json.ok) {
-    throw new Error(json.message || 'Kino topilmadi.');
-  }
-
-  return json.data;
+  return apiClient.get(`/api/movies/${movieId}`, {
+    cacheKey: `movies:${movieId}`,
+    ttlMs: 30 * 1000,
+    dedupeKey: `movies:${movieId}`,
+  });
 };

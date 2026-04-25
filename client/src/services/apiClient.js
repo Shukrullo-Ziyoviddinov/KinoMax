@@ -16,7 +16,7 @@ const parseJsonSafe = async (res) => {
   }
 };
 
-const parseApiPayload = (json, fallbackMessage) => {
+const assertApiSuccess = (json, fallbackMessage) => {
   if (!json) {
     throw createApiError(fallbackMessage, 500, null);
   }
@@ -24,7 +24,6 @@ const parseApiPayload = (json, fallbackMessage) => {
   if (!success) {
     throw createApiError(json.message || fallbackMessage, json.status || 500, json);
   }
-  return json.data;
 };
 
 const request = async (path, options = {}) => {
@@ -39,7 +38,8 @@ const request = async (path, options = {}) => {
     );
   }
 
-  return parseApiPayload(json, 'Server javobida xatolik.');
+  assertApiSuccess(json, 'Server javobida xatolik.');
+  return json;
 };
 
 const dedupeRequest = async (key, factory) => {
@@ -54,10 +54,20 @@ const dedupeRequest = async (key, factory) => {
 };
 
 export const apiClient = {
-  async get(path, { cacheKey, ttlMs = 0, dedupeKey } = {}) {
+  async get(path, { cacheKey, ttlMs = 0, dedupeKey, includeMeta = false } = {}) {
     const key = dedupeKey || `GET:${path}`;
     try {
-      const runner = () => request(path);
+      const runner = async () => {
+        const json = await request(path);
+        if (includeMeta) {
+          return {
+            data: json.data,
+            meta: json.meta || null,
+            message: json.message,
+          };
+        }
+        return json.data;
+      };
       if (cacheKey) {
         return await getOrSetCache(cacheKey, () => dedupeRequest(key, runner), ttlMs);
       }

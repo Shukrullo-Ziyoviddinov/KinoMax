@@ -53,7 +53,7 @@ router.get("/top-rated", async (req, res, next) => {
   }
 });
 
-router.get("/:id(\\d+)", validateIdParam("id"), async (req, res, next) => {
+router.get("/:id", validateIdParam("id"), async (req, res, next) => {
   try {
     const row = await Movie.findOne({ movieId: req.params.id }).select("-__v").lean();
     if (!row) {

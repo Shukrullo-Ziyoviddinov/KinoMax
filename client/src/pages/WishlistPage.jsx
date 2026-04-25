@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useWishlist } from '../context/WishlistContext';
 import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import Movies from '../components/Movies/Movies';
-import LoaderSkeleton from '../components/LoaderSkeleton/LoaderSkeleton';
 import './WishlistPage.css';
 
 const WishlistPage = () => {
@@ -16,35 +15,38 @@ const WishlistPage = () => {
   const wishlistMovies = allMovies.filter((m) => wishlistIds.includes(m.id));
   const isEmpty = wishlistMovies.length === 0;
 
+  if (wishlistLoading) {
+    return (
+      <div className="wishlist-page">
+        <Movies
+          sectionType="wishlist"
+          limit={null}
+          filteredMovies={[]}
+          hideHeader
+          isLoading
+        />
+      </div>
+    );
+  }
+
   if (isEmpty) {
     return (
       <div className="wishlist-page wishlist-page--empty">
         <div className="wishlist-empty">
-          {wishlistLoading ? (
-            <LoaderSkeleton variant="wishlist-empty-img" className="wishlist-empty-img-skeleton" width={200} height={200} />
-          ) : (
-            <img
-              src="/img/wishlist_preview_rev_1.png"
-              alt={t('wishlist.emptyText')}
-              className="wishlist-empty-img"
-            />
-          )}
-          {!wishlistLoading && (
-            <>
-              <p className="wishlist-empty-text">
-                {t('wishlist.emptyText')}
-              </p>
-              <button
-                className="wishlist-empty-btn"
-                onClick={() => navigate('/')}
-              >
-                {t('wishlist.goToHome')}
-              </button>
-            </>
-          )}
-          {wishlistLoading && (
-            <LoaderSkeleton variant="wishlist-empty-btn" className="wishlist-empty-btn-skeleton" width={160} height={44} />
-          )}
+          <img
+            src="/img/wishlist_preview_rev_1.png"
+            alt={t('wishlist.emptyText')}
+            className="wishlist-empty-img"
+          />
+          <p className="wishlist-empty-text">
+            {t('wishlist.emptyText')}
+          </p>
+          <button
+            className="wishlist-empty-btn"
+            onClick={() => navigate('/')}
+          >
+            {t('wishlist.goToHome')}
+          </button>
         </div>
       </div>
     );

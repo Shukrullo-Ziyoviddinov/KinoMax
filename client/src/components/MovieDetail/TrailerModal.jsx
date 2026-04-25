@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import SimilarTrailers from './SimilarTrailers';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
+import VideoLoader from '../VideoLoader/VideoLoader';
 import './TrailerModal.css';
 
 const TrailerModalBackIcon = () => (
@@ -160,16 +161,11 @@ const TrailerModal = ({ movie, onClose }) => {
   const modalRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [trailerLoading, setTrailerLoading] = useState(true);
+  const [trailerLoading] = useState(false);
+  const [isVideoBuffering, setIsVideoBuffering] = useState(true);
   const [isDraggingModal, setIsDraggingModal] = useState(false);
   const [modalTranslateY, setModalTranslateY] = useState(0);
   const modalDragStartYRef = useRef(null);
-
-  useEffect(() => {
-    setTrailerLoading(true);
-    const timer = setTimeout(() => setTrailerLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // useRef - stale closure muammosini hal qilish uchun
   const hideControlsTimeoutRef = useRef(null);
@@ -529,6 +525,7 @@ const TrailerModal = ({ movie, onClose }) => {
     video.pause();
     video.currentTime = 0;
     setIsPlaying(false);
+    setIsVideoBuffering(true);
     setCurrentTime(0);
     setDuration(0);
 
@@ -714,17 +711,35 @@ const TrailerModal = ({ movie, onClose }) => {
                   preload="auto"
                   playsInline
                   className="trailer-modal-video"
+                  onLoadStart={() => setIsVideoBuffering(true)}
+                  onWaiting={() => setIsVideoBuffering(true)}
+                  onStalled={() => setIsVideoBuffering(true)}
+                  onSeeking={() => setIsVideoBuffering(true)}
                   onPlay={() => setIsPlaying(true)}
+                  onPlaying={() => {
+                    setIsPlaying(true);
+                    setIsVideoBuffering(false);
+                  }}
                   onPause={() => setIsPlaying(false)}
                   onTimeUpdate={handleTimeUpdate}
                   onLoadedMetadata={handleLoadedMetadata}
-                  onLoadedData={handleLoadedMetadata}
-                  onCanPlay={handleLoadedMetadata}
+                  onLoadedData={() => {
+                    handleLoadedMetadata();
+                    setIsVideoBuffering(false);
+                  }}
+                  onCanPlay={() => {
+                    handleLoadedMetadata();
+                    setIsVideoBuffering(false);
+                  }}
+                  onCanPlayThrough={() => setIsVideoBuffering(false)}
+                  onSeeked={() => setIsVideoBuffering(false)}
+                  onError={() => setIsVideoBuffering(false)}
                   onClick={handleVideoClick}
                   onRateChange={(e) => {
                     if (e.target.playbackRate !== playbackSpeed) console.log('Rate mismatch! Expected:', playbackSpeed, 'Got:', e.target.playbackRate);
                   }}
                 />
+                {isVideoBuffering && <VideoLoader message="Trailer yuklanmoqda..." />}
                 
                 {trailerLoading ? (
                   <>

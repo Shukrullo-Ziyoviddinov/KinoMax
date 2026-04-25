@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { fetchActiveAd } from '../../api/adsApi';
+import VideoLoader from '../VideoLoader/VideoLoader';
 import './WatchModal.css';
 
 const AD_INTERVAL_SECONDS = 900; // 15 daqiqa
@@ -76,6 +77,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [isVideoBuffering, setIsVideoBuffering] = useState(true);
 
   const handleWatchVideoTrackChange = (track) => {
     if (!dualWatchAvailable || (track !== 'uz' && track !== 'ru')) return;
@@ -485,6 +487,10 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
   }, [movie.watchVideo, movie.watchUrl, videoUrl, contentLang, playbackSpeed, watchVideoTrack]);
 
   useEffect(() => {
+    setIsVideoBuffering(true);
+  }, [movie?.id, videoUrl, watchVideoTrack, contentLang]);
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (showSpeedMenu && !e.target.closest('.watch-modal-speed-menu') && !e.target.closest('.watch-modal-icon-btn')) setShowSpeedMenu(false);
     };
@@ -560,17 +566,37 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
                 ref={videoRef}
                 src={getWatchVideo()}
                 className="watch-modal-video"
+                onLoadStart={() => setIsVideoBuffering(true)}
+                onWaiting={() => setIsVideoBuffering(true)}
+                onStalled={() => setIsVideoBuffering(true)}
+                onSeeking={() => setIsVideoBuffering(true)}
                 onPlay={() => setIsPlaying(true)}
+                onPlaying={() => {
+                  setIsPlaying(true);
+                  setIsVideoBuffering(false);
+                }}
                 onPause={() => setIsPlaying(false)}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
-                onLoadedData={handleLoadedMetadata}
-                onCanPlay={handleLoadedMetadata}
+                onLoadedData={() => {
+                  handleLoadedMetadata();
+                  setIsVideoBuffering(false);
+                }}
+                onCanPlay={() => {
+                  handleLoadedMetadata();
+                  setIsVideoBuffering(false);
+                }}
+                onCanPlayThrough={() => setIsVideoBuffering(false)}
+                onSeeked={() => setIsVideoBuffering(false)}
+                onError={() => setIsVideoBuffering(false)}
                 onClick={handleVideoClick}
                 onRateChange={(e) => {
                   if (e.target.playbackRate !== playbackSpeed) console.log('Rate mismatch! Expected:', playbackSpeed, 'Got:', e.target.playbackRate);
                 }}
               />
+              {!showAdOverlay && isVideoBuffering && (
+                <VideoLoader message="Video yuklanmoqda..." />
+              )}
               
               {showAdOverlay && activeAd && (
                 <div className="watch-modal-ad-overlay show">

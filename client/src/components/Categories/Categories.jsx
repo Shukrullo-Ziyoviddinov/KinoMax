@@ -2,12 +2,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ScrollTouch from '../ScrollTouch/ScrollTouch';
+import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
+import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import './Categories.css';
 
 const Categories = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isLoading: catalogLoading } = useMoviesCatalog();
 
   const categories = [
     { id: 'romantika', key: 'romantika' },
@@ -33,15 +36,26 @@ const Categories = () => {
     <div className="categories">
       <div className="categories-container">
         <ScrollTouch className="categories-scroll-touch">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              className={`categories-item ${isActiveCategory(category.id) ? 'categories-item--active' : ''}`}
-              onClick={() => handleCategoryClick(category.id)}
-            >
-              {t(`categories.${category.key}`, category.key)}
-            </button>
-          ))}
+          {catalogLoading ? (
+            <>
+              <LoaderSkeleton variant="categories-item" width={120} height={44} />
+              <LoaderSkeleton variant="categories-item" width={100} height={44} />
+              <LoaderSkeleton variant="categories-item" width={90} height={44} />
+              <LoaderSkeleton variant="categories-item" width={110} height={44} />
+              <LoaderSkeleton variant="categories-item" width={100} height={44} />
+              <LoaderSkeleton variant="categories-item" width={80} height={44} />
+            </>
+          ) : (
+            categories.map((category) => (
+              <button
+                key={category.id}
+                className={`categories-item ${isActiveCategory(category.id) ? 'categories-item--active' : ''}`}
+                onClick={() => handleCategoryClick(category.id)}
+              >
+                {t(`categories.${category.key}`, category.key)}
+              </button>
+            ))
+          )}
         </ScrollTouch>
       </div>
     </div>

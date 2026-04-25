@@ -340,7 +340,29 @@ const Banner = () => {
         return 'hidden';
     };
 
-    if (images.length === 0) return null;
+    if (images.length === 0) {
+        if (!bannerLoading) return null;
+
+        return (
+            <div className="banner">
+                <div className="banner-container">
+                    <div className="manga-carousel">
+                        <ul className="manga-slides">
+                            <li className="manga-image left" aria-hidden="true">
+                                <LoaderSkeleton variant="banner-image" className="manga-image-skeleton" />
+                            </li>
+                            <li className="manga-image center" aria-hidden="false">
+                                <LoaderSkeleton variant="banner-image" className="manga-image-skeleton" />
+                            </li>
+                            <li className="manga-image right" aria-hidden="true">
+                                <LoaderSkeleton variant="banner-image" className="manga-image-skeleton" />
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="banner">

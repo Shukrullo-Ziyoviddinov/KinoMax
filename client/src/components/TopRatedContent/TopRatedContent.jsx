@@ -20,6 +20,7 @@ const TopRatedContent = ({ limit = DEFAULT_LIMIT, showHorizontalScroll = true, m
           setTopRatedMovies(data.items || []);
         }
       } catch (_error) {
+        console.error('[TopRatedContent] top-rated yuklashda xatolik:', _error?.message || _error);
         if (isMounted) {
           setTopRatedMovies([]);
         }

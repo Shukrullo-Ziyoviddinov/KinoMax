@@ -155,6 +155,7 @@ const RecommendedPage = () => {
         setTopRatedLoading(true);
         await loadTopRatedPage(1, { append: false });
       } catch (_error) {
+        console.error('[RecommendedPage] top-rated boshlang‘ich yuklash xatoligi:', _error?.message || _error);
         if (isMounted) {
           setTopRatedMovies([]);
           setTopRatedHasMore(false);
@@ -186,6 +187,7 @@ const RecommendedPage = () => {
         setTopRatedLoadingMore(true);
         await loadTopRatedPage(topRatedPage + 1, { append: true });
       } catch (_error) {
+        console.error('[RecommendedPage] top-rated keyingi sahifa xatoligi:', _error?.message || _error);
         setTopRatedHasMore(false);
       } finally {
         setTopRatedLoadingMore(false);

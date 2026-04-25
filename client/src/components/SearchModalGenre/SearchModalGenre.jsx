@@ -37,16 +37,20 @@ const SearchModalGenre = ({ onGenreClick }) => {
   const navigate = useNavigate();
   const { contentLang } = useContentLanguage();
   const [genres, setGenres] = useState([]);
+  const [genresLoading, setGenresLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadGenres = async () => {
       try {
+        if (isMounted) setGenresLoading(true);
         const data = await fetchGenres();
         if (isMounted) setGenres(data);
       } catch (_error) {
         if (isMounted) setGenres([]);
+      } finally {
+        if (isMounted) setGenresLoading(false);
       }
     };
 
@@ -77,14 +81,25 @@ const SearchModalGenre = ({ onGenreClick }) => {
     <div className="search-modal-genre">
       <h3 className="search-modal-genre-title">{t('filters.genre', 'Janr')}</h3>
       <HorizontalScroll scrollAmount={320}>
-        {genres.map((genre) => (
-          <GenreItem
-            key={genre.genreId}
-            genre={genre}
-            title={getGenreTitle(genre)}
-            onClick={() => handleGenreClick(genre)}
-          />
-        ))}
+        {genresLoading
+          ? Array.from({ length: 5 }).map((_, idx) => (
+              <div key={`genre-skeleton-${idx}`} className="search-modal-genre-item">
+                <div className="search-modal-genre-item-image-wrapper">
+                  <LoaderSkeleton
+                    variant="banner-image"
+                    className="search-modal-genre-item-image-skeleton"
+                  />
+                </div>
+              </div>
+            ))
+          : genres.map((genre) => (
+              <GenreItem
+                key={genre.genreId}
+                genre={genre}
+                title={getGenreTitle(genre)}
+                onClick={() => handleGenreClick(genre)}
+              />
+            ))}
       </HorizontalScroll>
     </div>
   );

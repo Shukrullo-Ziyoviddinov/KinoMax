@@ -27,6 +27,8 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
   const shouldShowLimit = limit != null;
   const displayMovies = getDisplayItems(allMoviesData, shouldShowLimit ? limit : null);
   const hasMoreMovies = shouldShowMore(allMoviesData, limit, moreTo);
+  const placeholderCount = shouldShowLimit ? Math.max(4, Math.min(limit || DEFAULT_LIMIT, 8)) : 8;
+  const shouldRenderPlaceholders = isLoading && allMoviesData.length === 0;
 
   const getMovieTitle = (movie) => {
     if (movie.title && typeof movie.title === 'object') {
@@ -119,11 +121,33 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
         <div className="movies-content-wrapper">
           {isHorizontal && shouldShowLimit ? (
             <HorizontalScroll>
-              {displayMovies.map((movie, index) => renderMovieItem(movie, index))}
+              {shouldRenderPlaceholders
+                ? Array.from({ length: placeholderCount }).map((_, index) => (
+                    <div
+                      key={`movies-placeholder-${index}`}
+                      className={`movies-item ${isHorizontal ? 'movies-item-horizontal' : ''} ${isWideLayout ? 'movies-item-wide' : ''}`}
+                    >
+                      <div className="movies-item-image-wrapper">
+                        <LoaderSkeleton variant="image" />
+                      </div>
+                    </div>
+                  ))
+                : displayMovies.map((movie, index) => renderMovieItem(movie, index))}
             </HorizontalScroll>
           ) : (
             <div className="movies-grid">
-              {displayMovies.map((movie, index) => renderMovieItem(movie, index))}
+              {shouldRenderPlaceholders
+                ? Array.from({ length: placeholderCount }).map((_, index) => (
+                    <div
+                      key={`movies-placeholder-${index}`}
+                      className={`movies-item ${isHorizontal ? 'movies-item-horizontal' : ''} ${isWideLayout ? 'movies-item-wide' : ''}`}
+                    >
+                      <div className="movies-item-image-wrapper">
+                        <LoaderSkeleton variant="image" />
+                      </div>
+                    </div>
+                  ))
+                : displayMovies.map((movie, index) => renderMovieItem(movie, index))}
             </div>
           )}
         </div>

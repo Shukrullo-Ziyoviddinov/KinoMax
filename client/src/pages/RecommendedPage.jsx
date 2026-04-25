@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import { fetchGenres } from '../api/genresApi';
@@ -115,7 +115,7 @@ const RecommendedPage = () => {
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (genreFromUrl) {
       setSelectedGenres(getGenresFromUrl(genreFromUrl));
     } else if (categoryId && CATEGORY_GENRE_MAP[categoryId]) {

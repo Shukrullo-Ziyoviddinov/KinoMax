@@ -54,8 +54,8 @@ const ActorsPage = () => {
     );
   }
 
-  const actorName = actor.name[contentLang] || actor.name.uz || actor.name.ru;
-  const actorInfo = actor.info?.[contentLang] || actor.info?.uz || actor.info?.ru || '';
+  const actorName = actor?.name?.[contentLang] || actor?.name?.uz || actor?.name?.ru || '';
+  const actorInfo = actor?.info?.[contentLang] || actor?.info?.uz || actor?.info?.ru || '';
 
   return (
     <div className="actors-page">

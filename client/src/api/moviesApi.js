@@ -70,7 +70,10 @@ const buildTopRatedMoviesLocal = (movies = []) =>
     [...movies]
       .filter(isTopRated)
       .sort((a, b) => getMovieMaxRating(b) - getMovieMaxRating(a))
-  );
+  ).map((movie) => ({
+    ...movie,
+    rating: getMovieMaxRating(movie),
+  }));
 
 export const fetchMoviesList = async () => {
   const data = await apiClient.get('/api/movies', {

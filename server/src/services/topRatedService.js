@@ -88,7 +88,11 @@ const buildTopRatedMovies = (movies = []) => {
     .filter(isTopRated)
     .sort((a, b) => getMovieMaxRating(b) - getMovieMaxRating(a));
 
-  return diversifyByGenre(filtered);
+  return diversifyByGenre(filtered).map((movie) => ({
+    ...movie,
+    // Top-rated sahifada userga 10-ballik reyting ko'rinishi uchun.
+    rating: getMovieMaxRating(movie),
+  }));
 };
 
 module.exports = {

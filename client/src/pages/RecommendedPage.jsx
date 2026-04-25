@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import { fetchGenres } from '../api/genresApi';
-import { getTopRatedMovies } from '../components/TopRatedContent/TopRatedContent';
+import { fetchTopRatedMovies } from '../api/moviesApi';
 import Filters from '../components/Filters';
 import Movies from '../components/Movies/Movies';
 import './RecommendedPage.css';
@@ -24,6 +24,11 @@ const normalizeFilterValue = (value) =>
     .trim()
     .toLowerCase()
     .replace(/[’ʻʼ`]/g, "'");
+
+const resolveTopRatedPageLimit = () => {
+  if (typeof window === 'undefined') return 30;
+  return window.innerWidth < 768 ? 20 : 30;
+};
 
 const getRatingFilter = (movie, selectedRatingType, selectedRating) => {
   if (selectedRating === null) return true;
@@ -84,6 +89,12 @@ const RecommendedPage = () => {
     return [g];
   }, [genresConfig]);
   const [genresLoading, setGenresLoading] = useState(true);
+  const [topRatedMovies, setTopRatedMovies] = useState([]);
+  const [topRatedLoading, setTopRatedLoading] = useState(false);
+  const [topRatedLoadingMore, setTopRatedLoadingMore] = useState(false);
+  const [topRatedPage, setTopRatedPage] = useState(1);
+  const [topRatedHasMore, setTopRatedHasMore] = useState(true);
+  const [topRatedPageLimit] = useState(resolveTopRatedPageLimit);
   const [selectedRatingType, setSelectedRatingType] = useState('rating');
   const [selectedRating, setSelectedRating] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -125,6 +136,66 @@ const RecommendedPage = () => {
     }
   }, [genreFromUrl, categoryId, getGenresFromUrl]);
 
+  const loadTopRatedPage = useCallback(async (pageToLoad, { append = false } = {}) => {
+    const data = await fetchTopRatedMovies({ page: pageToLoad, limit: topRatedPageLimit });
+    const nextItems = data.items || [];
+    const nextMeta = data.meta || {};
+
+    setTopRatedMovies((prev) => (append ? [...prev, ...nextItems] : nextItems));
+    setTopRatedHasMore(Boolean(nextMeta.hasNextPage));
+    setTopRatedPage(pageToLoad);
+  }, [topRatedPageLimit]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (categoryId !== 'topRated') return undefined;
+
+    const loadInitialTopRated = async () => {
+      try {
+        setTopRatedLoading(true);
+        await loadTopRatedPage(1, { append: false });
+      } catch (_error) {
+        if (isMounted) {
+          setTopRatedMovies([]);
+          setTopRatedHasMore(false);
+        }
+      } finally {
+        if (isMounted) {
+          setTopRatedLoading(false);
+        }
+      }
+    };
+
+    loadInitialTopRated();
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryId, loadTopRatedPage]);
+
+  useEffect(() => {
+    if (categoryId !== 'topRated') return undefined;
+    if (topRatedLoading || topRatedLoadingMore || !topRatedHasMore) return undefined;
+
+    const onScroll = async () => {
+      const threshold = 600;
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      if (scrollBottom < docHeight - threshold) return;
+
+      try {
+        setTopRatedLoadingMore(true);
+        await loadTopRatedPage(topRatedPage + 1, { append: true });
+      } catch (_error) {
+        setTopRatedHasMore(false);
+      } finally {
+        setTopRatedLoadingMore(false);
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [categoryId, loadTopRatedPage, topRatedHasMore, topRatedLoading, topRatedLoadingMore, topRatedPage]);
+
   const isSimilarMoviesPage = location.pathname.startsWith('/similar-movies/');
 
   // Genre filter bo'lsa (URL ?genre=) - barcha kinolardan qidirish (allMovies)
@@ -142,7 +213,7 @@ const RecommendedPage = () => {
     : location.pathname === '/recommended'
     ? recommendedMovies
     : categoryId === 'topRated'
-      ? getTopRatedMovies(allMovies)
+      ? topRatedMovies
       : categoryId
         ? allMovies.filter(movie =>
             movie.typeCategory?.includes(categoryId) || movie.category === categoryId
@@ -183,7 +254,10 @@ const RecommendedPage = () => {
     filteredMovies = filteredMovies.filter(movie => movie.ageRestriction === selectedAge);
   }
 
-  const recommendedLoading = catalogLoading || genresLoading;
+  const recommendedLoading =
+    catalogLoading ||
+    genresLoading ||
+    (categoryId === 'topRated' && (topRatedLoading || topRatedLoadingMore));
 
   return (
     <div className="recommended-page">

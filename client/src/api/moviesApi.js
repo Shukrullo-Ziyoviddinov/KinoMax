@@ -21,3 +21,18 @@ export const fetchMovieById = async (id) => {
     dedupeKey: `movies:${movieId}`,
   });
 };
+
+export const fetchTopRatedMovies = async ({ page = 1, limit = 20 } = {}) => {
+  const query = `?page=${page}&limit=${limit}`;
+  const data = await apiClient.get(`/api/movies/top-rated${query}`, {
+    cacheKey: `movies:top-rated:${page}:${limit}`,
+    ttlMs: 30 * 1000,
+    dedupeKey: `movies:top-rated:${page}:${limit}`,
+    includeMeta: true,
+  });
+
+  return {
+    items: Array.isArray(data?.data) ? data.data : [],
+    meta: data?.meta || null,
+  };
+};

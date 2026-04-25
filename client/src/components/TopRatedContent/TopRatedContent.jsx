@@ -1,31 +1,40 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
+import { fetchTopRatedMovies } from '../../api/moviesApi';
 import Movies from '../Movies/Movies';
 import { DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
 
-const MIN_RATING = 5;
-
-export const getTopRatedMovies = (movies) => {
-  const toNum = (v) => (v != null && v !== '' && v !== 'none' ? Number(v) : 0);
-  return [...movies]
-    .filter((m) => {
-      const imdb = toNum(m.ratingImdb);
-      const kp = toNum(m.ratingKinopoisk);
-      const netflix = toNum(m.ratingNetflix);
-      return imdb > MIN_RATING || kp > MIN_RATING || netflix > MIN_RATING;
-    })
-    .sort((a, b) => {
-      const maxA = Math.max(toNum(a.ratingImdb), toNum(a.ratingKinopoisk), toNum(a.ratingNetflix));
-      const maxB = Math.max(toNum(b.ratingImdb), toNum(b.ratingKinopoisk), toNum(b.ratingNetflix));
-      return maxB - maxA;
-    });
-};
-
 const TopRatedContent = ({ limit = DEFAULT_LIMIT, showHorizontalScroll = true, moreTo = '/category/topRated' }) => {
   const { t } = useTranslation();
-  const { allMovies } = useMoviesCatalog();
-  const topRatedMovies = React.useMemo(() => getTopRatedMovies(allMovies), [allMovies]);
+  const [topRatedMovies, setTopRatedMovies] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const loadTopRated = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchTopRatedMovies({ page: 1, limit });
+        if (isMounted) {
+          setTopRatedMovies(data.items || []);
+        }
+      } catch (_error) {
+        if (isMounted) {
+          setTopRatedMovies([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadTopRated();
+    return () => {
+      isMounted = false;
+    };
+  }, [limit]);
 
   return (
     <Movies
@@ -35,6 +44,7 @@ const TopRatedContent = ({ limit = DEFAULT_LIMIT, showHorizontalScroll = true, m
       showHorizontalScroll={showHorizontalScroll}
       headerTitle={t('movies.topRated')}
       moreTo={moreTo}
+      isLoading={isLoading}
     />
   );
 };

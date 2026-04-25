@@ -6,7 +6,7 @@ const Ads = require("../models/ads");
 const adsData = [
   {
     adId: 1,
-    videoUrl: "/video/rumovie.mp4",
+    videoUrl: "/video/shorts6.mp4",
     isActive: true,
     sortOrder: 1,
   },

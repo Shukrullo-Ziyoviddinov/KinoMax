@@ -1,20 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ScrollTouch from '../ScrollTouch/ScrollTouch';
-import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
-import { useLoading } from '../../context/LoadingContext';
 import './Categories.css';
 
 const Categories = () => {
   const { t } = useTranslation();
-  const { categoriesLoading, setLoading } = useLoading();
-
-  useEffect(() => {
-    setLoading('categories', true);
-    const timer = setTimeout(() => setLoading('categories', false), 400);
-    return () => clearTimeout(timer);
-  }, [setLoading]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,17 +33,7 @@ const Categories = () => {
     <div className="categories">
       <div className="categories-container">
         <ScrollTouch className="categories-scroll-touch">
-          {categoriesLoading ? (
-            <>
-              <LoaderSkeleton variant="categories-item" width={120} height={44} />
-              <LoaderSkeleton variant="categories-item" width={100} height={44} />
-              <LoaderSkeleton variant="categories-item" width={90} height={44} />
-              <LoaderSkeleton variant="categories-item" width={110} height={44} />
-              <LoaderSkeleton variant="categories-item" width={100} height={44} />
-              <LoaderSkeleton variant="categories-item" width={80} height={44} />
-            </>
-          ) : (
-          categories.map((category) => (
+          {categories.map((category) => (
             <button
               key={category.id}
               className={`categories-item ${isActiveCategory(category.id) ? 'categories-item--active' : ''}`}
@@ -60,8 +41,7 @@ const Categories = () => {
             >
               {t(`categories.${category.key}`, category.key)}
             </button>
-          ))
-          )}
+          ))}
         </ScrollTouch>
       </div>
     </div>

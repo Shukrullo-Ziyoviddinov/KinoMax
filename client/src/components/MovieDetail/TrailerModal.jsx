@@ -708,27 +708,23 @@ const TrailerModal = ({ movie, onClose }) => {
                 onTouchStart={handleVideoWrapperTouchStart}
                 onTouchEnd={handleVideoWrapperTouchEnd}
               >
-                {trailerLoading ? (
-                  <LoaderSkeleton variant="trailer-modal-video" className="trailer-modal-video-skeleton" />
-                ) : (
-                  <video
-                    ref={videoRef}
-                    src={selectedTrailer?.trailers?.[contentLang] || selectedTrailer?.trailers?.uz || selectedTrailer?.trailers?.ru || ''}
-                    preload="auto"
-                    playsInline
-                    className="trailer-modal-video"
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onLoadedData={handleLoadedMetadata}
-                    onCanPlay={handleLoadedMetadata}
-                    onClick={handleVideoClick}
-                    onRateChange={(e) => {
-                      if (e.target.playbackRate !== playbackSpeed) console.log('Rate mismatch! Expected:', playbackSpeed, 'Got:', e.target.playbackRate);
-                    }}
-                  />
-                )}
+                <video
+                  ref={videoRef}
+                  src={selectedTrailer?.trailers?.[contentLang] || selectedTrailer?.trailers?.uz || selectedTrailer?.trailers?.ru || ''}
+                  preload="auto"
+                  playsInline
+                  className="trailer-modal-video"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onTimeUpdate={handleTimeUpdate}
+                  onLoadedMetadata={handleLoadedMetadata}
+                  onLoadedData={handleLoadedMetadata}
+                  onCanPlay={handleLoadedMetadata}
+                  onClick={handleVideoClick}
+                  onRateChange={(e) => {
+                    if (e.target.playbackRate !== playbackSpeed) console.log('Rate mismatch! Expected:', playbackSpeed, 'Got:', e.target.playbackRate);
+                  }}
+                />
                 
                 {trailerLoading ? (
                   <>

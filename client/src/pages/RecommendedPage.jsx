@@ -3,7 +3,6 @@ import { useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import { fetchGenres } from '../api/genresApi';
 import { getTopRatedMovies } from '../components/TopRatedContent/TopRatedContent';
-import { useLoading } from '../context/LoadingContext';
 import Filters from '../components/Filters';
 import Movies from '../components/Movies/Movies';
 import './RecommendedPage.css';
@@ -70,7 +69,7 @@ const getSimilarMovies = (currentMovie, movies) => {
 const RecommendedPage = () => {
   const { categoryId, movieId } = useParams();
   const location = useLocation();
-  const { allMovies, recommendedMovies } = useMoviesCatalog();
+  const { allMovies, recommendedMovies, isLoading: catalogLoading } = useMoviesCatalog();
   const [searchParams] = useSearchParams();
   const genreFromUrl = searchParams.get('genre');
   const [genresConfig, setGenresConfig] = useState([]);
@@ -84,7 +83,7 @@ const RecommendedPage = () => {
     }
     return [g];
   }, [genresConfig]);
-  const { recommendedLoading, setLoading } = useLoading();
+  const [genresLoading, setGenresLoading] = useState(true);
   const [selectedRatingType, setSelectedRatingType] = useState('rating');
   const [selectedRating, setSelectedRating] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -100,10 +99,13 @@ const RecommendedPage = () => {
 
     const loadGenres = async () => {
       try {
+        setGenresLoading(true);
         const data = await fetchGenres();
         if (isMounted) setGenresConfig(data);
       } catch (_error) {
         if (isMounted) setGenresConfig([]);
+      } finally {
+        if (isMounted) setGenresLoading(false);
       }
     };
 
@@ -181,11 +183,7 @@ const RecommendedPage = () => {
     filteredMovies = filteredMovies.filter(movie => movie.ageRestriction === selectedAge);
   }
 
-  useEffect(() => {
-    setLoading('recommended', true);
-    const timer = setTimeout(() => setLoading('recommended', false), 500);
-    return () => clearTimeout(timer);
-  }, [categoryId, movieId, location.pathname, setLoading]);
+  const recommendedLoading = catalogLoading || genresLoading;
 
   return (
     <div className="recommended-page">

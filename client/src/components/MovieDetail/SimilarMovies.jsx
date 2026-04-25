@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
+import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import ShowMoreButton, { getDisplayItems, DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
 import './SimilarMovies.css';
@@ -13,9 +14,23 @@ const SimilarMovies = ({ currentMovie }) => {
   const navigate = useNavigate();
   const { contentLang } = useContentLanguage();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { allMovies } = useMoviesCatalog();
+  const { allMovies, isLoading: catalogLoading } = useMoviesCatalog();
 
   if (!currentMovie) return null;
+
+  if (catalogLoading) {
+    return (
+      <div className="similar-movies similar-movies-skeleton">
+        <LoaderSkeleton variant="similar-movies-title" className="similar-movies-title-skeleton" width={200} height={28} />
+        <div style={{ display: 'flex', gap: '1rem', overflow: 'hidden' }}>
+          <LoaderSkeleton variant="similar-movies-item-image" className="similar-movies-item-skeleton" width={150} />
+          <LoaderSkeleton variant="similar-movies-item-image" className="similar-movies-item-skeleton" width={150} />
+          <LoaderSkeleton variant="similar-movies-item-image" className="similar-movies-item-skeleton" width={150} />
+          <LoaderSkeleton variant="similar-movies-item-image" className="similar-movies-item-skeleton" width={150} />
+        </div>
+      </div>
+    );
+  }
 
   const currentTypeCategory = Array.isArray(currentMovie.typeCategory)
     ? currentMovie.typeCategory.map((tc) => String(tc).toLowerCase().trim())

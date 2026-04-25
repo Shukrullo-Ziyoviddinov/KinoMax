@@ -13,7 +13,7 @@ const ActorsPage = () => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const { contentLang } = useContentLanguage();
-  const { allMovies } = useMoviesCatalog();
+  const { allMovies, isLoading: catalogLoading } = useMoviesCatalog();
   const [actorsLoading, setActorsLoading] = useState(true);
   const [actor, setActor] = useState(null);
 
@@ -41,8 +41,9 @@ const ActorsPage = () => {
   const actorMovies = actor
     ? allMovies.filter(movie => movie.actors?.includes(actor.actorId))
     : [];
+  const isPageLoading = actorsLoading || catalogLoading;
 
-  if (!actor) {
+  if (!isPageLoading && !actor) {
     return (
       <div className="actors-page actors-page-error">
         <h2>{i18n.language === 'uz' ? 'Aktyor topilmadi' : 'Актер не найден'}</h2>
@@ -59,7 +60,7 @@ const ActorsPage = () => {
   return (
     <div className="actors-page">
       <div className="actors-page-header">
-        {actorsLoading ? (
+        {isPageLoading ? (
           <LoaderSkeleton variant="actors-page-back" width={100} height={40} className="actors-page-back-skeleton" />
         ) : (
           <button className="actors-page-back" onClick={() => navigate(-1)}>
@@ -67,7 +68,7 @@ const ActorsPage = () => {
           </button>
         )}
         <div className="actors-page-profile">
-          {actorsLoading ? (
+          {isPageLoading ? (
             <>
               <LoaderSkeleton variant="actors-page-image" width={120} className="actors-page-image-skeleton" />
               <div className="actors-page-info actors-page-info-skeleton">
@@ -89,7 +90,7 @@ const ActorsPage = () => {
         </div>
       </div>
       <div className="actors-page-movies">
-        {actorsLoading ? (
+        {isPageLoading ? (
           <LoaderSkeleton variant="text" width={180} height={28} className="actors-page-movies-title-skeleton" />
         ) : (
           <h2 className="actors-page-movies-title">
@@ -101,7 +102,7 @@ const ActorsPage = () => {
           limit={null}
           filteredMovies={actorMovies}
           hideHeader
-          isLoading={actorsLoading}
+          isLoading={isPageLoading}
         />
       </div>
     </div>

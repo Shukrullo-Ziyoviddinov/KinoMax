@@ -12,7 +12,7 @@ import './Home.css';
 const Home = () => {
   const { t } = useTranslation();
   const { setLoading } = useLoading();
-  const { sections } = useMoviesCatalog();
+  const { sections, isLoading: catalogLoading } = useMoviesCatalog();
 
   const {
     koreaDrama = [],
@@ -30,11 +30,12 @@ const Home = () => {
     retroMovies = [],
     uzbekMovies = [],
   } = sections || {};
+
   useEffect(() => {
-    setLoading('movies', true);
-    const timer = setTimeout(() => setLoading('movies', false), 500);
-    return () => clearTimeout(timer);
-  }, [setLoading]);
+    setLoading('movies', catalogLoading);
+    return () => setLoading('movies', false);
+  }, [catalogLoading, setLoading]);
+
   return (
     <div className="home">
       <Banner />

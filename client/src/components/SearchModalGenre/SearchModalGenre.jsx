@@ -4,7 +4,33 @@ import { useNavigate } from 'react-router-dom';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import { fetchGenres } from '../../api/genresApi';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
+import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import './SearchModalGenre.css';
+
+const GenreItem = ({ genre, title, onClick }) => {
+  const [imageLoading, setImageLoading] = useState(true);
+
+  return (
+    <div className="search-modal-genre-item" onClick={onClick}>
+      <div className="search-modal-genre-item-image-wrapper">
+        {imageLoading && (
+          <LoaderSkeleton
+            variant="banner-image"
+            className="search-modal-genre-item-image-skeleton"
+          />
+        )}
+        <img
+          src={genre.img}
+          alt={title}
+          className={`search-modal-genre-item-image ${imageLoading ? 'is-loading' : ''}`}
+          onLoad={() => setImageLoading(false)}
+          onError={() => setImageLoading(false)}
+        />
+        <span className="search-modal-genre-item-title">{title}</span>
+      </div>
+    </div>
+  );
+};
 
 const SearchModalGenre = ({ onGenreClick }) => {
   const { t } = useTranslation();
@@ -52,20 +78,12 @@ const SearchModalGenre = ({ onGenreClick }) => {
       <h3 className="search-modal-genre-title">{t('filters.genre', 'Janr')}</h3>
       <HorizontalScroll scrollAmount={320}>
         {genres.map((genre) => (
-          <div
+          <GenreItem
             key={genre.genreId}
-            className="search-modal-genre-item"
+            genre={genre}
+            title={getGenreTitle(genre)}
             onClick={() => handleGenreClick(genre)}
-          >
-            <div className="search-modal-genre-item-image-wrapper">
-              <img
-                src={genre.img}
-                alt={getGenreTitle(genre)}
-                className="search-modal-genre-item-image"
-              />
-              <span className="search-modal-genre-item-title">{getGenreTitle(genre)}</span>
-            </div>
-          </div>
+          />
         ))}
       </HorizontalScroll>
     </div>

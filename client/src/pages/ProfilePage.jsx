@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import ProfileEditModal from '../components/Profile/ProfileEditModal';
 import LoaderSkeleton from '../components/LoaderSkeleton/LoaderSkeleton';
-import { useLoading } from '../context/LoadingContext';
 import ProfileLanguageModal from '../components/Profile/ProfileLanguageModal';
 import ProfileContactModal from '../components/Profile/ProfileContactModal';
 import ProfileSocialModal from '../components/Profile/ProfileSocialModal';
@@ -39,7 +38,6 @@ const getCurrentLanguage = () => {
 const ProfilePage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { profileLoading, setLoading } = useLoading();
   const fileInputRef = useRef(null);
   const [profile, setProfile] = useState(getStoredProfile);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -52,28 +50,26 @@ const ProfilePage = () => {
     social: {},
     appStore: {},
   });
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
     setCurrentLanguage(getCurrentLanguage());
   }, [i18n.language]);
 
   useEffect(() => {
-    setLoading('profile', true);
-    const timer = setTimeout(() => setLoading('profile', false), 500);
-    return () => clearTimeout(timer);
-  }, [setLoading]);
-
-  useEffect(() => {
     let isMounted = true;
 
     const loadSocialData = async () => {
       try {
+        if (isMounted) setProfileLoading(true);
         const data = await fetchSocialLinks();
         if (isMounted) setSocialData(data);
       } catch (_error) {
         if (isMounted) {
           setSocialData({ contact: {}, social: {}, appStore: {} });
         }
+      } finally {
+        if (isMounted) setProfileLoading(false);
       }
     };
 

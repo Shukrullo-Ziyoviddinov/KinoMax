@@ -37,7 +37,7 @@ const MovieDetail = () => {
   const [isDisliked, setIsDisliked] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
-  const [descriptionModalLoading, setDescriptionModalLoading] = useState(false);
+  const [actorsLoading, setActorsLoading] = useState(false);
   const [modalStartY, setModalStartY] = useState(0);
   const [modalCurrentY, setModalCurrentY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -90,14 +90,18 @@ const MovieDetail = () => {
     const loadActors = async () => {
       if (!movie?.actors?.length) {
         if (isMounted) setMovieActors([]);
+        if (isMounted) setActorsLoading(false);
         return;
       }
 
       try {
+        if (isMounted) setActorsLoading(true);
         const actors = await fetchActorsByIds(movie.actors);
         if (isMounted) setMovieActors(actors);
       } catch (_error) {
         if (isMounted) setMovieActors([]);
+      } finally {
+        if (isMounted) setActorsLoading(false);
       }
     };
 
@@ -153,16 +157,11 @@ const MovieDetail = () => {
   useEffect(() => {
     if (showDescriptionModal) {
       document.body.style.overflow = 'hidden';
-      setDescriptionModalLoading(true);
-      const t = setTimeout(() => setDescriptionModalLoading(false), 400);
       return () => {
-        clearTimeout(t);
         document.body.style.overflow = '';
-        setDescriptionModalLoading(false);
       };
     } else {
       document.body.style.overflow = '';
-      setDescriptionModalLoading(false);
     }
   }, [showDescriptionModal]);
 
@@ -836,6 +835,24 @@ const MovieDetail = () => {
               })()}
 
               {movie?.actors?.length > 0 && (() => {
+                if (actorsLoading) {
+                  return (
+                    <div className="movie-detail-actors">
+                      <h3 className="movie-detail-actors-title">
+                        {i18n.language === 'uz' ? 'Aktyorlar' : 'Актеры'}
+                      </h3>
+                      <div className="movie-detail-actors-scroll">
+                        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'nowrap', overflow: 'hidden' }}>
+                          <LoaderSkeleton variant="actor-item" width={80} height={100} />
+                          <LoaderSkeleton variant="actor-item" width={80} height={100} />
+                          <LoaderSkeleton variant="actor-item" width={80} height={100} />
+                          <LoaderSkeleton variant="actor-item" width={80} height={100} />
+                          <LoaderSkeleton variant="actor-item" width={80} height={100} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
                 if (movieActors.length === 0) return null;
                 return (
                   <div className="movie-detail-actors">
@@ -929,36 +946,21 @@ const MovieDetail = () => {
               onTouchStart={handleModalHeaderTouchStart}
               onTouchEnd={handleModalTouchEnd}
             >
-              {descriptionModalLoading ? (
-                <LoaderSkeleton variant="text" width="60%" height={28} className="movie-detail-description-modal-header-title-skeleton" />
-              ) : (
-                <h3>
-                  {i18n.language === 'uz' ? 'Film haqida qisqacha' : 'Кратко о фильме'}
-                </h3>
-              )}
-              {descriptionModalLoading ? (
-                <LoaderSkeleton variant="description-modal-close" className="movie-detail-description-modal-close-skeleton" />
-              ) : (
-                <button 
-                  className="movie-detail-description-modal-close"
-                  onClick={() => setShowDescriptionModal(false)}
-                  aria-label="Close"
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                  </svg>
-                </button>
-              )}
+              <h3>
+                {i18n.language === 'uz' ? 'Film haqida qisqacha' : 'Кратко о фильме'}
+              </h3>
+              <button 
+                className="movie-detail-description-modal-close"
+                onClick={() => setShowDescriptionModal(false)}
+                aria-label="Close"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+              </button>
             </div>
             <div className="movie-detail-description-modal-body">
-              {descriptionModalLoading ? (
-                <>
-                  <LoaderSkeleton variant="text" width="100%" height={80} className="movie-detail-description-modal-text-skeleton" />
-                  <div className="movie-detail-description-modal-info movie-detail-description-modal-info-skeleton">
-                    <LoaderSkeleton variant="description-modal-info-item" count={5} className="movie-detail-description-info-items-skeleton" />
-                  </div>
-                </>
-              ) : isNewFormat ? (
+              {isNewFormat ? (
                 <>
                   <div className="movie-detail-description-modal-text">
                     <p>{descriptionText}</p>

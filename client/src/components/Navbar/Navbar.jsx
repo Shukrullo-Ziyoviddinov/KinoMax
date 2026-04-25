@@ -2,17 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LanguageModal from './LanguageModal';
-import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import SearchModalGenre from '../SearchModalGenre/SearchModalGenre';
 import SearchModalAnons from '../SearchModalAnons/SearchModalAnons';
 import SearchModalTavsiya from '../SearchModalTavsiya/SearchModalTavsiya';
 import SearchModalResults from '../SearchModalResults/SearchModalResults';
-import { useLoading } from '../../context/LoadingContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
-  const { navbarLoading, setLoading } = useLoading();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,15 +48,6 @@ const Navbar = () => {
 
   const currentLanguage = getCurrentLanguage();
   const currentLanguageImage = languages.find(lang => lang.code === currentLanguage)?.image || languages[0].image;
-
-  useEffect(() => {
-    setLoading('navbar', true);
-    const timer = setTimeout(() => setLoading('navbar', false), 400);
-    return () => {
-      clearTimeout(timer);
-      setLoading('navbar', false);
-    };
-  }, [setLoading]);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('i18nextLng') || 'uz';
@@ -141,7 +129,7 @@ const Navbar = () => {
   };
 
   const openSearchModal = () => {
-    if (!navbarLoading) setShowSearchModal(true);
+    setShowSearchModal(true);
   };
 
   return (
@@ -149,12 +137,8 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <div className="navbar-left">
-          <div className="navbar-logo" onClick={() => !navbarLoading && navigate('/')}>
-            {navbarLoading ? (
-              <LoaderSkeleton variant="logo" className="navbar-logo-img-skeleton" width={120} height={40} />
-            ) : (
-              <img src="/img/KinoMaxLogo_preview_rev_1.png" alt="KinoMax" className="navbar-logo-img" />
-            )}
+          <div className="navbar-logo" onClick={() => navigate('/')}>
+            <img src="/img/KinoMaxLogo_preview_rev_1.png" alt="KinoMax" className="navbar-logo-img" />
           </div>
           <button
             className="navbar-mobile-search-trigger"
@@ -171,9 +155,6 @@ const Navbar = () => {
         <div className="navbar-center navbar-desktop-only">
           <form onSubmit={handleSearch} className="navbar-search">
             <div className="navbar-search-wrap" ref={searchInputRef}>
-              {navbarLoading ? (
-                <LoaderSkeleton variant="search" className="navbar-search-skeleton" width="100%" height={44} />
-              ) : (
               <>
               <input
                 type="text"
@@ -202,20 +183,11 @@ const Navbar = () => {
                 )}
               </button>
               </>
-              )}
             </div>
           </form>
         </div>
 
         <div className="navbar-right">
-          {navbarLoading ? (
-            <>
-              <LoaderSkeleton variant="icon" className="navbar-icon-skeleton navbar-desktop-only" width={40} height={40} />
-              <LoaderSkeleton variant="icon" className="navbar-icon-skeleton navbar-desktop-only" width={40} height={40} />
-              <LoaderSkeleton variant="icon" className="navbar-icon-skeleton navbar-desktop-only" width={40} height={40} />
-              <LoaderSkeleton variant="language-btn" className="navbar-language-skeleton" width={50} height={35} />
-            </>
-          ) : (
           <>
           <button
             className="navbar-icon-btn navbar-desktop-only"
@@ -259,7 +231,6 @@ const Navbar = () => {
             )}
           </div>
           </>
-          )}
         </div>
       </div>
     </nav>

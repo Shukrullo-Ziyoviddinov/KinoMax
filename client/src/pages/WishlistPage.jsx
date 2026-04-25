@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useWishlist } from '../context/WishlistContext';
-import { useLoading } from '../context/LoadingContext';
 import { useMoviesCatalog } from '../context/MoviesCatalogContext';
 import Movies from '../components/Movies/Movies';
 import LoaderSkeleton from '../components/LoaderSkeleton/LoaderSkeleton';
@@ -12,17 +11,10 @@ const WishlistPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { wishlistIds } = useWishlist();
-  const { wishlistLoading, setLoading } = useLoading();
-  const { allMovies } = useMoviesCatalog();
+  const { allMovies, isLoading: wishlistLoading } = useMoviesCatalog();
 
   const wishlistMovies = allMovies.filter((m) => wishlistIds.includes(m.id));
   const isEmpty = wishlistMovies.length === 0;
-
-  useEffect(() => {
-    setLoading('wishlist', true);
-    const timer = setTimeout(() => setLoading('wishlist', false), 500);
-    return () => clearTimeout(timer);
-  }, [setLoading]);
 
   if (isEmpty) {
     return (

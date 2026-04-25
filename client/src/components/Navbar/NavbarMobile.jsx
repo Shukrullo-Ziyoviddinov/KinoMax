@@ -2,17 +2,14 @@ import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
-import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import SearchModalGenre from '../SearchModalGenre/SearchModalGenre';
 import SearchModalAnons from '../SearchModalAnons/SearchModalAnons';
 import SearchModalTavsiya from '../SearchModalTavsiya/SearchModalTavsiya';
 import SearchModalResults from '../SearchModalResults/SearchModalResults';
-import { useLoading } from '../../context/LoadingContext';
 import './NavbarMobile.css';
 
 const NavbarMobile = () => {
   const { t } = useTranslation();
-  const { navbarLoading } = useLoading();
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
@@ -56,14 +53,6 @@ const NavbarMobile = () => {
   return (
     <>
       <nav className="navbar-mobile">
-        {navbarLoading ? (
-          <>
-            <LoaderSkeleton variant="icon" className="navbar-mobile-skeleton-item" width={36} height={36} />
-            <LoaderSkeleton variant="icon" className="navbar-mobile-skeleton-item" width={36} height={36} />
-            <LoaderSkeleton variant="icon" className="navbar-mobile-skeleton-item" width={36} height={36} />
-            <LoaderSkeleton variant="icon" className="navbar-mobile-skeleton-item" width={36} height={36} />
-          </>
-        ) : (
         <>
         <button
           className={`navbar-mobile-item ${isHomeActive ? 'navbar-mobile-item-active' : ''}`}
@@ -112,7 +101,6 @@ const NavbarMobile = () => {
           <span>{t('navbar.profile')}</span>
         </button>
         </>
-        )}
       </nav>
 
       {showSearch && (

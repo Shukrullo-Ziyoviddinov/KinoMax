@@ -97,13 +97,13 @@
 }
 
 .profile-lang-modal-item:hover {
-  background: #ca4edd3a ;
-  border-color: #ca4edd ;
+  background: #ca4edd3a;
+  border-color: #7b4edd;
 }
 
 .profile-lang-modal-item.active {
-  background: #ca4edd3a ;
-  border-color: #ca4edd ;
+  background: #964edd3a;
+  border-color: #7b4edd;
 }
 
 .profile-lang-modal-flag {
@@ -121,7 +121,7 @@
 .profile-lang-modal-save {
   width: 100%;
   padding: 0.85rem 1.5rem;
-  background: linear-gradient(135deg, #d85de8 0%, #ca4edd 100%);
+  background: linear-gradient(135deg, #7b4edd, #692cbf);
   border: none;
   border-radius: 12px;
   color: #fff;

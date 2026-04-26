@@ -98,7 +98,7 @@ const Home = () => {
     <div className="home">
       <Banner />
       <Categories />
-      <Movies sectionType="recommended" limit={DEFAULT_LIMIT} showHorizontalScroll={true} />
+      <Movies sectionType="recommended" limit={DEFAULT_LIMIT} showHorizontalScroll={true} moreTo="/recommended" />
       {renderedSections}
     </div>
   );

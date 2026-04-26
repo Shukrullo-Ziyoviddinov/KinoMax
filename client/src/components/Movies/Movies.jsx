@@ -16,7 +16,7 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { contentLang } = useContentLanguage();
   const { moviesLoading } = useLoading();
-  const { allMovies, recommendedMovies } = useMoviesCatalog();
+  const { allMovies, recommendedMovies, hasMore: catalogHasMore } = useMoviesCatalog();
   const isLoading = isLoadingProp ?? moviesLoading;
 
   let allMoviesData = filteredMovies || allMovies;
@@ -26,7 +26,8 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
 
   const shouldShowLimit = limit != null;
   const displayMovies = getDisplayItems(allMoviesData, shouldShowLimit ? limit : null);
-  const hasMoreMovies = shouldShowMore(allMoviesData, limit, moreTo);
+  const hasMoreMovies = shouldShowMore(allMoviesData, limit, moreTo)
+    || (sectionType === 'recommended' && Boolean(catalogHasMore) && (allMoviesData?.length || 0) > 0);
   const placeholderCount = shouldShowLimit ? Math.max(4, Math.min(limit || DEFAULT_LIMIT, 8)) : 8;
   const shouldRenderPlaceholders = isLoading && allMoviesData.length === 0;
 

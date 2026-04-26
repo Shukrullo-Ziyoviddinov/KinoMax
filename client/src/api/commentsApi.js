@@ -2,7 +2,6 @@ import { BASE_URL } from '../config/api';
 import { getAuthToken } from '../utils/authStorage';
 import { createApiError, normalizeApiError } from '../utils/errorHandler';
 
-const LIKED_PREFIX = 'violet_comment_liked_';
 const getBase = () => BASE_URL.replace(/\/$/, '');
 const toUrl = (path) => `${getBase()}${path.startsWith('/') ? path : `/${path}`}`;
 const parseJsonSafe = async (res) => {
@@ -26,7 +25,10 @@ export const getComments = (movieId) => {
 
 export const fetchComments = async (movieId) => {
   try {
-    const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments`));
+    const token = getAuthToken();
+    const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments`), {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
@@ -62,33 +64,40 @@ export const createComment = async (movieId, payload) => {
   }
 };
 
-/**
- * @param {string|number} movieId - Kino ID
- * @returns {Set<string>} Like qilingan comment ID'lar (faqat shu kinoga)
- */
-export const getLikedIds = (movieId) => {
+export const likeComment = async (movieId, commentId) => {
   try {
-    const key = `${LIKED_PREFIX}${toMovieKey(movieId)}`;
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return new Set(Array.isArray(parsed) ? parsed : []);
+    const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments/${commentId}/like`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+    });
+    const json = await parseJsonSafe(response);
+    if (!response.ok || !(json?.success ?? json?.ok)) {
+      throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
-  } catch (e) {
-    console.warn('getLikedIds error:', e);
+    return json?.data || { likes: 0, likedByMe: true };
+  } catch (error) {
+    throw normalizeApiError(error);
   }
-  return new Set();
 };
 
-/**
- * @param {string|number} movieId - Kino ID
- * @param {Set<string>} likedIds - Yangilangan like ID'lar
- */
-export const saveLikedIds = (movieId, likedIds) => {
+export const unlikeComment = async (movieId, commentId) => {
   try {
-    const key = `${LIKED_PREFIX}${toMovieKey(movieId)}`;
-    localStorage.setItem(key, JSON.stringify([...likedIds]));
-  } catch (e) {
-    console.warn('saveLikedIds error:', e);
+    const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments/${commentId}/like`), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+    });
+    const json = await parseJsonSafe(response);
+    if (!response.ok || !(json?.success ?? json?.ok)) {
+      throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
+    }
+    return json?.data || { likes: 0, likedByMe: false };
+  } catch (error) {
+    throw normalizeApiError(error);
   }
 };

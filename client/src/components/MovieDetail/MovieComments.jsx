@@ -24,33 +24,10 @@ const getStoredProfile = () => {
   return { name: '', surname: '', avatar: null };
 };
 
-const toggleCommentLike = (movieId, commentId, comments, setComments) => {
-  const liked = commentsApi.getLikedIds(movieId);
-  const isLiked = liked.has(String(commentId));
-
-  const updateInTree = (list) => {
-    return list.map((c) => {
-      if (String(c.id) === String(commentId)) {
-        return { ...c, likes: Math.max(0, (c.likes || 0) + (isLiked ? -1 : 1)) };
-      }
-      if (c.replies?.length) {
-        return { ...c, replies: updateInTree(c.replies) };
-      }
-      return c;
-    });
-  };
-
-  const updated = updateInTree(comments);
-  setComments(updated);
-
-  if (isLiked) liked.delete(String(commentId));
-  else liked.add(String(commentId));
-  commentsApi.saveLikedIds(movieId, liked);
-};
-
 const migrateComment = (c) => ({
   ...c,
   likes: c.likes ?? 0,
+  likedByMe: Boolean(c.likedByMe),
   replies: Array.isArray(c.replies) ? c.replies.map(migrateComment) : [],
 });
 
@@ -207,6 +184,85 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
     setReplyingTo(comment);
   };
 
+  const handleToggleCommentLike = async (commentId) => {
+    if (!getAuthToken()) {
+      openAuthModal();
+      return;
+    }
+
+    let previous = null;
+    let optimistic = null;
+
+    setComments((prev) => {
+      const updateInTree = (list) =>
+        list.map((item) => {
+          if (String(item.id) === String(commentId)) {
+            previous = { likes: item.likes || 0, likedByMe: Boolean(item.likedByMe) };
+            const nextLiked = !Boolean(item.likedByMe);
+            optimistic = {
+              likes: Math.max(0, (item.likes || 0) + (nextLiked ? 1 : -1)),
+              likedByMe: nextLiked,
+            };
+            return { ...item, ...optimistic };
+          }
+          if (!item.replies?.length) return item;
+          return { ...item, replies: updateInTree(item.replies) };
+        });
+      return updateInTree(prev);
+    });
+
+    try {
+      if (optimistic?.likedByMe) {
+        const result = await commentsApi.likeComment(movieId, commentId);
+        setComments((prev) => {
+          const syncTree = (list) =>
+            list.map((item) => {
+              if (String(item.id) === String(commentId)) {
+                return {
+                  ...item,
+                  likes: typeof result?.likes === 'number' ? result.likes : item.likes,
+                  likedByMe: Boolean(result?.likedByMe),
+                };
+              }
+              if (!item.replies?.length) return item;
+              return { ...item, replies: syncTree(item.replies) };
+            });
+          return syncTree(prev);
+        });
+      } else {
+        const result = await commentsApi.unlikeComment(movieId, commentId);
+        setComments((prev) => {
+          const syncTree = (list) =>
+            list.map((item) => {
+              if (String(item.id) === String(commentId)) {
+                return {
+                  ...item,
+                  likes: typeof result?.likes === 'number' ? result.likes : item.likes,
+                  likedByMe: Boolean(result?.likedByMe),
+                };
+              }
+              if (!item.replies?.length) return item;
+              return { ...item, replies: syncTree(item.replies) };
+            });
+          return syncTree(prev);
+        });
+      }
+    } catch (_error) {
+      if (!previous) return;
+      setComments((prev) => {
+        const rollbackTree = (list) =>
+          list.map((item) => {
+            if (String(item.id) === String(commentId)) {
+              return { ...item, likes: previous.likes, likedByMe: previous.likedByMe };
+            }
+            if (!item.replies?.length) return item;
+            return { ...item, replies: rollbackTree(item.replies) };
+          });
+        return rollbackTree(prev);
+      });
+    }
+  };
+
   const handleEmojiClick = (emoji) => {
     setInputValue((prev) => prev + emoji);
   };
@@ -242,8 +298,6 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
   const displayedComments = getDisplayedComments(comments);
   const totalCount = countTotalComments(comments);
   const hasMore = totalCount > PREVIEW_LIMIT;
-  const likedIds = commentsApi.getLikedIds(movieId);
-
   useImperativeHandle(ref, () => ({
     openModal: () => setShowCommentsModal(true),
   }), []);
@@ -285,15 +339,15 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
           </div>
         </div>
         <div
-          className={`movie-detail-comment-like-wrap ${likedIds.has(String(c.id)) ? 'active' : ''}`}
-          onClick={(e) => { e.stopPropagation(); toggleCommentLike(movieId, String(c.id), comments, setComments); }}
+          className={`movie-detail-comment-like-wrap ${c.likedByMe ? 'active' : ''}`}
+          onClick={(e) => { e.stopPropagation(); handleToggleCommentLike(String(c.id)); }}
           role="button"
           tabIndex={0}
-          onKeyDown={(ev) => ev.key === 'Enter' && toggleCommentLike(movieId, String(c.id), comments, setComments)}
+          onKeyDown={(ev) => ev.key === 'Enter' && handleToggleCommentLike(String(c.id))}
           aria-label="Like"
         >
           <button type="button" className="movie-detail-comment-like-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={likedIds.has(String(c.id)) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={c.likedByMe ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>

@@ -8,10 +8,25 @@ const { buildTopRatedMovies } = require("../services/topRatedService");
 const { toPublicMovie, buildSimilarMovies } = require("../services/similarMoviesService");
 const authMiddleware = require("../middlewares/auth.middleware");
 const MovieComment = require("../models/movieComment");
+const User = require("../models/User");
+const { verifyToken } = require("../utils/token");
 
 const router = express.Router();
 
-const toCommentTree = (rows = []) => {
+const getOptionalUserId = async (req) => {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const [type, token] = authHeader.split(" ");
+    if (type !== "Bearer" || !token) return null;
+    const payload = verifyToken(token);
+    const user = await User.findById(payload.userId).select("_id").lean();
+    return user?._id ? String(user._id) : null;
+  } catch (_error) {
+    return null;
+  }
+};
+
+const toCommentTree = (rows = [], authorMap = new Map(), currentUserId = null) => {
   const byParent = new Map();
   rows.forEach((row) => {
     const parentKey = row.parentId ? String(row.parentId) : "root";
@@ -21,14 +36,17 @@ const toCommentTree = (rows = []) => {
 
   const build = (parentKey) =>
     (byParent.get(parentKey) || []).map((row) => ({
+      // Always prefer current profile data so old comments show fresh avatar/name.
+      ...(authorMap.get(String(row.authorId)) || {}),
       id: String(row._id),
       movieId: row.movieId,
       parentId: row.parentId ? String(row.parentId) : null,
       text: row.text,
-      authorName: row.authorName,
-      authorAvatar: row.authorAvatar || null,
+      authorName: (authorMap.get(String(row.authorId))?.authorName || row.authorName),
+      authorAvatar: (authorMap.get(String(row.authorId))?.authorAvatar ?? row.authorAvatar ?? null),
       createdAt: row.createdAt,
       likes: row.likes || 0,
+      likedByMe: currentUserId ? (row.likedBy || []).some((id) => String(id) === String(currentUserId)) : false,
       replies: build(String(row._id)),
     }));
 
@@ -82,10 +100,27 @@ router.get("/top-rated", async (req, res, next) => {
 
 router.get("/:movieId/comments", validateIdParam("movieId"), async (req, res, next) => {
   try {
+    const currentUserId = await getOptionalUserId(req);
     const comments = await MovieComment.find({ movieId: req.params.movieId })
       .sort({ createdAt: -1 })
       .lean();
-    return success(res, toCommentTree(comments), "Kommentlar olindi.");
+
+    const authorIds = [...new Set(comments.map((item) => String(item.authorId)).filter(Boolean))];
+    let authorMap = new Map();
+    if (authorIds.length > 0) {
+      const authors = await User.find({ _id: { $in: authorIds } })
+        .select("firstName lastName avatar")
+        .lean();
+
+      authorMap = new Map(
+        authors.map((user) => {
+          const authorName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || "User";
+          return [String(user._id), { authorName, authorAvatar: user.avatar || null }];
+        })
+      );
+    }
+
+    return success(res, toCommentTree(comments, authorMap, currentUserId), "Kommentlar olindi.");
   } catch (error) {
     return next(error);
   }
@@ -121,10 +156,59 @@ router.post("/:movieId/comments", validateIdParam("movieId"), authMiddleware, as
         authorAvatar: newComment.authorAvatar || null,
         createdAt: newComment.createdAt,
         likes: newComment.likes || 0,
+        likedByMe: false,
       },
       "Komment qo'shildi.",
       201
     );
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/:movieId/comments/:commentId/like", validateIdParam("movieId"), authMiddleware, async (req, res, next) => {
+  try {
+    const comment = await MovieComment.findOne({
+      _id: req.params.commentId,
+      movieId: req.params.movieId,
+    });
+
+    if (!comment) {
+      return fail(res, "Komment topilmadi.", 404);
+    }
+
+    const userId = String(req.user._id);
+    const likedBy = Array.isArray(comment.likedBy) ? comment.likedBy.map((id) => String(id)) : [];
+    if (!likedBy.includes(userId)) {
+      comment.likedBy = [...likedBy, req.user._id];
+      comment.likes = comment.likedBy.length;
+      await comment.save();
+    }
+
+    return success(res, { likes: comment.likes || 0, likedByMe: true }, "Kommentga like bosildi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/:movieId/comments/:commentId/like", validateIdParam("movieId"), authMiddleware, async (req, res, next) => {
+  try {
+    const comment = await MovieComment.findOne({
+      _id: req.params.commentId,
+      movieId: req.params.movieId,
+    });
+
+    if (!comment) {
+      return fail(res, "Komment topilmadi.", 404);
+    }
+
+    const userId = String(req.user._id);
+    const nextLikedBy = (Array.isArray(comment.likedBy) ? comment.likedBy : []).filter((id) => String(id) !== userId);
+    comment.likedBy = nextLikedBy;
+    comment.likes = nextLikedBy.length;
+    await comment.save();
+
+    return success(res, { likes: comment.likes || 0, likedByMe: false }, "Komment like'i olib tashlandi.");
   } catch (error) {
     return next(error);
   }

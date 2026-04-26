@@ -78,36 +78,36 @@ function App() {
 
   return (
     <Router>
-      <AuthModalProvider>
-        <ContentLanguageProvider>
-        <LoadingProvider>
-        <MoviesCatalogProvider>
-        <ToastProvider>
-        <WishlistProvider>
-        <ViewedMoviesProvider>
-        <div className="App">
-          <Navbar />
-          <main className="App-main">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/category/:categoryId" element={<RecommendedPage />} />
-              <Route path="/similar-movies/:movieId" element={<RecommendedPage />} />
-              <Route path="/movie/:id" element={<MovieDetail />} />
-              <Route path="/recommended" element={<RecommendedPage />} />
-              <Route path="/wishlist" element={<WishlistPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/actor/:id" element={<ActorsPage />} />
-            </Routes>
-          </main>
-          <NavbarMobile />
-        </div>
-        </ViewedMoviesProvider>
-        </WishlistProvider>
-        </ToastProvider>
-        </MoviesCatalogProvider>
-        </LoadingProvider>
-        </ContentLanguageProvider>
-      </AuthModalProvider>
+      <ToastProvider>
+        <AuthModalProvider>
+          <ContentLanguageProvider>
+          <LoadingProvider>
+          <MoviesCatalogProvider>
+          <WishlistProvider>
+          <ViewedMoviesProvider>
+          <div className="App">
+            <Navbar />
+            <main className="App-main">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/category/:categoryId" element={<RecommendedPage />} />
+                <Route path="/similar-movies/:movieId" element={<RecommendedPage />} />
+                <Route path="/movie/:id" element={<MovieDetail />} />
+                <Route path="/recommended" element={<RecommendedPage />} />
+                <Route path="/wishlist" element={<WishlistPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/actor/:id" element={<ActorsPage />} />
+              </Routes>
+            </main>
+            <NavbarMobile />
+          </div>
+          </ViewedMoviesProvider>
+          </WishlistProvider>
+          </MoviesCatalogProvider>
+          </LoadingProvider>
+          </ContentLanguageProvider>
+        </AuthModalProvider>
+      </ToastProvider>
     </Router>
   );
 }

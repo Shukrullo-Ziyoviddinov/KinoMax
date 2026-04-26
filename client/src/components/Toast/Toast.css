@@ -1,6 +1,6 @@
 .toast-root {
   position: fixed;
-  top: 50px;
+  top: 100px;
   left: 0;
   right: 0;
   z-index: 2200;

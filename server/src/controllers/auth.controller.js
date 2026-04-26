@@ -13,8 +13,17 @@ const toUserPayload = (user) => ({
   avatar: user.avatar || null,
 });
 
+const ensureJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    const error = new Error("JWT_SECRET .env faylda topilmadi.");
+    error.statusCode = 500;
+    throw error;
+  }
+};
+
 const register = async (req, res, next) => {
   try {
+    ensureJwtSecret();
     const { firstName, lastName, phone, password, avatar } = req.body || {};
 
     if (!firstName || !lastName || !phone || !password) {
@@ -61,6 +70,7 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
+    ensureJwtSecret();
     const { phone, password } = req.body || {};
     if (!phone || !password) {
       const error = new Error("Telefon raqam va parol majburiy.");

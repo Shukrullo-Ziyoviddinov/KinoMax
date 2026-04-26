@@ -14,6 +14,7 @@ import { ContentLanguageProvider } from './context/ContentLanguageContext';
 import { LoadingProvider } from './context/LoadingContext';
 import { MoviesCatalogProvider } from './context/MoviesCatalogContext';
 import { ToastProvider } from './context/ToastContext';
+import { AuthModalProvider } from './context/AuthModalContext';
 import './App.css';
 
 function App() {
@@ -76,13 +77,14 @@ function App() {
   }, []);
 
   return (
-    <WishlistProvider>
-      <ViewedMoviesProvider>
-      <Router>
+    <Router>
+      <AuthModalProvider>
         <ContentLanguageProvider>
         <LoadingProvider>
         <MoviesCatalogProvider>
         <ToastProvider>
+        <WishlistProvider>
+        <ViewedMoviesProvider>
         <div className="App">
           <Navbar />
           <main className="App-main">
@@ -99,13 +101,14 @@ function App() {
           </main>
           <NavbarMobile />
         </div>
+        </ViewedMoviesProvider>
+        </WishlistProvider>
         </ToastProvider>
         </MoviesCatalogProvider>
         </LoadingProvider>
         </ContentLanguageProvider>
-      </Router>
-      </ViewedMoviesProvider>
-    </WishlistProvider>
+      </AuthModalProvider>
+    </Router>
   );
 }
 

@@ -26,6 +26,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    wishlist: {
+      type: [Number],
+      default: [],
+    },
+    movieReactions: {
+      type: Map,
+      of: String,
+      default: {},
+    },
+    trailerReactions: {
+      type: Map,
+      of: String,
+      default: {},
+    },
   },
   { timestamps: true }
 );

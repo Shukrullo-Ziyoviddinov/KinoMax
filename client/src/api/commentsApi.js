@@ -1,16 +1,17 @@
-/**
- * Comments API - Backendga mos
- * Hozir localStorage, keyin fetch/axios bilan almashtiriladi
- *
- * Backend endpoint'lari (kelajakda):
- * GET    /api/movies/:movieId/comments
- * POST   /api/movies/:movieId/comments
- * PATCH  /api/movies/:movieId/comments/:commentId/like
- * GET    /api/movies/:movieId/comments/liked
- */
+import { BASE_URL } from '../config/api';
+import { getAuthToken } from '../utils/authStorage';
+import { createApiError, normalizeApiError } from '../utils/errorHandler';
 
-const STORAGE_PREFIX = 'violet_movie_comments_';
 const LIKED_PREFIX = 'violet_comment_liked_';
+const getBase = () => BASE_URL.replace(/\/$/, '');
+const toUrl = (path) => `${getBase()}${path.startsWith('/') ? path : `/${path}`}`;
+const parseJsonSafe = async (res) => {
+  try {
+    return await res.json();
+  } catch (_error) {
+    return null;
+  }
+};
 
 /** movieId har doim bir xil formatda (aralashmasin) */
 export const toMovieKey = (movieId) => String(movieId);
@@ -20,29 +21,44 @@ export const toMovieKey = (movieId) => String(movieId);
  * @returns {Array} Kommentlar ro'yxati (faqat shu kinoga tegishli)
  */
 export const getComments = (movieId) => {
+  return fetchComments(movieId);
+};
+
+export const fetchComments = async (movieId) => {
   try {
-    const key = `${STORAGE_PREFIX}${toMovieKey(movieId)}`;
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return Array.isArray(parsed) ? parsed : [];
+    const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments`));
+    const json = await parseJsonSafe(response);
+    if (!response.ok || !(json?.success ?? json?.ok)) {
+      throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
-  } catch (e) {
-    console.warn('getComments error:', e);
+    const list = json?.data;
+    return Array.isArray(list) ? list : [];
+  } catch (error) {
+    throw normalizeApiError(error);
   }
-  return [];
 };
 
 /**
  * @param {string|number} movieId - Kino ID
  * @param {Array} comments - Yangilangan kommentlar
  */
-export const saveComments = (movieId, comments) => {
+export const createComment = async (movieId, payload) => {
   try {
-    const key = `${STORAGE_PREFIX}${toMovieKey(movieId)}`;
-    localStorage.setItem(key, JSON.stringify(comments));
-  } catch (e) {
-    console.warn('saveComments error:', e);
+    const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const json = await parseJsonSafe(response);
+    if (!response.ok || !(json?.success ?? json?.ok)) {
+      throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
+    }
+    return json?.data || null;
+  } catch (error) {
+    throw normalizeApiError(error);
   }
 };
 

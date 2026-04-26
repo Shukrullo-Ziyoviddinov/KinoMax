@@ -5,6 +5,9 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { formatActionCount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
+import { useAuthModal } from '../../context/AuthModalContext';
+import { getAuthToken } from '../../utils/authStorage';
+import { fetchTrailerReactions, removeTrailerReaction, setTrailerReaction } from '../../api/userApi';
 import SimilarTrailers from './SimilarTrailers';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import VideoLoader from '../VideoLoader/VideoLoader';
@@ -25,6 +28,7 @@ const TrailerModalBackIcon = () => (
 
 const TrailerModal = ({ movie, onClose }) => {
   const { t } = useTranslation();
+  const { openAuthModal } = useAuthModal();
   const { contentLang } = useContentLanguage();
   const getTrailers = () => {
     if (movie.trailersVideo && Array.isArray(movie.trailersVideo)) {
@@ -54,22 +58,13 @@ const TrailerModal = ({ movie, onClose }) => {
     dislike: parseInt(trailer.dislike, 10) || 0
   });
 
-  const loadTrailerReactions = (trailer) => {
+  const loadTrailerReactions = (trailer, serverMap = {}) => {
     if (!trailer) return { like: 0, dislike: 0, userReaction: null };
     const key = getTrailerKey(trailer);
     if (!key) return { like: 0, dislike: 0, userReaction: null };
     
     const base = getBaseCounts(trailer);
-    const stored = localStorage.getItem(`trailer_reactions_${key}`);
-    let userReaction = null;
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        userReaction = data.userReaction || null;
-      } catch (_) {
-        userReaction = null;
-      }
-    }
+    const userReaction = serverMap[key] || null;
     
     const like = base.like + (userReaction === 'like' ? 1 : 0);
     const dislike = base.dislike + (userReaction === 'dislike' ? 1 : 0);
@@ -81,19 +76,23 @@ const TrailerModal = ({ movie, onClose }) => {
     trailers.forEach(trailer => {
       const key = getTrailerKey(trailer);
       if (key) {
-        reactions[key] = loadTrailerReactions(trailer);
+        reactions[key] = loadTrailerReactions(trailer, {});
       }
     });
     return reactions;
   });
 
-  const updateTrailerReaction = (trailer, type) => {
+  const updateTrailerReaction = async (trailer, type) => {
     if (!trailer) return;
+    if (!getAuthToken()) {
+      openAuthModal();
+      return;
+    }
     const key = getTrailerKey(trailer);
     if (!key) return;
 
     const base = getBaseCounts(trailer);
-    const current = loadTrailerReactions(trailer);
+    const current = trailerReactions[key] || loadTrailerReactions(trailer, {});
     const currentReaction = current.userReaction;
     let newReaction = null;
 
@@ -106,20 +105,32 @@ const TrailerModal = ({ movie, onClose }) => {
     const newLike = base.like + (newReaction === 'like' ? 1 : 0);
     const newDislike = base.dislike + (newReaction === 'dislike' ? 1 : 0);
 
-    const updated = { like: newLike, dislike: newDislike, userReaction: newReaction };
-
-    setTrailerReactions(prev => ({ ...prev, [key]: updated }));
-    localStorage.setItem(`trailer_reactions_${key}`, JSON.stringify({ userReaction: newReaction }));
+    try {
+      if (newReaction) {
+        await setTrailerReaction({
+          movieId: trailer.movieId || movie?.id,
+          trailerId: trailer.id,
+          reaction: newReaction,
+        });
+      } else {
+        await removeTrailerReaction({
+          movieId: trailer.movieId || movie?.id,
+          trailerId: trailer.id,
+        });
+      }
+      const updated = { like: newLike, dislike: newDislike, userReaction: newReaction };
+      setTrailerReactions(prev => ({ ...prev, [key]: updated }));
+    } catch (_error) {}
   };
 
-  const handleLike = (trailer) => updateTrailerReaction(trailer, 'like');
-  const handleDislike = (trailer) => updateTrailerReaction(trailer, 'dislike');
+  const handleLike = async (trailer) => updateTrailerReaction(trailer, 'like');
+  const handleDislike = async (trailer) => updateTrailerReaction(trailer, 'dislike');
 
   const getReactionCounts = (trailer) => {
     if (!trailer) return { like: 0, dislike: 0 };
     const key = getTrailerKey(trailer);
     if (!key) return { like: 0, dislike: 0 };
-    const reactions = trailerReactions[key] || loadTrailerReactions(trailer);
+    const reactions = trailerReactions[key] || loadTrailerReactions(trailer, {});
     return { like: reactions.like || 0, dislike: reactions.dislike || 0 };
   };
 
@@ -127,9 +138,49 @@ const TrailerModal = ({ movie, onClose }) => {
     if (!trailer) return null;
     const key = getTrailerKey(trailer);
     if (!key) return null;
-    const reactions = trailerReactions[key] || loadTrailerReactions(trailer);
+    const reactions = trailerReactions[key] || loadTrailerReactions(trailer, {});
     return reactions.userReaction || null;
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    let cancelled = false;
+    const syncTrailerReactions = async () => {
+      if (!getAuthToken() || !movie?.id) {
+        const empty = {};
+        trailers.forEach((trailer) => {
+          const key = getTrailerKey(trailer);
+          if (key) empty[key] = loadTrailerReactions(trailer, {});
+        });
+        if (!cancelled) setTrailerReactions(empty);
+        return;
+      }
+
+      try {
+        const serverMap = await fetchTrailerReactions(movie.id);
+        if (cancelled) return;
+        const next = {};
+        trailers.forEach((trailer) => {
+          const key = getTrailerKey(trailer);
+          if (key) next[key] = loadTrailerReactions(trailer, serverMap);
+        });
+        setTrailerReactions(next);
+      } catch (_error) {
+        if (cancelled) return;
+        const next = {};
+        trailers.forEach((trailer) => {
+          const key = getTrailerKey(trailer);
+          if (key) next[key] = loadTrailerReactions(trailer, {});
+        });
+        setTrailerReactions(next);
+      }
+    };
+
+    syncTrailerReactions();
+    return () => {
+      cancelled = true;
+    };
+  }, [movie?.id, trailers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTrailerSelect = (trailer) => {
     if (videoRef.current) {
@@ -148,7 +199,7 @@ const TrailerModal = ({ movie, onClose }) => {
       if (key) {
         setTrailerReactions(prev => {
           if (!prev[key]) {
-            return { ...prev, [key]: loadTrailerReactions(trailer) };
+                return { ...prev, [key]: loadTrailerReactions(trailer, {}) };
           }
           return prev;
         });

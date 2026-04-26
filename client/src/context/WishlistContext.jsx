@@ -1,65 +1,91 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { addWishlist, fetchWishlist, removeWishlist } from '../api/userApi';
+import { AUTH_SESSION_CHANGED_EVENT, getAuthToken } from '../utils/authStorage';
+import { useAuthModal } from './AuthModalContext';
 
 const WishlistContext = createContext();
 
-const WISHLIST_STORAGE_KEY = 'movie_wishlist';
+const toId = (movieOrId) => {
+  const raw = movieOrId && typeof movieOrId === 'object' ? movieOrId.id : movieOrId;
+  const id = Number.parseInt(raw, 10);
+  return Number.isNaN(id) ? null : id;
+};
 
 export const WishlistProvider = ({ children }) => {
   const [wishlistIds, setWishlistIds] = useState([]);
-
-  const toId = (movieOrId) => {
-    const raw = movieOrId && typeof movieOrId === 'object' ? movieOrId.id : movieOrId;
-    const id = Number.parseInt(raw, 10);
-    return Number.isNaN(id) ? null : id;
-  };
+  const { openAuthModal } = useAuthModal();
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const normalized = Array.isArray(parsed)
-          ? parsed
-              .map((item) => toId(item))
-              .filter((item) => item !== null)
-          : [];
-        setWishlistIds(normalized);
+    let isMounted = true;
+
+    const syncWishlist = async () => {
+      const token = getAuthToken();
+      if (!token) {
+        if (isMounted) setWishlistIds([]);
+        return;
       }
-    } catch (e) {
-      setWishlistIds([]);
-    }
+
+      try {
+        const serverWishlist = await fetchWishlist();
+        if (isMounted) setWishlistIds(serverWishlist.map((item) => toId(item)).filter((item) => item !== null));
+      } catch (_error) {
+        if (isMounted) setWishlistIds([]);
+      }
+    };
+
+    syncWishlist();
+
+    const handleSessionChange = () => {
+      syncWishlist();
+    };
+
+    window.addEventListener(AUTH_SESSION_CHANGED_EVENT, handleSessionChange);
+    window.addEventListener('storage', handleSessionChange);
+    return () => {
+      isMounted = false;
+      window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, handleSessionChange);
+      window.removeEventListener('storage', handleSessionChange);
+    };
   }, []);
 
-  const addToWishlist = (movieOrId) => {
+  const addToWishlist = async (movieOrId) => {
     const id = toId(movieOrId);
     if (id === null) return;
-    setWishlistIds((prev) => {
-      if (prev.includes(id)) return prev;
-      const next = [...prev, id];
-      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    const token = getAuthToken();
+    if (!token) {
+      openAuthModal();
+      return;
+    }
+
+    try {
+      const next = await addWishlist(id);
+      setWishlistIds(next.map((item) => toId(item)).filter((item) => item !== null));
+    } catch (_error) {}
   };
 
-  const removeFromWishlist = (movieOrId) => {
+  const removeFromWishlist = async (movieOrId) => {
     const id = toId(movieOrId);
     if (id === null) return;
-    setWishlistIds((prev) => {
-      const next = prev.filter((x) => x !== id);
-      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    const token = getAuthToken();
+    if (!token) {
+      openAuthModal();
+      return;
+    }
+
+    try {
+      const next = await removeWishlist(id);
+      setWishlistIds(next.map((item) => toId(item)).filter((item) => item !== null));
+    } catch (_error) {}
   };
 
   const toggleWishlist = (movieOrId) => {
     const id = toId(movieOrId);
     if (id === null) return;
-    setWishlistIds((prev) => {
-      const has = prev.includes(id);
-      const next = has ? prev.filter((x) => x !== id) : [...prev, id];
-      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    if (wishlistIds.includes(id)) {
+      removeFromWishlist(id);
+      return;
+    }
+    addToWishlist(id);
   };
 
   const isInWishlist = (movieOrId) => {

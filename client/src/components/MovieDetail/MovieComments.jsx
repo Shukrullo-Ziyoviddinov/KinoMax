@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import ScrollTouch from '../ScrollTouch/ScrollTouch';
 import * as commentsApi from '../../api/commentsApi';
+import { getAuthToken } from '../../utils/authStorage';
+import { useAuthModal } from '../../context/AuthModalContext';
 import './MovieComments.css';
 
 const PROFILE_STORAGE_KEY = 'violet_profile';
@@ -40,7 +42,6 @@ const toggleCommentLike = (movieId, commentId, comments, setComments) => {
 
   const updated = updateInTree(comments);
   setComments(updated);
-  commentsApi.saveComments(movieId, updated);
 
   if (isLiked) liked.delete(String(commentId));
   else liked.add(String(commentId));
@@ -86,6 +87,7 @@ const VL_EMOJI_IMG = '/img/photo_2026-02-16_20-30-31_preview_rev_1.png';
 
 const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
   const { i18n } = useTranslation();
+  const { openAuthModal } = useAuthModal();
   const [comments, setComments] = useState([]);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -96,11 +98,25 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
   const commentsListRef = useRef(null);
 
   useEffect(() => {
-    const raw = commentsApi.getComments(movieId);
-    setComments(raw.map(migrateComment));
-    setReplyingTo(null);
-    setInputValue('');
-    setShowCommentsModal(false);
+    let cancelled = false;
+    const loadComments = async () => {
+      try {
+        const raw = await commentsApi.fetchComments(movieId);
+        if (!cancelled) setComments(raw.map(migrateComment));
+      } catch (_error) {
+        if (!cancelled) setComments([]);
+      } finally {
+        if (!cancelled) {
+          setReplyingTo(null);
+          setInputValue('');
+          setShowCommentsModal(false);
+        }
+      }
+    };
+    loadComments();
+    return () => {
+      cancelled = true;
+    };
   }, [movieId]);
 
   useEffect(() => {
@@ -120,46 +136,25 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
     return () => { document.body.style.overflow = ''; };
   }, [showCommentsModal]);
 
-  const handleSubmitComment = (e) => {
+  const handleSubmitComment = async (e) => {
     e?.preventDefault();
+    if (!getAuthToken()) {
+      openAuthModal();
+      return;
+    }
     const text = inputValue.trim();
     if (!text) return;
 
-    const fullName = [profile.name, profile.surname].filter(Boolean).join(' ') || (i18n.language === 'uz' ? 'Foydalanuvchi' : 'Пользователь');
-    const newComment = {
-      id: Date.now(),
-      movieId: commentsApi.toMovieKey(movieId),
-      parentId: replyingTo ? replyingTo.id : null,
-      text,
-      authorName: fullName,
-      authorAvatar: profile.avatar,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      replies: [],
-    };
-
-    if (replyingTo) {
-      const addReply = (list, parentId) => {
-        return list.map((c) => {
-          if (String(c.id) === String(parentId)) {
-            return { ...c, replies: [...(c.replies || []), newComment] };
-          }
-          if (c.replies?.length) {
-            return { ...c, replies: addReply(c.replies, parentId) };
-          }
-          return c;
-        });
-      };
-      const updated = addReply(comments, replyingTo.id);
-      setComments(updated);
-      commentsApi.saveComments(movieId, updated);
+    try {
+      await commentsApi.createComment(movieId, {
+        text,
+        parentId: replyingTo ? replyingTo.id : null,
+      });
+      const refreshed = await commentsApi.fetchComments(movieId);
+      setComments(refreshed.map(migrateComment));
       setReplyingTo(null);
-    } else {
-      const updated = [newComment, ...comments];
-      setComments(updated);
-      commentsApi.saveComments(movieId, updated);
-    }
-    setInputValue('');
+      setInputValue('');
+    } catch (_error) {}
   };
 
   const handleReplyClick = (comment) => {
@@ -175,6 +170,10 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
   };
 
   const handleInputClick = () => {
+    if (!getAuthToken()) {
+      openAuthModal();
+      return;
+    }
     setShowCommentsModal(true);
   };
 

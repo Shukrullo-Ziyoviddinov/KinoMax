@@ -6,17 +6,17 @@ import SearchModalGenre from '../SearchModalGenre/SearchModalGenre';
 import SearchModalAnons from '../SearchModalAnons/SearchModalAnons';
 import SearchModalTavsiya from '../SearchModalTavsiya/SearchModalTavsiya';
 import SearchModalResults from '../SearchModalResults/SearchModalResults';
-import SiginModal from '../SiginModal/SiginModal';
 import { isAuthenticated } from '../../utils/authStorage';
+import { useAuthModal } from '../../context/AuthModalContext';
 import './NavbarMobile.css';
 
 const NavbarMobile = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openAuthModal } = useAuthModal();
   const location = useLocation();
   const pathname = location.pathname;
   const [showSearch, setShowSearch] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const isHomeActive = pathname === '/';
@@ -55,7 +55,7 @@ const NavbarMobile = () => {
 
   const handleProfileClick = () => {
     if (!isAuthenticated()) {
-      setShowAuthModal(true);
+      openAuthModal({ redirectToProfile: true });
       return;
     }
     navigate('/profile');
@@ -173,16 +173,6 @@ const NavbarMobile = () => {
             )}
           </div>
         </div>
-      )}
-
-      {showAuthModal && (
-        <SiginModal
-          onClose={() => setShowAuthModal(false)}
-          onSuccess={() => {
-            setShowAuthModal(false);
-            navigate('/profile');
-          }}
-        />
       )}
     </>
   );

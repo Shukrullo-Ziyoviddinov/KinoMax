@@ -5,8 +5,34 @@ const { parsePagination, buildPaginationMeta } = require("../utils/pagination");
 const { applyPagination } = require("../utils/queryOptimizer");
 const { validateIdParam } = require("../middlewares/validateRequest");
 const { buildTopRatedMovies } = require("../services/topRatedService");
+const authMiddleware = require("../middlewares/auth.middleware");
+const MovieComment = require("../models/movieComment");
 
 const router = express.Router();
+
+const toCommentTree = (rows = []) => {
+  const byParent = new Map();
+  rows.forEach((row) => {
+    const parentKey = row.parentId ? String(row.parentId) : "root";
+    if (!byParent.has(parentKey)) byParent.set(parentKey, []);
+    byParent.get(parentKey).push(row);
+  });
+
+  const build = (parentKey) =>
+    (byParent.get(parentKey) || []).map((row) => ({
+      id: String(row._id),
+      movieId: row.movieId,
+      parentId: row.parentId ? String(row.parentId) : null,
+      text: row.text,
+      authorName: row.authorName,
+      authorAvatar: row.authorAvatar || null,
+      createdAt: row.createdAt,
+      likes: row.likes || 0,
+      replies: build(String(row._id)),
+    }));
+
+  return build("root");
+};
 
 router.get("/", async (req, res, next) => {
   try {
@@ -47,6 +73,56 @@ router.get("/top-rated", async (req, res, next) => {
       "Yuqori reytingli kinolar",
       200,
       buildPaginationMeta(topRatedMovies.length, pagination)
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/:movieId/comments", validateIdParam("movieId"), async (req, res, next) => {
+  try {
+    const comments = await MovieComment.find({ movieId: req.params.movieId })
+      .sort({ createdAt: -1 })
+      .lean();
+    return success(res, toCommentTree(comments), "Kommentlar olindi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/:movieId/comments", validateIdParam("movieId"), authMiddleware, async (req, res, next) => {
+  try {
+    const text = String(req.body?.text || "").trim();
+    const parentId = req.body?.parentId || null;
+
+    if (!text) {
+      return fail(res, "Komment matni bo'sh bo'lmasligi kerak.", 400);
+    }
+
+    const newComment = await MovieComment.create({
+      movieId: req.params.movieId,
+      parentId: parentId || null,
+      text,
+      authorId: req.user._id,
+      authorName: [req.user.firstName, req.user.lastName].filter(Boolean).join(" ").trim() || "User",
+      authorAvatar: req.user.avatar || null,
+      likes: 0,
+    });
+
+    return success(
+      res,
+      {
+        id: String(newComment._id),
+        movieId: newComment.movieId,
+        parentId: newComment.parentId ? String(newComment.parentId) : null,
+        text: newComment.text,
+        authorName: newComment.authorName,
+        authorAvatar: newComment.authorAvatar || null,
+        createdAt: newComment.createdAt,
+        likes: newComment.likes || 0,
+      },
+      "Komment qo'shildi.",
+      201
     );
   } catch (error) {
     return next(error);

@@ -15,6 +15,9 @@ import SimilarMovies from './SimilarMovies';
 import ScrollTouch from '../ScrollTouch/ScrollTouch';
 import ShareButton from '../ShareButton/ShareButton';
 import { formatActionCount } from '../../utils/utils';
+import { getAuthToken } from '../../utils/authStorage';
+import { useAuthModal } from '../../context/AuthModalContext';
+import { fetchMovieReaction, removeMovieReaction, setMovieReaction } from '../../api/userApi';
 import './MovieDetail.css';
 
 const MovieDetail = () => {
@@ -22,6 +25,7 @@ const MovieDetail = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { openAuthModal } = useAuthModal();
   const { addMovie } = useViewedMovies();
   const { detailLoading, setLoading } = useLoading();
   const [movie, setMovie] = useState(null);
@@ -133,25 +137,44 @@ const MovieDetail = () => {
     else if (seasonsLang === 'uz' && !hasUz && hasRu) setSeasonsLang('ru');
   }, [movie, selectedSeason, seasonsLang]);
 
-  // FILM sahifasi like/dislike — faqat movie.id orqali (trailer_reactions dan FARQ)
-  // Key: movie_1, movie_2... — har bir kino alohida
   useEffect(() => {
-    if (movie) {
-      const key = `movie_${movie.id}`;
-      const baseLikes = (movie.like !== '' && movie.like !== undefined && movie.like !== null)
-        ? (parseInt(movie.like, 10) || 0)
-        : 0;
-      const baseDislikes = (movie.dislike !== '' && movie.dislike !== undefined && movie.dislike !== null)
-        ? (parseInt(movie.dislike, 10) || 0)
-        : 0;
-      const isLiked = localStorage.getItem(`${key}_isLiked`) === 'true';
-      const isDisliked = localStorage.getItem(`${key}_isDisliked`) === 'true';
+    if (!movie) return;
+    const baseLikes = (movie.like !== '' && movie.like !== undefined && movie.like !== null)
+      ? (parseInt(movie.like, 10) || 0)
+      : 0;
+    const baseDislikes = (movie.dislike !== '' && movie.dislike !== undefined && movie.dislike !== null)
+      ? (parseInt(movie.dislike, 10) || 0)
+      : 0;
 
-      setLikeCount(baseLikes + (isLiked ? 1 : 0));
-      setDislikeCount(baseDislikes + (isDisliked ? 1 : 0));
-      setIsLiked(isLiked);
-      setIsDisliked(isDisliked);
+    const token = getAuthToken();
+    if (!token) {
+      setLikeCount(baseLikes);
+      setDislikeCount(baseDislikes);
+      setIsLiked(false);
+      setIsDisliked(false);
+      return;
     }
+
+    let cancelled = false;
+    const loadReaction = async () => {
+      try {
+        const reaction = await fetchMovieReaction(movie.id);
+        if (cancelled) return;
+        setIsLiked(reaction === 'like');
+        setIsDisliked(reaction === 'dislike');
+        setLikeCount(baseLikes + (reaction === 'like' ? 1 : 0));
+        setDislikeCount(baseDislikes + (reaction === 'dislike' ? 1 : 0));
+      } catch (_error) {
+        if (cancelled) return;
+        setIsLiked(false);
+        setIsDisliked(false);
+        setLikeCount(baseLikes);
+        setDislikeCount(baseDislikes);
+      }
+    };
+
+    loadReaction();
+    return () => { cancelled = true; };
   }, [movie]);
 
   useEffect(() => {
@@ -429,57 +452,61 @@ const MovieDetail = () => {
     return null;
   };
 
-  const handleLike = () => {
-    const key = `movie_${movie.id}`; // film sahifasi — movie_1, movie_2...
+  const handleLike = async () => {
+    if (!getAuthToken()) {
+      openAuthModal();
+      return;
+    }
     const baseLikes = (movie.like !== '' && movie.like !== undefined && movie.like !== null)
       ? (parseInt(movie.like, 10) || 0)
       : 0;
     const baseDislikes = (movie.dislike !== '' && movie.dislike !== undefined && movie.dislike !== null)
       ? (parseInt(movie.dislike, 10) || 0)
       : 0;
-    const wasLiked = localStorage.getItem(`${key}_isLiked`) === 'true';
-    const wasDisliked = localStorage.getItem(`${key}_isDisliked`) === 'true';
-
-    if (wasLiked) {
-      setIsLiked(false);
-      setIsDisliked(wasDisliked);
-      setLikeCount(baseLikes);
-      setDislikeCount(baseDislikes + (wasDisliked ? 1 : 0));
-      localStorage.setItem(`${key}_isLiked`, 'false');
-    } else {
-      setIsLiked(true);
-      setIsDisliked(false);
-      setLikeCount(baseLikes + 1);
-      setDislikeCount(baseDislikes);
-      localStorage.setItem(`${key}_isLiked`, 'true');
-      localStorage.setItem(`${key}_isDisliked`, 'false');
+    try {
+      if (isLiked) {
+        await removeMovieReaction(movie.id);
+        setIsLiked(false);
+        setIsDisliked(false);
+        setLikeCount(baseLikes);
+        setDislikeCount(baseDislikes);
+      } else {
+        await setMovieReaction(movie.id, 'like');
+        setIsLiked(true);
+        setIsDisliked(false);
+        setLikeCount(baseLikes + 1);
+        setDislikeCount(baseDislikes);
+      }
+    } catch (_error) {
     }
   };
 
-  const handleDislike = () => {
-    const key = `movie_${movie.id}`; // film sahifasi — movie_1, movie_2...
+  const handleDislike = async () => {
+    if (!getAuthToken()) {
+      openAuthModal();
+      return;
+    }
     const baseLikes = (movie.like !== '' && movie.like !== undefined && movie.like !== null)
       ? (parseInt(movie.like, 10) || 0)
       : 0;
     const baseDislikes = (movie.dislike !== '' && movie.dislike !== undefined && movie.dislike !== null)
       ? (parseInt(movie.dislike, 10) || 0)
       : 0;
-    const wasLiked = localStorage.getItem(`${key}_isLiked`) === 'true';
-    const wasDisliked = localStorage.getItem(`${key}_isDisliked`) === 'true';
-
-    if (wasDisliked) {
-      setIsDisliked(false);
-      setIsLiked(wasLiked);
-      setDislikeCount(baseDislikes);
-      setLikeCount(baseLikes + (wasLiked ? 1 : 0));
-      localStorage.setItem(`${key}_isDisliked`, 'false');
-    } else {
-      setIsDisliked(true);
-      setIsLiked(false);
-      setDislikeCount(baseDislikes + 1);
-      setLikeCount(baseLikes);
-      localStorage.setItem(`${key}_isDisliked`, 'true');
-      localStorage.setItem(`${key}_isLiked`, 'false');
+    try {
+      if (isDisliked) {
+        await removeMovieReaction(movie.id);
+        setIsDisliked(false);
+        setIsLiked(false);
+        setDislikeCount(baseDislikes);
+        setLikeCount(baseLikes);
+      } else {
+        await setMovieReaction(movie.id, 'dislike');
+        setIsDisliked(true);
+        setIsLiked(false);
+        setDislikeCount(baseDislikes + 1);
+        setLikeCount(baseLikes);
+      }
+    } catch (_error) {
     }
   };
 

@@ -93,7 +93,9 @@ const SiginModal = ({ onClose, onSuccess }) => {
       onSuccess?.();
     } catch (error) {
       const message =
-        error?.status === 413
+        error?.status === 409
+          ? t('toast.phoneAlreadyRegistered')
+          : error?.status === 413
           ? t('toast.requestTooLarge')
           : (error?.message || t('auth.errorFallback'));
       showToast(message, 'error');

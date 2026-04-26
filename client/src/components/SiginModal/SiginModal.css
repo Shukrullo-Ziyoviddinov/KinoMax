@@ -1,7 +1,9 @@
 .sigin-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background:
+    linear-gradient(rgba(4, 8, 20, 0.72), rgba(4, 8, 20, 0.72)),
+    url('/img/profilfoto.jpg') center / cover no-repeat;
   z-index: 1400;
 }
 
@@ -42,7 +44,7 @@
 .sigin-modal-close {
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   border: none;
   width: 36px;
   height: 36px;
@@ -120,10 +122,15 @@
   width: 100%;
   box-sizing: border-box;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.06);
   color: #fff;
   padding: 0.75rem 0.9rem;
+}
+
+.sigin-modal-form input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .sigin-modal-password-wrap {
@@ -167,7 +174,7 @@
   border-radius: 10px;
   cursor: pointer;
   color: #fff;
-  background: #ca4edd;
+  background: linear-gradient(135deg, #7b4edd, #692cbf);
   font-weight: 600;
   padding: 0.78rem 1rem;
 }

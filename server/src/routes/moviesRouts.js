@@ -168,24 +168,28 @@ router.post("/:movieId/comments", validateIdParam("movieId"), authMiddleware, as
 
 router.post("/:movieId/comments/:commentId/like", validateIdParam("movieId"), authMiddleware, async (req, res, next) => {
   try {
-    const comment = await MovieComment.findOne({
-      _id: req.params.commentId,
-      movieId: req.params.movieId,
-    });
+    const comment = await MovieComment.findOneAndUpdate(
+      {
+        _id: req.params.commentId,
+        movieId: req.params.movieId,
+      },
+      {
+        $addToSet: { likedBy: req.user._id },
+      },
+      { new: true }
+    );
 
     if (!comment) {
       return fail(res, "Komment topilmadi.", 404);
     }
 
-    const userId = String(req.user._id);
-    const likedBy = Array.isArray(comment.likedBy) ? comment.likedBy.map((id) => String(id)) : [];
-    if (!likedBy.includes(userId)) {
-      comment.likedBy = [...likedBy, req.user._id];
-      comment.likes = comment.likedBy.length;
+    const actualLikes = Array.isArray(comment.likedBy) ? comment.likedBy.length : 0;
+    if ((comment.likes || 0) !== actualLikes) {
+      comment.likes = actualLikes;
       await comment.save();
     }
 
-    return success(res, { likes: comment.likes || 0, likedByMe: true }, "Kommentga like bosildi.");
+    return success(res, { likes: actualLikes, likedByMe: true }, "Kommentga like bosildi.");
   } catch (error) {
     return next(error);
   }
@@ -193,22 +197,28 @@ router.post("/:movieId/comments/:commentId/like", validateIdParam("movieId"), au
 
 router.delete("/:movieId/comments/:commentId/like", validateIdParam("movieId"), authMiddleware, async (req, res, next) => {
   try {
-    const comment = await MovieComment.findOne({
-      _id: req.params.commentId,
-      movieId: req.params.movieId,
-    });
+    const comment = await MovieComment.findOneAndUpdate(
+      {
+        _id: req.params.commentId,
+        movieId: req.params.movieId,
+      },
+      {
+        $pull: { likedBy: req.user._id },
+      },
+      { new: true }
+    );
 
     if (!comment) {
       return fail(res, "Komment topilmadi.", 404);
     }
 
-    const userId = String(req.user._id);
-    const nextLikedBy = (Array.isArray(comment.likedBy) ? comment.likedBy : []).filter((id) => String(id) !== userId);
-    comment.likedBy = nextLikedBy;
-    comment.likes = nextLikedBy.length;
-    await comment.save();
+    const actualLikes = Array.isArray(comment.likedBy) ? comment.likedBy.length : 0;
+    if ((comment.likes || 0) !== actualLikes) {
+      comment.likes = actualLikes;
+      await comment.save();
+    }
 
-    return success(res, { likes: comment.likes || 0, likedByMe: false }, "Komment like'i olib tashlandi.");
+    return success(res, { likes: actualLikes, likedByMe: false }, "Komment like'i olib tashlandi.");
   } catch (error) {
     return next(error);
   }

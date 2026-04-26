@@ -1,4 +1,5 @@
 const { success } = require("../utils/apiResponse");
+const MovieComment = require("../models/movieComment");
 const toMovieId = (value) => {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? null : parsed;
@@ -35,6 +36,17 @@ const updateProfile = async (req, res, next) => {
     if (avatar !== undefined) req.user.avatar = avatar || null;
 
     await req.user.save();
+
+    const authorName = [req.user.firstName, req.user.lastName].filter(Boolean).join(" ").trim() || "User";
+    await MovieComment.updateMany(
+      { authorId: req.user._id },
+      {
+        $set: {
+          authorName,
+          authorAvatar: req.user.avatar || null,
+        },
+      }
+    );
 
     return success(res, {
       id: req.user._id,

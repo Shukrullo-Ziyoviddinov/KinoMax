@@ -28,6 +28,7 @@
   justify-content: center;
   margin-bottom: 0.75rem;
   padding-top: 0.2rem;
+  min-height: 44px;
 }
 
 .sigin-modal-header-logo {
@@ -44,8 +45,9 @@
 
 .sigin-modal-close {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 0;
+  transform: translateY(-50%);
   border: none;
   width: 36px;
   height: 36px;
@@ -56,6 +58,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.sigin-modal-title {
+  margin: 0 0 0.75rem;
+  color: #fff;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .sigin-modal-close:hover {

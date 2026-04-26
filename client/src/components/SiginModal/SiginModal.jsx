@@ -152,6 +152,7 @@ const SiginModal = ({ onClose, onSuccess }) => {
             </svg>
           </button>
         </div>
+        <h3 className="sigin-modal-title">{t('auth.register')}</h3>
 
         <div className="sigin-modal-switch">
           <button

@@ -6,6 +6,8 @@ import SearchModalGenre from '../SearchModalGenre/SearchModalGenre';
 import SearchModalAnons from '../SearchModalAnons/SearchModalAnons';
 import SearchModalTavsiya from '../SearchModalTavsiya/SearchModalTavsiya';
 import SearchModalResults from '../SearchModalResults/SearchModalResults';
+import SiginModal from '../SiginModal/SiginModal';
+import { isAuthenticated } from '../../utils/authStorage';
 import './NavbarMobile.css';
 
 const NavbarMobile = () => {
@@ -14,6 +16,7 @@ const NavbarMobile = () => {
   const location = useLocation();
   const pathname = location.pathname;
   const [showSearch, setShowSearch] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const isHomeActive = pathname === '/';
@@ -49,6 +52,14 @@ const NavbarMobile = () => {
       { replace: true }
     );
   }, [location.pathname, location.search, navigate]);
+
+  const handleProfileClick = () => {
+    if (!isAuthenticated()) {
+      setShowAuthModal(true);
+      return;
+    }
+    navigate('/profile');
+  };
 
   return (
     <>
@@ -91,7 +102,7 @@ const NavbarMobile = () => {
 
         <button
           className={`navbar-mobile-item ${isProfileActive ? 'navbar-mobile-item-active' : ''}`}
-          onClick={() => navigate('/profile')}
+          onClick={handleProfileClick}
           aria-label={t('navbar.profile')}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -162,6 +173,16 @@ const NavbarMobile = () => {
             )}
           </div>
         </div>
+      )}
+
+      {showAuthModal && (
+        <SiginModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            setShowAuthModal(false);
+            navigate('/profile');
+          }}
+        />
       )}
     </>
   );

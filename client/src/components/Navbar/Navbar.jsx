@@ -6,6 +6,8 @@ import SearchModalGenre from '../SearchModalGenre/SearchModalGenre';
 import SearchModalAnons from '../SearchModalAnons/SearchModalAnons';
 import SearchModalTavsiya from '../SearchModalTavsiya/SearchModalTavsiya';
 import SearchModalResults from '../SearchModalResults/SearchModalResults';
+import SiginModal from '../SiginModal/SiginModal';
+import { isAuthenticated } from '../../utils/authStorage';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -15,6 +17,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const languageWrapperRef = useRef(null);
   const searchInputRef = useRef(null);
   const modalRef = useRef(null);
@@ -132,6 +135,14 @@ const Navbar = () => {
     setShowSearchModal(true);
   };
 
+  const handleProfileClick = () => {
+    if (!isAuthenticated()) {
+      setShowAuthModal(true);
+      return;
+    }
+    navigate('/profile');
+  };
+
   return (
     <>
     <nav className="navbar">
@@ -201,7 +212,7 @@ const Navbar = () => {
 
           <button
             className="navbar-icon-btn navbar-desktop-only"
-            onClick={() => navigate('/profile')}
+            onClick={handleProfileClick}
             aria-label={t('navbar.profile')}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -307,6 +318,16 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+    )}
+
+    {showAuthModal && (
+      <SiginModal
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          navigate('/profile');
+        }}
+      />
     )}
     </>
   );

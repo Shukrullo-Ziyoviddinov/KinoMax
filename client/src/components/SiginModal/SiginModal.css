@@ -1,0 +1,140 @@
+.sigin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1400;
+}
+
+.sigin-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 420px);
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1rem;
+  z-index: 1401;
+}
+
+.sigin-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.sigin-modal-title {
+  margin: 0;
+  color: #fff;
+}
+
+.sigin-modal-close {
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.35rem;
+}
+
+.sigin-modal-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sigin-modal-switch-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.6rem;
+  cursor: pointer;
+}
+
+.sigin-modal-switch-btn.active {
+  background: #4e66dd;
+  border-color: #4e66dd;
+}
+
+.sigin-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sigin-modal-hidden-input {
+  display: none;
+}
+
+.sigin-modal-avatar-picker {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0.35rem auto;
+  border: 2px solid #4e66dd;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.sigin-modal-avatar-picker span {
+  font-size: 0.75rem;
+  padding: 0.3rem;
+}
+
+.sigin-modal-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sigin-modal-form input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 0.75rem 0.9rem;
+}
+
+.sigin-modal-form input.invalid {
+  border-color: #e53935;
+}
+
+.sigin-modal-error {
+  color: #ff8a80;
+  font-size: 0.8rem;
+}
+
+.sigin-modal-server-error {
+  margin: 0 0 0.6rem;
+  color: #ff8a80;
+  font-size: 0.9rem;
+}
+
+.sigin-modal-submit {
+  margin-top: 0.4rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #fff;
+  background: #ca4edd;
+  font-weight: 600;
+  padding: 0.78rem 1rem;
+}
+
+.sigin-modal-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

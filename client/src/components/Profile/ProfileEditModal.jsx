@@ -123,10 +123,10 @@ const ProfileEditModal = ({ profile, onSave, onClose }) => {
             />
             <div className="profile-edit-avatar-actions">
               <button type="button" className="profile-edit-avatar-btn profile-edit-avatar-btn-edit" onClick={handleAvatarEdit}>
-                Tahrirlash
+                {t('profile.avatarEdit')}
               </button>
               <button type="button" className="profile-edit-avatar-btn profile-edit-avatar-btn-delete" onClick={handleAvatarRemove}>
-                O'chirish
+                {t('profile.avatarDelete')}
               </button>
             </div>
           </div>

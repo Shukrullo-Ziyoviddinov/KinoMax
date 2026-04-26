@@ -7,9 +7,8 @@ import ProfileLanguageModal from '../components/Profile/ProfileLanguageModal';
 import ProfileContactModal from '../components/Profile/ProfileContactModal';
 import ProfileSocialModal from '../components/Profile/ProfileSocialModal';
 import { fetchSocialLinks } from '../api/socialLinksApi';
+import { PROFILE_STORAGE_KEY } from '../utils/authStorage';
 import './ProfilePage.css';
-
-const PROFILE_STORAGE_KEY = 'violet_profile';
 
 const DEFAULT_PROFILE = { name: 'Shukrullo', surname: 'Aliyov', phone: '909560304', avatar: null };
 

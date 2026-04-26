@@ -11,6 +11,8 @@ const socialLinkRoutes = require("./routes/socialLinkRouts");
 const moviesCatalogRoutes = require("./routes/moviesCatalogRouts");
 const moviesRoutes = require("./routes/moviesRouts");
 const adsRoutes = require("./routes/adsRouts");
+const authRoutes = require("./routes/auth.routes");
+const userRoutes = require("./routes/user.routes");
 const { success, fail } = require("./utils/apiResponse");
 const { notFoundHandler, errorHandler } = require("./middlewares/errorHandler");
 require("dotenv").config();
@@ -48,7 +50,7 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use("/api/banners", bannerRoutes);
 app.use("/api/actors", actorsRoutes);
 app.use("/api/genres", genresRoutes);
@@ -56,6 +58,8 @@ app.use("/api/social-links", socialLinkRoutes);
 app.use("/api/movies-catalog", moviesCatalogRoutes);
 app.use("/api/movies", moviesRoutes);
 app.use("/api/ads", adsRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 
 app.get("/health", (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;

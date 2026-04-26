@@ -1,9 +1,10 @@
 .sigin-modal-overlay {
   position: fixed;
   inset: 0;
-  background:
-    linear-gradient(rgba(4, 8, 20, 0.72), rgba(4, 8, 20, 0.72)),
-    url('/img/profilfoto.jpg') center / cover no-repeat;
+  background-color: rgba(4, 8, 20, 0.72);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   z-index: 1400;
 }
 

@@ -133,7 +133,14 @@ const SiginModal = ({ onClose, onSuccess }) => {
 
   return (
     <>
-      <div className="sigin-modal-overlay" onClick={onClose} />
+      <div
+        className="sigin-modal-overlay"
+        onClick={onClose}
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(4, 8, 20, 0.72), rgba(4, 8, 20, 0.72)), url('/img/profilfoto.jpg')",
+        }}
+      />
       <div className="sigin-modal" onClick={(e) => e.stopPropagation()}>
         <div className="sigin-modal-header">
           <div className="sigin-modal-header-logo">

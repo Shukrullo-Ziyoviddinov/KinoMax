@@ -5,6 +5,7 @@ const { parsePagination, buildPaginationMeta } = require("../utils/pagination");
 const { applyPagination } = require("../utils/queryOptimizer");
 const { validateIdParam } = require("../middlewares/validateRequest");
 const { buildTopRatedMovies } = require("../services/topRatedService");
+const { toPublicMovie, buildSimilarMovies } = require("../services/similarMoviesService");
 const authMiddleware = require("../middlewares/auth.middleware");
 const MovieComment = require("../models/movieComment");
 
@@ -144,6 +145,35 @@ router.get("/:id", validateIdParam("id"), async (req, res, next) => {
         id: movie.id ?? movieId,
       },
       "Kino ma'lumoti"
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/:id/similar", validateIdParam("id"), async (req, res, next) => {
+  try {
+    const pagination = parsePagination(req.query);
+    const currentRow = await Movie.findOne({ movieId: req.params.id }).select("-__v").lean();
+    if (!currentRow) {
+      return fail(res, "Kino topilmadi.", 404);
+    }
+
+    const currentMovie = toPublicMovie(currentRow);
+    const rows = await Movie.find().select("-__v").lean();
+    const candidates = rows.map(toPublicMovie);
+    const similarMovies = buildSimilarMovies({ currentMovie, candidates });
+    const paginatedItems = similarMovies.slice(
+      pagination.skip,
+      pagination.skip + pagination.limit
+    );
+
+    return success(
+      res,
+      paginatedItems,
+      "O'xshash kinolar",
+      200,
+      buildPaginationMeta(similarMovies.length, pagination)
     );
   } catch (error) {
     return next(error);

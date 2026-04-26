@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useWishlist } from '../../context/WishlistContext';
-import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
+import { fetchSimilarMovies } from '../../api/moviesApi';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import ShowMoreButton, { getDisplayItems, DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
@@ -14,11 +14,45 @@ const SimilarMovies = ({ currentMovie }) => {
   const navigate = useNavigate();
   const { contentLang } = useContentLanguage();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { allMovies, isLoading: catalogLoading } = useMoviesCatalog();
+  const [similarMovies, setSimilarMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const currentMovieId = currentMovie?.id;
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadSimilar = async () => {
+      if (!currentMovieId) {
+        if (isMounted) {
+          setSimilarMovies([]);
+          setIsLoading(false);
+        }
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const result = await fetchSimilarMovies(currentMovieId, { page: 1, limit: 30 });
+        if (isMounted) {
+          setSimilarMovies(result.items || []);
+        }
+      } catch (_error) {
+        if (isMounted) {
+          setSimilarMovies([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadSimilar();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentMovieId]);
 
   if (!currentMovie) return null;
 
-  if (catalogLoading) {
+  if (isLoading) {
     return (
       <div className="similar-movies similar-movies-skeleton">
         <LoaderSkeleton variant="similar-movies-title" className="similar-movies-title-skeleton" width={200} height={28} />
@@ -31,43 +65,6 @@ const SimilarMovies = ({ currentMovie }) => {
       </div>
     );
   }
-
-  const currentTypeCategory = Array.isArray(currentMovie.typeCategory)
-    ? currentMovie.typeCategory.map((tc) => String(tc).toLowerCase().trim())
-    : currentMovie.typeCategory
-    ? [String(currentMovie.typeCategory).toLowerCase().trim()]
-    : [];
-
-  const currentFilterCountry = currentMovie.filterCountry
-    ? String(currentMovie.filterCountry).toLowerCase().trim()
-    : '';
-
-  const similarMovies = allMovies.filter((movie) => {
-    if (movie.id === currentMovie.id) return false;
-    if (!movie.typeCategory && !movie.filterCountry) return false;
-
-    const movieTypeCategory = Array.isArray(movie.typeCategory)
-      ? movie.typeCategory.map((tc) => String(tc).toLowerCase().trim())
-      : movie.typeCategory
-      ? [String(movie.typeCategory).toLowerCase().trim()]
-      : [];
-
-    const movieFilterCountry = movie.filterCountry
-      ? String(movie.filterCountry).toLowerCase().trim()
-      : '';
-
-    const hasMatchingTypeCategory =
-      currentTypeCategory.length > 0 &&
-      movieTypeCategory.length > 0 &&
-      currentTypeCategory.some((ctc) => movieTypeCategory.includes(ctc));
-
-    const hasMatchingFilterCountry =
-      currentFilterCountry &&
-      movieFilterCountry &&
-      currentFilterCountry === movieFilterCountry;
-
-    return hasMatchingTypeCategory || hasMatchingFilterCountry;
-  });
 
   const getMovieTitle = (movie) => {
     if (movie.title && typeof movie.title === 'object') {

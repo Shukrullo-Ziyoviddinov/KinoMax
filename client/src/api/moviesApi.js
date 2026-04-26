@@ -97,6 +97,26 @@ export const fetchMovieById = async (id) => {
   });
 };
 
+export const fetchSimilarMovies = async (movieId, { page = 1, limit = 20 } = {}) => {
+  const id = Number(movieId);
+  if (!Number.isFinite(id)) {
+    throw new Error("Noto'g'ri kino id.");
+  }
+
+  const query = `?page=${page}&limit=${limit}`;
+  const data = await apiClient.get(`/api/movies/${id}/similar${query}`, {
+    cacheKey: `movies:similar:${id}:${page}:${limit}`,
+    ttlMs: 30 * 1000,
+    dedupeKey: `movies:similar:${id}:${page}:${limit}`,
+    includeMeta: true,
+  });
+
+  return {
+    items: Array.isArray(data?.data) ? data.data : [],
+    meta: data?.meta || null,
+  };
+};
+
 export const fetchTopRatedMovies = async ({ page = 1, limit = 20 } = {}) => {
   const query = `?page=${page}&limit=${limit}`;
   try {

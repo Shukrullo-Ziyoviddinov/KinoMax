@@ -12,7 +12,7 @@ import './Home.css';
 const Home = () => {
   const { t } = useTranslation();
   const { setLoading } = useLoading();
-  const { sections, isLoading: catalogLoading } = useMoviesCatalog();
+  const { sections, isLoading: catalogLoading, hasMore, isLoadingMore } = useMoviesCatalog();
 
   const {
     koreaDrama = [],
@@ -36,124 +36,70 @@ const Home = () => {
     return () => setLoading('movies', false);
   }, [catalogLoading, setLoading]);
 
+  const sectionConfigs = [
+    { sectionType: 'koreaDrama', data: koreaDrama, title: t('movies.koreaDrama'), to: '/category/korea' },
+    { sectionType: 'kinolar', data: kinolar, title: t('movies.kinolar'), to: '/category/kinolar' },
+    { sectionType: 'worldMovies', data: worldMovies, title: t('movies.worldMovies'), to: '/category/worldMovies' },
+    { sectionType: 'animations', data: animations, title: t('movies.animations'), to: '/category/animations' },
+    { sectionType: 'turkishSeries', data: turkishSeries, title: t('movies.turkishSeries'), to: '/category/turkishSeries' },
+    { sectionType: 'russianMovies', data: russianMovies, title: t('movies.russianMovies'), to: '/category/russianMovies' },
+    { sectionType: 'tvSeries', data: tvSeries, title: t('movies.tvSeries'), to: '/category/tvSeries' },
+    { sectionType: 'topRated', isTopRated: true },
+    { sectionType: 'actionMovies', data: actionMovies, title: t('movies.actionMovies'), to: '/category/actionMovies' },
+    { sectionType: 'horrorMovies', data: horrorMovies, title: t('movies.horrorMovies'), to: '/category/horrorMovies' },
+    { sectionType: 'anime', data: anime, title: t('movies.anime'), to: '/category/anime' },
+    { sectionType: 'adventureMovies', data: adventureMovies, title: t('movies.adventureMovies'), to: '/category/adventureMovies' },
+    { sectionType: 'romanceMovies', data: romanceMovies, title: t('movies.romanceMovies'), to: '/category/romanceMovies' },
+    { sectionType: 'retroMovies', data: retroMovies, title: t('movies.retroMovies'), to: '/category/retroMovies' },
+    { sectionType: 'uzbekMovies', data: uzbekMovies, title: t('movies.uzbekMovies'), to: '/category/uzbekMovies' },
+  ];
+
+  let blockFollowingSections = false;
+  const renderedSections = sectionConfigs.map((section) => {
+      if (section.isTopRated) {
+        if (blockFollowingSections) return null;
+        return (
+          <TopRatedContent
+            key="top-rated-content"
+            limit={DEFAULT_LIMIT}
+            showHorizontalScroll={true}
+            moreTo="/category/topRated"
+          />
+        );
+      }
+
+      if (blockFollowingSections) return null;
+
+      const sectionIsEmpty = (section.data?.length || 0) === 0;
+      const shouldKeepLoading = sectionIsEmpty && (catalogLoading || isLoadingMore || hasMore);
+      const shouldRenderSection = !sectionIsEmpty || shouldKeepLoading;
+
+      if (shouldKeepLoading) {
+        blockFollowingSections = true;
+      }
+
+      if (!shouldRenderSection) return null;
+
+      return (
+        <Movies
+          key={section.sectionType}
+          sectionType={section.sectionType}
+          filteredMovies={section.data}
+          limit={DEFAULT_LIMIT}
+          showHorizontalScroll={true}
+          headerTitle={section.title}
+          moreTo={section.to}
+          isLoading={shouldKeepLoading}
+        />
+      );
+    });
+
   return (
     <div className="home">
       <Banner />
       <Categories />
       <Movies sectionType="recommended" limit={DEFAULT_LIMIT} showHorizontalScroll={true} />
-      <Movies
-        sectionType="koreaDrama"
-        filteredMovies={koreaDrama}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.koreaDrama')}
-        moreTo="/category/korea"
-      />
-      <Movies
-        sectionType="kinolar"
-        filteredMovies={kinolar}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.kinolar')}
-        moreTo="/category/kinolar"
-      />
-      <Movies
-        sectionType="worldMovies"
-        filteredMovies={worldMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.worldMovies')}
-        moreTo="/category/worldMovies"
-      />
-      <Movies
-        sectionType="animations"
-        filteredMovies={animations}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.animations')}
-        moreTo="/category/animations"
-      />
-      <Movies
-        sectionType="turkishSeries"
-        filteredMovies={turkishSeries}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.turkishSeries')}
-        moreTo="/category/turkishSeries"
-      />
-      <Movies
-        sectionType="russianMovies"
-        filteredMovies={russianMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.russianMovies')}
-        moreTo="/category/russianMovies"
-      />
-      <Movies
-        sectionType="tvSeries"
-        filteredMovies={tvSeries}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.tvSeries')}
-        moreTo="/category/tvSeries"
-      />
-      <TopRatedContent limit={DEFAULT_LIMIT} showHorizontalScroll={true} moreTo="/category/topRated" />
-      <Movies
-        sectionType="actionMovies"
-        filteredMovies={actionMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.actionMovies')}
-        moreTo="/category/actionMovies"
-      />
-      <Movies
-        sectionType="horrorMovies"
-        filteredMovies={horrorMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.horrorMovies')}
-        moreTo="/category/horrorMovies"
-      />
-      <Movies
-        sectionType="anime"
-        filteredMovies={anime}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.anime')}
-        moreTo="/category/anime"
-      />
-      <Movies
-        sectionType="adventureMovies"
-        filteredMovies={adventureMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.adventureMovies')}
-        moreTo="/category/adventureMovies"
-      />
-      <Movies
-        sectionType="romanceMovies"
-        filteredMovies={romanceMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.romanceMovies')}
-        moreTo="/category/romanceMovies"
-      />
-      <Movies
-        sectionType="retroMovies"
-        filteredMovies={retroMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.retroMovies')}
-        moreTo="/category/retroMovies"
-      />
-      <Movies
-        sectionType="uzbekMovies"
-        filteredMovies={uzbekMovies}
-        limit={DEFAULT_LIMIT}
-        showHorizontalScroll={true}
-        headerTitle={t('movies.uzbekMovies')}
-        moreTo="/category/uzbekMovies"
-      />
+      {renderedSections}
     </div>
   );
 };

@@ -163,3 +163,23 @@ export const fetchTopRatedMovies = async ({ page = 1, limit = 20 } = {}) => {
     };
   }
 };
+
+export const fetchSimilarTrailers = async ({ movieId, trailerId, typeTrailers, limit = 12 }) => {
+  const id = Number(movieId);
+  const tId = Number(trailerId);
+  if (!Number.isFinite(id) || !Number.isFinite(tId)) {
+    throw new Error("Noto'g'ri kino yoki treyler id.");
+  }
+
+  const type = String(typeTrailers || '').trim();
+  if (!type) return [];
+
+  const query = `?trailerId=${tId}&typeTrailers=${encodeURIComponent(type)}&limit=${Number(limit) || 12}`;
+  const data = await apiClient.get(`/api/movies/${id}/similar-trailers${query}`, {
+    cacheKey: `movies:similar-trailers:${id}:${tId}:${type}:${limit}`,
+    ttlMs: 30 * 1000,
+    dedupeKey: `movies:similar-trailers:${id}:${tId}:${type}:${limit}`,
+  });
+
+  return Array.isArray(data) ? data : [];
+};

@@ -6,6 +6,7 @@ const { applyPagination } = require("../utils/queryOptimizer");
 const { validateIdParam } = require("../middlewares/validateRequest");
 const { buildTopRatedMovies } = require("../services/topRatedService");
 const { toPublicMovie, buildSimilarMovies } = require("../services/similarMoviesService");
+const { buildSimilarTrailers } = require("../services/similarTrailersService");
 const authMiddleware = require("../middlewares/auth.middleware");
 const MovieComment = require("../models/movieComment");
 const User = require("../models/User");
@@ -219,6 +220,35 @@ router.delete("/:movieId/comments/:commentId/like", validateIdParam("movieId"), 
     }
 
     return success(res, { likes: actualLikes, likedByMe: false }, "Komment like'i olib tashlandi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/:id/similar-trailers", validateIdParam("id"), async (req, res, next) => {
+  try {
+    const currentTrailerId = Number.parseInt(req.query?.trailerId, 10);
+    const typeTrailers = String(req.query?.typeTrailers || "").trim();
+    const limit = Number.parseInt(req.query?.limit, 10) || 12;
+
+    if (!Number.isFinite(currentTrailerId)) {
+      return fail(res, "Noto'g'ri trailerId.", 400);
+    }
+    if (!typeTrailers) {
+      return success(res, [], "O'xshash treylerlar");
+    }
+
+    const rows = await Movie.find().select("-__v").lean();
+    const movies = rows.map(toPublicMovie);
+    const items = buildSimilarTrailers({
+      movies,
+      currentMovieId: req.params.id,
+      currentTrailerId,
+      typeTrailers,
+      limit,
+    });
+
+    return success(res, items, "O'xshash treylerlar");
   } catch (error) {
     return next(error);
   }

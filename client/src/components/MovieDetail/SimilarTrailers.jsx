@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
-import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { formatActionCount } from '../../utils/utils';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import VerticalScroll from './VerticalScroll';
@@ -10,6 +9,7 @@ import './SimilarTrailers.css';
 const SimilarTrailers = ({
   currentMovie,
   selectedTrailer,
+  similarTrailers = [],
   onTrailerSelect,
   trailerReactions,
   getTrailerKey,
@@ -21,38 +21,6 @@ const SimilarTrailers = ({
 }) => {
   const { t } = useTranslation();
   const { contentLang } = useContentLanguage();
-  const { allMovies } = useMoviesCatalog();
-
-  const similarTrailers = useMemo(() => {
-    const currentTypeTrailers = selectedTrailer?.typeTrailers || '';
-    if (!currentTypeTrailers) return [];
-
-    const seen = new Set();
-
-    return allMovies
-      .flatMap((movie) =>
-        (movie.trailersVideo || []).map((trailer) => ({
-          ...trailer,
-          movieId: movie.id,
-          movieTitle: movie.title
-        }))
-      )
-      .filter((trailer) => {
-        const isSameType = trailer.typeTrailers === currentTypeTrailers;
-        const isNotCurrent = !(
-          trailer.movieId === currentMovie?.id && trailer.id === selectedTrailer?.id
-        );
-        return isSameType && isNotCurrent;
-      })
-      .filter((trailer) => {
-        const src = trailer.trailers?.[contentLang] || trailer.trailers?.uz || trailer.trailers?.ru || '';
-        const uniqueSignature = `${trailer.movieId}|${trailer.id}|${src}|${trailer.title?.uz || trailer.title?.ru || ''}`;
-        if (seen.has(uniqueSignature)) return false;
-        seen.add(uniqueSignature);
-        return true;
-      })
-      .slice(0, 12);
-  }, [allMovies, selectedTrailer?.typeTrailers, selectedTrailer?.id, currentMovie?.id, contentLang]);
 
   if (trailerLoading) {
     return (

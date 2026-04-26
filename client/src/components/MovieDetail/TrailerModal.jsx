@@ -8,6 +8,7 @@ import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useAuthModal } from '../../context/AuthModalContext';
 import { getAuthToken } from '../../utils/authStorage';
 import { fetchTrailerReactions, removeTrailerReaction, setTrailerReaction } from '../../api/userApi';
+import { fetchSimilarTrailers } from '../../api/moviesApi';
 import SimilarTrailers from './SimilarTrailers';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import VideoLoader from '../VideoLoader/VideoLoader';
@@ -81,6 +82,7 @@ const TrailerModal = ({ movie, onClose }) => {
     });
     return reactions;
   });
+  const [similarTrailers, setSimilarTrailers] = useState([]);
 
   const updateTrailerReaction = async (trailer, type) => {
     if (!trailer) return;
@@ -185,6 +187,32 @@ const TrailerModal = ({ movie, onClose }) => {
       cancelled = true;
     };
   }, [movie?.id, trailers]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSimilarTrailers = async () => {
+      if (!movie?.id || !selectedTrailer?.id || !selectedTrailer?.typeTrailers) {
+        if (!cancelled) setSimilarTrailers([]);
+        return;
+      }
+      try {
+        const list = await fetchSimilarTrailers({
+          movieId: movie.id,
+          trailerId: selectedTrailer.id,
+          typeTrailers: selectedTrailer.typeTrailers,
+          limit: 12,
+        });
+        if (!cancelled) setSimilarTrailers(Array.isArray(list) ? list : []);
+      } catch (_error) {
+        if (!cancelled) setSimilarTrailers([]);
+      }
+    };
+
+    loadSimilarTrailers();
+    return () => {
+      cancelled = true;
+    };
+  }, [movie?.id, selectedTrailer?.id, selectedTrailer?.typeTrailers]);
 
   const handleTrailerSelect = (trailer) => {
     if (videoRef.current) {
@@ -982,6 +1010,7 @@ const TrailerModal = ({ movie, onClose }) => {
               trailerLoading={trailerLoading}
               currentMovie={movie}
               selectedTrailer={selectedTrailer}
+              similarTrailers={similarTrailers}
               onTrailerSelect={handleTrailerSelect}
               trailerReactions={trailerReactions}
               getTrailerKey={getTrailerKey}

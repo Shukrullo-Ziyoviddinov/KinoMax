@@ -9,7 +9,9 @@ import ProfileSocialModal from '../components/Profile/ProfileSocialModal';
 import ProfileLogoutModal from '../components/Profile/ProfileLogoutModal';
 import { fetchSocialLinks } from '../api/socialLinksApi';
 import { logoutUser } from '../api/authApi';
-import { PROFILE_STORAGE_KEY, clearAuthSession } from '../utils/authStorage';
+import { fetchUserProfile, updateUserProfile } from '../api/userApi';
+import { useToast } from '../context/ToastContext';
+import { PROFILE_STORAGE_KEY, clearAuthSession, getAuthToken } from '../utils/authStorage';
 import './ProfilePage.css';
 
 const DEFAULT_PROFILE = { name: 'Shukrullo', surname: 'Aliyov', phone: '909560304', avatar: null };
@@ -38,6 +40,7 @@ const getCurrentLanguage = () => {
 
 const ProfilePage = () => {
   const { t, i18n } = useTranslation();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(getStoredProfile);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -80,11 +83,55 @@ const ProfilePage = () => {
     };
   }, []);
 
-  const handleSaveProfile = (data) => {
-    const newProfile = { ...profile, ...data };
-    setProfile(newProfile);
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(newProfile));
-    setShowEditModal(false);
+  useEffect(() => {
+    let isMounted = true;
+    const loadProfile = async () => {
+      if (!getAuthToken()) return;
+      try {
+        const data = await fetchUserProfile();
+        if (!isMounted || !data) return;
+        const nextProfile = {
+          name: data.firstName?.trim() || DEFAULT_PROFILE.name,
+          surname: data.lastName?.trim() || DEFAULT_PROFILE.surname,
+          phone: data.phone?.trim() || DEFAULT_PROFILE.phone,
+          avatar: data.avatar ?? null,
+        };
+        setProfile(nextProfile);
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+      } catch (_error) {}
+    };
+    loadProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSaveProfile = async (data) => {
+    if (!data.avatar) {
+      showToast(t('toast.profileAvatarRequired'), 'error');
+      return;
+    }
+
+    try {
+      const serverProfile = await updateUserProfile({
+        firstName: data.name?.trim(),
+        lastName: data.surname?.trim(),
+        avatar: data.avatar,
+      });
+
+      const newProfile = {
+        name: serverProfile?.firstName?.trim() || data.name?.trim() || profile.name,
+        surname: serverProfile?.lastName?.trim() || data.surname?.trim() || profile.surname,
+        phone: serverProfile?.phone?.trim() || profile.phone,
+        avatar: serverProfile?.avatar ?? data.avatar ?? null,
+      };
+
+      setProfile(newProfile);
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(newProfile));
+      setShowEditModal(false);
+    } catch (error) {
+      showToast(error?.message || t('auth.errorFallback'), 'error');
+    }
   };
 
   const handleLanguageChange = (langCode) => {

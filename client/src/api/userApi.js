@@ -31,6 +31,36 @@ export const fetchWishlist = async () => {
   }
 };
 
+export const fetchUserProfile = async () => {
+  try {
+    const response = await fetch(toUrl('/api/user/profile'), { headers: authHeaders() });
+    const json = await parseJsonSafe(response);
+    if (!response.ok || !(json?.success ?? json?.ok)) {
+      throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
+    }
+    return json?.data || null;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+};
+
+export const updateUserProfile = async ({ firstName, lastName, avatar }) => {
+  try {
+    const response = await fetch(toUrl('/api/user/profile'), {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ firstName, lastName, avatar }),
+    });
+    const json = await parseJsonSafe(response);
+    if (!response.ok || !(json?.success ?? json?.ok)) {
+      throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
+    }
+    return json?.data || null;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+};
+
 export const addWishlist = async (movieId) => {
   try {
     const response = await fetch(toUrl('/api/user/wishlist'), {

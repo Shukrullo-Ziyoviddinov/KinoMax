@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../context/ToastContext';
 import './ProfileEditModal.css';
 
 const ProfileEditModal = ({ profile, onSave, onClose }) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [name, setName] = useState(profile.name || '');
   const [surname, setSurname] = useState(profile.surname || '');
   const [avatar, setAvatar] = useState(profile.avatar || null);
@@ -69,6 +71,10 @@ const ProfileEditModal = ({ profile, onSave, onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!isFormValid) return;
+    if (!avatar) {
+      showToast(t('toast.profileAvatarRequired'), 'error');
+      return;
+    }
     onSave({ name, surname, avatar });
   };
 

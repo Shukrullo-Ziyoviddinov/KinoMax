@@ -463,21 +463,31 @@ const MovieDetail = () => {
     const baseDislikes = (movie.dislike !== '' && movie.dislike !== undefined && movie.dislike !== null)
       ? (parseInt(movie.dislike, 10) || 0)
       : 0;
+    const prevState = { isLiked, isDisliked, likeCount, dislikeCount };
+
+    if (isLiked) {
+      setIsLiked(false);
+      setIsDisliked(false);
+      setLikeCount(baseLikes);
+      setDislikeCount(baseDislikes);
+    } else {
+      setIsLiked(true);
+      setIsDisliked(false);
+      setLikeCount(baseLikes + 1);
+      setDislikeCount(baseDislikes);
+    }
+
     try {
-      if (isLiked) {
+      if (prevState.isLiked) {
         await removeMovieReaction(movie.id);
-        setIsLiked(false);
-        setIsDisliked(false);
-        setLikeCount(baseLikes);
-        setDislikeCount(baseDislikes);
       } else {
         await setMovieReaction(movie.id, 'like');
-        setIsLiked(true);
-        setIsDisliked(false);
-        setLikeCount(baseLikes + 1);
-        setDislikeCount(baseDislikes);
       }
     } catch (_error) {
+      setIsLiked(prevState.isLiked);
+      setIsDisliked(prevState.isDisliked);
+      setLikeCount(prevState.likeCount);
+      setDislikeCount(prevState.dislikeCount);
     }
   };
 
@@ -492,21 +502,31 @@ const MovieDetail = () => {
     const baseDislikes = (movie.dislike !== '' && movie.dislike !== undefined && movie.dislike !== null)
       ? (parseInt(movie.dislike, 10) || 0)
       : 0;
+    const prevState = { isLiked, isDisliked, likeCount, dislikeCount };
+
+    if (isDisliked) {
+      setIsDisliked(false);
+      setIsLiked(false);
+      setDislikeCount(baseDislikes);
+      setLikeCount(baseLikes);
+    } else {
+      setIsDisliked(true);
+      setIsLiked(false);
+      setDislikeCount(baseDislikes + 1);
+      setLikeCount(baseLikes);
+    }
+
     try {
-      if (isDisliked) {
+      if (prevState.isDisliked) {
         await removeMovieReaction(movie.id);
-        setIsDisliked(false);
-        setIsLiked(false);
-        setDislikeCount(baseDislikes);
-        setLikeCount(baseLikes);
       } else {
         await setMovieReaction(movie.id, 'dislike');
-        setIsDisliked(true);
-        setIsLiked(false);
-        setDislikeCount(baseDislikes + 1);
-        setLikeCount(baseLikes);
       }
     } catch (_error) {
+      setIsLiked(prevState.isLiked);
+      setIsDisliked(prevState.isDisliked);
+      setLikeCount(prevState.likeCount);
+      setDislikeCount(prevState.dislikeCount);
     }
   };
 

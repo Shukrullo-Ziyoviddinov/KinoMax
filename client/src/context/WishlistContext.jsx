@@ -57,10 +57,20 @@ export const WishlistProvider = ({ children }) => {
       return;
     }
 
+    let shouldRollback = false;
+    setWishlistIds((prev) => {
+      if (prev.includes(id)) return prev;
+      shouldRollback = true;
+      return [...prev, id];
+    });
+
     try {
-      const next = await addWishlist(id);
-      setWishlistIds(next.map((item) => toId(item)).filter((item) => item !== null));
-    } catch (_error) {}
+      await addWishlist(id);
+    } catch (_error) {
+      if (shouldRollback) {
+        setWishlistIds((prev) => prev.filter((item) => item !== id));
+      }
+    }
   };
 
   const removeFromWishlist = async (movieOrId) => {
@@ -72,10 +82,20 @@ export const WishlistProvider = ({ children }) => {
       return;
     }
 
+    let removed = false;
+    setWishlistIds((prev) => {
+      if (!prev.includes(id)) return prev;
+      removed = true;
+      return prev.filter((item) => item !== id);
+    });
+
     try {
-      const next = await removeWishlist(id);
-      setWishlistIds(next.map((item) => toId(item)).filter((item) => item !== null));
-    } catch (_error) {}
+      await removeWishlist(id);
+    } catch (_error) {
+      if (removed) {
+        setWishlistIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      }
+    }
   };
 
   const toggleWishlist = (movieOrId) => {

@@ -105,6 +105,10 @@ const TrailerModal = ({ movie, onClose }) => {
     const newLike = base.like + (newReaction === 'like' ? 1 : 0);
     const newDislike = base.dislike + (newReaction === 'dislike' ? 1 : 0);
 
+    const previous = trailerReactions[key] || loadTrailerReactions(trailer, {});
+    const optimistic = { like: newLike, dislike: newDislike, userReaction: newReaction };
+    setTrailerReactions((prev) => ({ ...prev, [key]: optimistic }));
+
     try {
       if (newReaction) {
         await setTrailerReaction({
@@ -118,9 +122,9 @@ const TrailerModal = ({ movie, onClose }) => {
           trailerId: trailer.id,
         });
       }
-      const updated = { like: newLike, dislike: newDislike, userReaction: newReaction };
-      setTrailerReactions(prev => ({ ...prev, [key]: updated }));
-    } catch (_error) {}
+    } catch (_error) {
+      setTrailerReactions((prev) => ({ ...prev, [key]: previous }));
+    }
   };
 
   const handleLike = async (trailer) => updateTrailerReaction(trailer, 'like');

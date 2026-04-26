@@ -54,6 +54,15 @@ const migrateComment = (c) => ({
   replies: Array.isArray(c.replies) ? c.replies.map(migrateComment) : [],
 });
 
+const insertReplyInTree = (list, parentId, reply) =>
+  list.map((item) => {
+    if (String(item.id) === String(parentId)) {
+      return { ...item, replies: [...(item.replies || []), reply] };
+    }
+    if (!item.replies?.length) return item;
+    return { ...item, replies: insertReplyInTree(item.replies, parentId, reply) };
+  });
+
 const PREVIEW_LIMIT = 4;
 
 /** Jami kommentlar soni (asosiy + barcha javoblar, ichki javoblar bilan) */
@@ -145,16 +154,53 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
     const text = inputValue.trim();
     if (!text) return;
 
+    const parentId = replyingTo ? replyingTo.id : null;
+    const tempId = `tmp-${Date.now()}`;
+    const tempComment = {
+      id: tempId,
+      text,
+      likes: 0,
+      authorName: [profile.name, profile.surname].filter(Boolean).join(' ') || 'You',
+      authorAvatar: profile.avatar || null,
+      replies: [],
+    };
+
+    setInputValue('');
+    setReplyingTo(null);
+    setComments((prev) => (
+      parentId ? insertReplyInTree(prev, parentId, tempComment) : [...prev, tempComment]
+    ));
+
     try {
-      await commentsApi.createComment(movieId, {
+      const created = await commentsApi.createComment(movieId, {
         text,
-        parentId: replyingTo ? replyingTo.id : null,
+        parentId,
       });
-      const refreshed = await commentsApi.fetchComments(movieId);
-      setComments(refreshed.map(migrateComment));
-      setReplyingTo(null);
-      setInputValue('');
-    } catch (_error) {}
+      const mappedCreated = created ? migrateComment(created) : null;
+
+      setComments((prev) => {
+        const replaceTemp = (list) =>
+          list.map((item) => {
+            if (String(item.id) === String(tempId)) {
+              return mappedCreated || item;
+            }
+            if (!item.replies?.length) return item;
+            return { ...item, replies: replaceTemp(item.replies) };
+          });
+        return replaceTemp(prev);
+      });
+    } catch (_error) {
+      setComments((prev) => {
+        const removeTemp = (list) =>
+          list
+            .filter((item) => String(item.id) !== String(tempId))
+            .map((item) => ({
+              ...item,
+              replies: item.replies?.length ? removeTemp(item.replies) : [],
+            }));
+        return removeTemp(prev);
+      });
+    }
   };
 
   const handleReplyClick = (comment) => {

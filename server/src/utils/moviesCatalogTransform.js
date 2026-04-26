@@ -17,39 +17,13 @@ const CATEGORY_NAME_TO_SECTION = {
   animationMovie: "animations",
   multFilm: "animations",
 };
+const { buildPersonalizedRecommendations } = require("../services/recommendationService");
 
 const resolveSectionKey = (movie) => {
   if (movie?.categoryName && CATEGORY_NAME_TO_SECTION[movie.categoryName]) {
     return CATEGORY_NAME_TO_SECTION[movie.categoryName];
   }
   return null;
-};
-
-const normalizeText = (value) => String(value || "").trim().toLowerCase();
-const RECOMMENDED_LIMIT = 12;
-
-const recommendationKey = (movie) => {
-  const title =
-    normalizeText(movie?.title?.uz) ||
-    normalizeText(movie?.title?.ru) ||
-    normalizeText(movie?.title);
-  const year = normalizeText(
-    movie?.description?.uz?.year || movie?.description?.ru?.year || movie?.specs?.year
-  );
-  const image = normalizeText(movie?.homeImg?.uz || movie?.homeImg?.ru);
-  return `${title}|${year}|${image}`;
-};
-
-const uniqueRecommendations = (items) => {
-  const used = new Set();
-  const result = [];
-  items.forEach((movie) => {
-    const key = recommendationKey(movie);
-    if (!key || used.has(key)) return;
-    used.add(key);
-    result.push(movie);
-  });
-  return result;
 };
 
 const transformMovies = (movies) =>
@@ -79,13 +53,13 @@ const transformMovies = (movies) =>
     })
     .filter(Boolean);
 
-const buildMoviesCatalog = (movies) => {
+const buildMoviesCatalog = (movies, { user = null, popularMovieScores = null } = {}) => {
   const allMovies = transformMovies(movies);
-  const recommendedMovies = uniqueRecommendations(
-    [...allMovies]
-      .filter((movie) => movie.category !== "anonslar")
-      .sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0))
-  ).slice(0, RECOMMENDED_LIMIT);
+  const recommendedMovies = buildPersonalizedRecommendations({
+    movies: allMovies,
+    user,
+    popularMovieScores,
+  });
 
   const bySection = (sectionKey) =>
     allMovies.filter((movie) => movie.category === sectionKey);

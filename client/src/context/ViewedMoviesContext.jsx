@@ -3,6 +3,8 @@
  * Format: { items: [{ id, typeCategory, filterGenre, filterCountry }] }
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getAuthToken } from '../utils/authStorage';
+import { addViewedMovie as addViewedMovieApi } from '../api/userApi';
 
 const STORAGE_KEY = 'violet_viewed_movies';
 const MAX_ITEMS = 50;
@@ -48,6 +50,11 @@ export const ViewedMoviesProvider = ({ children }) => {
       const next = [item, ...filtered].slice(0, MAX_ITEMS);
       return { items: next };
     });
+
+    // Authorized users additionally persist viewed history in DB for recommendations.
+    if (getAuthToken()) {
+      addViewedMovieApi(movie.id).catch(() => {});
+    }
   }, []);
 
   const getViewedItems = useCallback(() => data.items, [data.items]);

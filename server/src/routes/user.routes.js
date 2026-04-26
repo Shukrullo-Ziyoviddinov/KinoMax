@@ -12,6 +12,8 @@ const {
   getTrailerReactionsByMovie,
   setTrailerReaction,
   removeTrailerReaction,
+  getViewedMovies,
+  addViewedMovie,
 } = require("../controllers/user.controller");
 
 const router = express.Router();
@@ -27,5 +29,7 @@ router.delete("/reactions/movie/:movieId", authMiddleware, removeMovieReaction);
 router.get("/reactions/trailer", authMiddleware, getTrailerReactionsByMovie);
 router.post("/reactions/trailer", authMiddleware, setTrailerReaction);
 router.delete("/reactions/trailer/:movieId/:trailerId", authMiddleware, removeTrailerReaction);
+router.get("/viewed-movies", authMiddleware, getViewedMovies);
+router.post("/viewed-movies", authMiddleware, addViewedMovie);
 
 module.exports = router;

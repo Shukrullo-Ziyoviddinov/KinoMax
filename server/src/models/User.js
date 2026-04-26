@@ -40,6 +40,16 @@ const userSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+    viewedMovies: {
+      type: [
+        {
+          movieId: { type: Number, required: true },
+          viewedAt: { type: Date, default: Date.now },
+          viewCount: { type: Number, default: 1 },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

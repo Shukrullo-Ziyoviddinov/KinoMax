@@ -199,6 +199,44 @@ const removeTrailerReaction = async (req, res, next) => {
   }
 };
 
+const getViewedMovies = async (req, res, next) => {
+  try {
+    const viewedMovies = Array.isArray(req.user.viewedMovies) ? req.user.viewedMovies : [];
+    return success(res, { viewedMovies }, "Ko'rilgan kinolar olindi.");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const addViewedMovie = async (req, res, next) => {
+  try {
+    const movieId = toMovieId(req.body?.movieId);
+    if (movieId === null) {
+      const error = new Error("movieId noto'g'ri.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const viewedMovies = Array.isArray(req.user.viewedMovies) ? req.user.viewedMovies : [];
+    const existing = viewedMovies.find((item) => Number(item.movieId) === movieId);
+    if (existing) {
+      existing.viewCount = Math.max(1, Number(existing.viewCount) || 1) + 1;
+      existing.viewedAt = new Date();
+    } else {
+      viewedMovies.unshift({ movieId, viewedAt: new Date(), viewCount: 1 });
+    }
+
+    req.user.viewedMovies = viewedMovies
+      .sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime())
+      .slice(0, 150);
+
+    await req.user.save();
+    return success(res, { viewedMovies: req.user.viewedMovies }, "Ko'rilgan kino saqlandi.");
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -211,4 +249,6 @@ module.exports = {
   getTrailerReactionsByMovie,
   setTrailerReaction,
   removeTrailerReaction,
+  getViewedMovies,
+  addViewedMovie,
 };

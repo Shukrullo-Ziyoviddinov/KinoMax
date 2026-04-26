@@ -155,3 +155,20 @@ export const removeTrailerReaction = async ({ movieId, trailerId }) => {
     throw normalizeApiError(error);
   }
 };
+
+export const addViewedMovie = async (movieId) => {
+  try {
+    const response = await fetch(toUrl('/api/user/viewed-movies'), {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ movieId }),
+    });
+    const json = await parseJsonSafe(response);
+    if (!response.ok || !(json?.success ?? json?.ok)) {
+      throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
+    }
+    return Array.isArray(json?.data?.viewedMovies) ? json.data.viewedMovies : [];
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+};

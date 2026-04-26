@@ -6,19 +6,19 @@ const ProfileEditModal = ({ profile, onSave, onClose }) => {
   const { t } = useTranslation();
   const [name, setName] = useState(profile.name || '');
   const [surname, setSurname] = useState(profile.surname || '');
-  const [phone, setPhone] = useState(profile.phone || '');
+  const [avatar, setAvatar] = useState(profile.avatar || null);
   const [dragY, setDragY] = useState(0);
   const startYRef = useRef(0);
+  const fileInputRef = useRef(null);
 
   const isNameInvalid = !name.trim();
   const isSurnameInvalid = !surname.trim();
-  const isPhoneInvalid = !phone.trim();
-  const isFormValid = !isNameInvalid && !isSurnameInvalid && !isPhoneInvalid;
+  const isFormValid = !isNameInvalid && !isSurnameInvalid;
 
   useEffect(() => {
     setName(profile.name || '');
     setSurname(profile.surname || '');
-    setPhone(profile.phone || '');
+    setAvatar(profile.avatar || null);
   }, [profile]);
 
   useEffect(() => {
@@ -46,10 +46,30 @@ const ProfileEditModal = ({ profile, onSave, onClose }) => {
     setDragY(0);
   };
 
+  const handleAvatarEdit = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setAvatar(ev.target?.result || null);
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleAvatarRemove = () => {
+    setAvatar(null);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!isFormValid) return;
-    onSave({ name, surname, phone });
+    onSave({ name, surname, avatar });
   };
 
   return (
@@ -75,6 +95,41 @@ const ProfileEditModal = ({ profile, onSave, onClose }) => {
           </button>
         </div>
         <form onSubmit={handleSubmit} className="profile-edit-form">
+          <div className="profile-edit-avatar-section">
+            <div className="profile-edit-avatar-preview">
+              {avatar ? (
+                <img src={avatar} alt="" className="profile-edit-avatar-img" />
+              ) : (
+                <svg
+                  className="profile-edit-avatar-icon"
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="profile-edit-avatar-input"
+            />
+            <div className="profile-edit-avatar-actions">
+              <button type="button" className="profile-edit-avatar-btn profile-edit-avatar-btn-edit" onClick={handleAvatarEdit}>
+                Tahrirlash
+              </button>
+              <button type="button" className="profile-edit-avatar-btn profile-edit-avatar-btn-delete" onClick={handleAvatarRemove}>
+                O'chirish
+              </button>
+            </div>
+          </div>
           <div className="profile-edit-field">
             <label htmlFor="profile-name">{t('profile.name')}</label>
             <input
@@ -95,17 +150,6 @@ const ProfileEditModal = ({ profile, onSave, onClose }) => {
               onChange={(e) => setSurname(e.target.value)}
               placeholder={t('profile.surnamePlaceholder')}
               className={`profile-edit-input ${isSurnameInvalid ? 'profile-edit-input-invalid' : ''}`}
-            />
-          </div>
-          <div className="profile-edit-field">
-            <label htmlFor="profile-phone">{t('profile.phone')}</label>
-            <input
-              id="profile-phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder={t('profile.phonePlaceholder')}
-              className={`profile-edit-input ${isPhoneInvalid ? 'profile-edit-input-invalid' : ''}`}
             />
           </div>
           <button

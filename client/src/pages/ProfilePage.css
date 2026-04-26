@@ -185,18 +185,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   overflow: hidden;
-  transition: border-color 0.25s, transform 0.25s;
-}
-
-.profile-avatar-wrap:hover {
-  border-color: #0312eac2;
-  transform: scale(1.02);
-}
-
-.profile-avatar-input {
-  display: none;
 }
 
 .profile-avatar-img {

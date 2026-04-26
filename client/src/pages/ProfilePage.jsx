@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import ProfileEditModal from '../components/Profile/ProfileEditModal';
@@ -38,7 +38,6 @@ const getCurrentLanguage = () => {
 const ProfilePage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
   const [profile, setProfile] = useState(getStoredProfile);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
@@ -79,24 +78,6 @@ const ProfilePage = () => {
     };
   }, []);
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAvatarChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const newProfile = { ...profile, avatar: ev.target.result };
-        setProfile(newProfile);
-        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(newProfile));
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
-  };
-
   const handleSaveProfile = (data) => {
     const newProfile = { ...profile, ...data };
     setProfile(newProfile);
@@ -125,18 +106,7 @@ const ProfilePage = () => {
               <LoaderSkeleton variant="profile-top" className="profile-page-top-skeleton" />
             ) : (
             <>
-            <button
-              className="profile-avatar-wrap"
-              onClick={handleAvatarClick}
-              aria-label={t('profile.uploadPhoto')}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="profile-avatar-input"
-              />
+            <div className="profile-avatar-wrap" aria-label={t('profile.uploadPhoto')}>
               {profile.avatar ? (
                 <img src={profile.avatar} alt="" className="profile-avatar-img" />
               ) : (
@@ -153,7 +123,7 @@ const ProfilePage = () => {
                   <circle cx="12" cy="7" r="4" />
                 </svg>
               )}
-            </button>
+            </div>
             <div className="profile-info">
               <div className="profile-name">
                 {t('profile.name')}: {profile.name || t('profile.name')}

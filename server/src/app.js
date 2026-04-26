@@ -50,7 +50,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "15mb" }));
 app.use("/api/banners", bannerRoutes);
 app.use("/api/actors", actorsRoutes);
 app.use("/api/genres", genresRoutes);

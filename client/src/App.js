@@ -13,6 +13,7 @@ import { ViewedMoviesProvider } from './context/ViewedMoviesContext';
 import { ContentLanguageProvider } from './context/ContentLanguageContext';
 import { LoadingProvider } from './context/LoadingContext';
 import { MoviesCatalogProvider } from './context/MoviesCatalogContext';
+import { ToastProvider } from './context/ToastContext';
 import './App.css';
 
 function App() {
@@ -81,6 +82,7 @@ function App() {
         <ContentLanguageProvider>
         <LoadingProvider>
         <MoviesCatalogProvider>
+        <ToastProvider>
         <div className="App">
           <Navbar />
           <main className="App-main">
@@ -97,6 +99,7 @@ function App() {
           </main>
           <NavbarMobile />
         </div>
+        </ToastProvider>
         </MoviesCatalogProvider>
         </LoadingProvider>
         </ContentLanguageProvider>

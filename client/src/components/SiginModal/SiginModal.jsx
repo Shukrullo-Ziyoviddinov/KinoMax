@@ -5,6 +5,38 @@ import { saveAuthSession } from '../../utils/authStorage';
 import { useToast } from '../../context/ToastContext';
 import './SiginModal.css';
 
+const loadImageFromFile = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.readAsDataURL(file);
+  });
+
+const compressAvatar = async (file) => {
+  const image = await loadImageFromFile(file);
+  const maxSize = 720;
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const targetWidth = Math.max(1, Math.round(image.width * scale));
+  const targetHeight = Math.max(1, Math.round(image.height * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Canvas context unavailable');
+  }
+  ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+  return canvas.toDataURL('image/jpeg', 0.78);
+};
+
 const SiginModal = ({ onClose, onSuccess }) => {
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -52,7 +84,7 @@ const SiginModal = ({ onClose, onSuccess }) => {
 
   const handleAvatarSelect = () => fileInputRef.current?.click();
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
       if (file.size > MAX_AVATAR_SIZE_BYTES) {
@@ -62,12 +94,14 @@ const SiginModal = ({ onClose, onSuccess }) => {
         e.target.value = '';
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setRegisterForm((prev) => ({ ...prev, avatar: ev.target?.result || null }));
-      };
-      reader.readAsDataURL(file);
-      setErrors((prev) => ({ ...prev, avatar: '' }));
+
+      try {
+        const compressedAvatar = await compressAvatar(file);
+        setRegisterForm((prev) => ({ ...prev, avatar: compressedAvatar || null }));
+        setErrors((prev) => ({ ...prev, avatar: '' }));
+      } catch (_error) {
+        showToast(t('auth.errorFallback'), 'error');
+      }
     }
     e.target.value = '';
   };

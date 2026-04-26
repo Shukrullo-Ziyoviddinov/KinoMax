@@ -1,6 +1,6 @@
 .toast-root {
   position: fixed;
-  top: 12px;
+  top: 28px;
   left: 0;
   right: 0;
   z-index: 2200;
@@ -55,16 +55,16 @@
 
 @media (max-width: 768px) {
   .toast-root {
-    top: 0;
+    top: 12px;
   }
 
   .toast-container {
-    padding: 0;
+    padding: 0 12px;
     align-items: stretch;
   }
 
   .toast-item {
-    border-radius: 0;
+    border-radius: 10px;
     width: 100%;
     max-width: 100%;
     justify-content: space-between;

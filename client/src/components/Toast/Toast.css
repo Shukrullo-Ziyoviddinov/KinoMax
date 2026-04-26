@@ -55,7 +55,7 @@
 
 @media (max-width: 768px) {
   .toast-root {
-    top: 12px;
+    top: 50px;
   }
 
   .toast-container {

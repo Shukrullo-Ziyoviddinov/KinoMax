@@ -6,8 +6,10 @@ import LoaderSkeleton from '../components/LoaderSkeleton/LoaderSkeleton';
 import ProfileLanguageModal from '../components/Profile/ProfileLanguageModal';
 import ProfileContactModal from '../components/Profile/ProfileContactModal';
 import ProfileSocialModal from '../components/Profile/ProfileSocialModal';
+import ProfileLogoutModal from '../components/Profile/ProfileLogoutModal';
 import { fetchSocialLinks } from '../api/socialLinksApi';
-import { PROFILE_STORAGE_KEY } from '../utils/authStorage';
+import { logoutUser } from '../api/authApi';
+import { PROFILE_STORAGE_KEY, clearAuthSession } from '../utils/authStorage';
 import './ProfilePage.css';
 
 const DEFAULT_PROFILE = { name: 'Shukrullo', surname: 'Aliyov', phone: '909560304', avatar: null };
@@ -42,6 +44,7 @@ const ProfilePage = () => {
   const [showLangModal, setShowLangModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage);
   const [socialData, setSocialData] = useState({
     contact: {},
@@ -89,6 +92,18 @@ const ProfilePage = () => {
       i18n.changeLanguage(langCode);
       localStorage.setItem('i18nextLng', langCode);
       setCurrentLanguage(langCode);
+    }
+  };
+
+  const handleConfirmLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (_error) {
+      // Logout should still continue locally even if backend request fails.
+    } finally {
+      clearAuthSession();
+      setShowLogoutModal(false);
+      navigate('/');
     }
   };
 
@@ -245,6 +260,23 @@ const ProfilePage = () => {
             </svg>
           </button>
 
+          <button
+            className="profile-wishlist-block profile-logout-block"
+            onClick={() => setShowLogoutModal(true)}
+          >
+            <div className="profile-wishlist-left">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span>{t('profile.logout')}</span>
+            </div>
+            <svg className="profile-wishlist-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
           </>
           )}
           <div className="profile-app-stores">
@@ -308,6 +340,13 @@ const ProfilePage = () => {
         <ProfileSocialModal
           onClose={() => setShowSocialModal(false)}
           socialLinks={socialData.social}
+        />
+      )}
+
+      {showLogoutModal && (
+        <ProfileLogoutModal
+          onClose={() => setShowLogoutModal(false)}
+          onConfirm={handleConfirmLogout}
         />
       )}
     </div>

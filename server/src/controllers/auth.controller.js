@@ -101,7 +101,16 @@ const login = async (req, res, next) => {
   }
 };
 
+const logout = async (_req, res, next) => {
+  try {
+    return success(res, null, "Profildan chiqildi.");
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
+  logout,
 };

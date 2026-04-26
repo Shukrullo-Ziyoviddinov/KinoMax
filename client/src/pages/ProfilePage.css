@@ -175,6 +175,10 @@
   flex-shrink: 0;
 }
 
+.profile-logout-block .profile-wishlist-left svg {
+  color: #cf2f2f;
+}
+
 .profile-avatar-wrap {
   flex-shrink: 0;
   width: 72px;

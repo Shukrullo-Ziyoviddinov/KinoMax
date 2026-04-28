@@ -193,10 +193,10 @@ export default function BannerForm({ onCancel, onSaved }) {
     try {
       const baseBannerId = Date.now();
       await Promise.all(
-        ['uz', 'ru'].map((lang, index) => {
+        ['uz', 'ru'].map((lang) => {
           const item = formByLang[lang];
           return createBanner({
-            bannerId: baseBannerId + index,
+            bannerId: baseBannerId,
             movieId: Number(item.movieId),
             image: item.image,
             lang,

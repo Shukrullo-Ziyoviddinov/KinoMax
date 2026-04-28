@@ -23,19 +23,14 @@ export default function QuickActions({ onActionClick }) {
       <h2 id="quick-actions-title" className="quick-actions__title">
         Tezkor amallar
       </h2>
-      <ScrollTouch className="quick-actions__grid" role="list">
+      <ScrollTouch className="quick-actions__grid" role="list" allowInteractiveDrag>
         {ACTIONS.map((item) => (
           <div key={item.id} className="quick-actions__cell" role="listitem">
             <button
               type="button"
               className="quick-actions__card"
-              onPointerDown={(event) => {
-                event.stopPropagation();
-              }}
               onClick={() => {
-                if (item.id === 'banner') {
-                  onActionClick?.('banner');
-                }
+                onActionClick?.(item.id);
               }}
             >
               <span className="quick-actions__icon" aria-hidden>

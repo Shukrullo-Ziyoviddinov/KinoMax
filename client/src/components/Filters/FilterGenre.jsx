@@ -5,7 +5,7 @@ import './FilterGenre.css';
 
 const GENRE_ORDER = [
   "Drama", "Romantika", "Sarguzasht", "Qo'rqinchli", "Jangari", "Anime",
-  "Boevik", "Komediya", "Detektiv", "Oilaviy", "Fantastika", "Melodrama"
+  "Boevik", "Komediya", "Detektiv", "Oilaviy", "Fantastika", "Multfilim", "Melodrama"
 ];
 
 const FilterGenre = ({ movies = [], selectedGenres = [], onGenreSelect }) => {

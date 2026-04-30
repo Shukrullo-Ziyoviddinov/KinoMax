@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 100%;
 }
 
 .translation-settings-form__hint {
@@ -88,4 +89,16 @@
 .translation-settings-form__save-btn {
   background: #5b3fe7;
   color: #fff;
+}
+
+@media (max-width: 767px) {
+  .translation-settings-form {
+    min-height: calc(100vh - 150px);
+  }
+
+  .translation-settings-form__list {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
 }

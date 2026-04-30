@@ -71,6 +71,12 @@
   gap: 10px;
 }
 
+.translation-settings-form__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .translation-settings-form__cancel-btn,
 .translation-settings-form__save-btn {
   border: none;
@@ -100,5 +106,20 @@
     flex: 1;
     max-height: none;
     min-height: 0;
+  }
+
+  .translation-settings-form__footer {
+    position: sticky;
+    bottom: -1px;
+    background: #fff;
+    padding-top: 8px;
+    border-top: 1px solid #e7ebf5;
+    z-index: 5;
+  }
+
+  .translation-settings-form__remove-btn {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
   }
 }

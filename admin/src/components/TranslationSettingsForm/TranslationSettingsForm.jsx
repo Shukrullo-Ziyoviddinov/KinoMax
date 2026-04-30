@@ -97,19 +97,21 @@ export default function TranslationSettingsForm({ onCancel, onSaved }) {
         </div>
       )}
 
-      <button type="button" className="translation-settings-form__add-btn" onClick={addRow}>
-        + Yana qo'shish
-      </button>
-
-      {error ? <p className="translation-settings-form__error">{error}</p> : null}
-
-      <div className="translation-settings-form__actions">
-        <button type="button" className="translation-settings-form__cancel-btn" onClick={onCancel}>
-          Bekor qilish
+      <div className="translation-settings-form__footer">
+        <button type="button" className="translation-settings-form__add-btn" onClick={addRow}>
+          + Yana qo'shish
         </button>
-        <button type="button" className="translation-settings-form__save-btn" onClick={onSubmit} disabled={saving || loading}>
-          {saving ? "Saqlanmoqda..." : "Saqlash"}
-        </button>
+
+        {error ? <p className="translation-settings-form__error">{error}</p> : null}
+
+        <div className="translation-settings-form__actions">
+          <button type="button" className="translation-settings-form__cancel-btn" onClick={onCancel}>
+            Bekor qilish
+          </button>
+          <button type="button" className="translation-settings-form__save-btn" onClick={onSubmit} disabled={saving || loading}>
+            {saving ? "Saqlanmoqda..." : "Saqlash"}
+          </button>
+        </div>
       </div>
     </div>
   );

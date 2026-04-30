@@ -1,7 +1,4 @@
-/**
- * Ko'rgan kinolar - localStorage da saqlanadi, backend qo'shilganda oson almashtiriladi
- * Format: { items: [{ id, typeCategory, filterGenre, filterCountry }] }
- */
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getAuthToken } from '../utils/authStorage';
 import { addViewedMovie as addViewedMovieApi } from '../api/userApi';

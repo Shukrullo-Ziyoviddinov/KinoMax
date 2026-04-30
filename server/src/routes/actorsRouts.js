@@ -62,4 +62,44 @@ router.get("/:id", validateIdParam("id"), async (req, res, next) => {
   }
 });
 
+router.post("/", async (req, res, next) => {
+  try {
+    const { actorId, name, image, info = {}, isActive = true } = req.body || {};
+
+    if (!name?.uz || !name?.ru) {
+      return fail(res, "name.uz va name.ru majburiy.");
+    }
+    if (!image || typeof image !== "string") {
+      return fail(res, "image maydoni majburiy.");
+    }
+
+    let nextActorId = Number(actorId);
+    if (!Number.isFinite(nextActorId) || nextActorId <= 0) {
+      const last = await Actor.findOne().sort({ actorId: -1 }).select("actorId").lean();
+      nextActorId = Number(last?.actorId || 0) + 1;
+    }
+
+    const created = await Actor.create({
+      actorId: nextActorId,
+      name: {
+        uz: String(name.uz).trim(),
+        ru: String(name.ru).trim(),
+      },
+      image: String(image).trim(),
+      info: {
+        uz: String(info?.uz || "").trim(),
+        ru: String(info?.ru || "").trim(),
+      },
+      isActive: Boolean(isActive),
+    });
+
+    return success(res, created, "Aktyor yaratildi", 201);
+  } catch (error) {
+    if (error?.code === 11000) {
+      return fail(res, "Bu actorId allaqachon mavjud.", 409);
+    }
+    return next(error);
+  }
+});
+
 module.exports = router;

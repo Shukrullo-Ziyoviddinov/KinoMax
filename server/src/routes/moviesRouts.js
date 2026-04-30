@@ -99,6 +99,41 @@ router.get("/top-rated", async (req, res, next) => {
   }
 });
 
+router.post("/", async (req, res, next) => {
+  try {
+    const payload = req.body || {};
+    const hasTitle = payload?.title && (payload.title.uz || payload.title.ru);
+    const hasHomeImg = payload?.homeImg && (payload.homeImg.uz || payload.homeImg.ru);
+    if (!hasTitle) {
+      return fail(res, "title.uz yoki title.ru majburiy.", 400);
+    }
+    if (!hasHomeImg) {
+      return fail(res, "homeImg.uz yoki homeImg.ru majburiy.", 400);
+    }
+
+    let nextMovieId = Number(payload.movieId ?? payload.id);
+    if (!Number.isFinite(nextMovieId) || nextMovieId <= 0) {
+      const last = await Movie.findOne().sort({ movieId: -1 }).select("movieId").lean();
+      nextMovieId = Number(last?.movieId || 0) + 1;
+    }
+
+    const created = await Movie.create({
+      ...payload,
+      movieId: nextMovieId,
+      id: nextMovieId,
+      filterGenre: Array.isArray(payload.filterGenre) ? payload.filterGenre : [],
+      typeCategory: Array.isArray(payload.typeCategory) ? payload.typeCategory : [],
+      actors: Array.isArray(payload.actors)
+        ? payload.actors.map((v) => Number(v)).filter((v) => Number.isFinite(v))
+        : [],
+    });
+
+    return success(res, created, "Kino yaratildi", 201);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.get("/:movieId/comments", validateIdParam("movieId"), async (req, res, next) => {
   try {
     const currentUserId = await getOptionalUserId(req);

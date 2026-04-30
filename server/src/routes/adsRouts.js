@@ -1,6 +1,6 @@
 const express = require("express");
 const Ads = require("../models/ads");
-const { success } = require("../utils/apiResponse");
+const { success, fail } = require("../utils/apiResponse");
 const { parsePagination, buildPaginationMeta } = require("../utils/pagination");
 const { applyPagination } = require("../utils/queryOptimizer");
 
@@ -33,6 +33,36 @@ router.get("/active", async (_req, res, next) => {
     const fallbackAd = await Ads.findOne().sort({ sortOrder: 1, adId: 1 }).lean();
     return success(res, fallbackAd || null, "Fallback reklama");
   } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/", async (req, res, next) => {
+  try {
+    const { adId, videoUrl, isActive = true, sortOrder = 1 } = req.body || {};
+
+    if (!videoUrl || typeof videoUrl !== "string") {
+      return fail(res, "videoUrl majburiy.");
+    }
+
+    let nextAdId = Number(adId);
+    if (!Number.isFinite(nextAdId) || nextAdId <= 0) {
+      const last = await Ads.findOne().sort({ adId: -1 }).select("adId").lean();
+      nextAdId = Number(last?.adId || 0) + 1;
+    }
+
+    const created = await Ads.create({
+      adId: nextAdId,
+      videoUrl: String(videoUrl).trim(),
+      isActive: Boolean(isActive),
+      sortOrder: Number(sortOrder) || 1,
+    });
+
+    return success(res, created, "Reklama yaratildi", 201);
+  } catch (error) {
+    if (error?.code === 11000) {
+      return fail(res, "Bu adId allaqachon mavjud.", 409);
+    }
     return next(error);
   }
 });

@@ -96,11 +96,6 @@ export default function SettingsLinksForm({ section, onCancel, onSaved }) {
       }))
       .filter((row) => row.key);
 
-    if (!filtered.length) {
-      setError("Kamida bitta key kiriting.");
-      return;
-    }
-
     setSaving(true);
     setError("");
     try {

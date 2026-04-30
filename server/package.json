@@ -13,7 +13,8 @@
     "seed:social": "node src/seed/seedSocialLink.js",
     "seed:ads": "node src/seed/seedAdsData.js",
     "seed:movies": "node src/seed/seedMovies.js",
-    "seed:movies-catalog": "node src/seed/seedMoviesCatalog.js"
+    "seed:movies-catalog": "node src/seed/seedMoviesCatalog.js",
+    "seed:translations": "node src/seed/seedTranslations.js"
   },
   "keywords": [],
   "author": "",

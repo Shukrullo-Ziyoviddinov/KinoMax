@@ -10,6 +10,7 @@ import AdsForm from './components/AdsForm/AdsForm';
 import ActorForm from './components/ActorForm/ActorForm';
 import MovieForm from './components/MovieForm/MovieForm';
 import SettingsLinksForm from './components/SettingsLinksForm/SettingsLinksForm';
+import TranslationSettingsForm from './components/TranslationSettingsForm/TranslationSettingsForm';
 
 function App() {
   const [activeModal, setActiveModal] = useState('');
@@ -23,6 +24,7 @@ function App() {
   const onSettingsClick = (settingId) => {
     if (settingId === 'social') setActiveModal('settings-social');
     if (settingId === 'app-links') setActiveModal('settings-app-links');
+    if (settingId === 'language') setActiveModal('settings-language');
     if (settingId === 'contact') setActiveModal('settings-contact');
   };
 
@@ -34,6 +36,7 @@ function App() {
     movie: "Kino qo'shish",
     'settings-social': 'Ijtimoiy tarmoqlar',
     'settings-app-links': 'Ilova havolalari',
+    'settings-language': 'Til sozlamalari',
     'settings-contact': 'Aloqa',
   };
 
@@ -64,6 +67,8 @@ function App() {
           <SettingsLinksForm section="social" onCancel={closeModal} onSaved={closeModal} />
         ) : activeModal === 'settings-app-links' ? (
           <SettingsLinksForm section="app-links" onCancel={closeModal} onSaved={closeModal} />
+        ) : activeModal === 'settings-language' ? (
+          <TranslationSettingsForm onCancel={closeModal} onSaved={closeModal} />
         ) : activeModal === 'settings-contact' ? (
           <SettingsLinksForm section="contact" onCancel={closeModal} onSaved={closeModal} />
         ) : activeModal === 'actor' ? (

@@ -32,6 +32,15 @@ function emptyRow() {
   };
 }
 
+function toDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function SettingsLinksForm({ section, onCancel, onSaved }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,6 +72,16 @@ export default function SettingsLinksForm({ section, onCancel, onSaved }) {
 
   const patchRow = (index, patch) => {
     setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  };
+
+  const onPickIcon = async (index, file) => {
+    if (!file) return;
+    try {
+      const iconData = await toDataUrl(file);
+      patchRow(index, { icon: iconData });
+    } catch (_error) {
+      setError("Icon yuklashda xatolik.");
+    }
   };
 
   const addRow = () => setRows((prev) => [...prev, { ...emptyRow(), sortOrder: prev.length + 1 }]);
@@ -111,7 +130,31 @@ export default function SettingsLinksForm({ section, onCancel, onSaved }) {
                 <label className="settings-links-form__label">Link</label>
                 <input className="settings-links-form__input" value={row.link} onChange={(e) => patchRow(index, { link: e.target.value })} />
                 <label className="settings-links-form__label">Icon</label>
-                <input className="settings-links-form__input" value={row.icon} onChange={(e) => patchRow(index, { icon: e.target.value })} />
+                <div className="settings-links-form__icon-field">
+                  <label className="settings-links-form__icon-upload">
+                    <input
+                      className="settings-links-form__file-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => onPickIcon(index, e.target.files?.[0])}
+                    />
+                    <span>Rasm yuklash</span>
+                  </label>
+                  {row.icon ? (
+                    <div className="settings-links-form__icon-preview-wrap">
+                      <img className="settings-links-form__icon-preview" src={row.icon} alt="icon" />
+                      <button
+                        type="button"
+                        className="settings-links-form__icon-remove"
+                        onClick={() => patchRow(index, { icon: "" })}
+                      >
+                        O'chirish
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="settings-links-form__icon-empty">Icon tanlanmagan</span>
+                  )}
+                </div>
                 <label className="settings-links-form__label">Address</label>
                 <input className="settings-links-form__input" value={row.address} onChange={(e) => patchRow(index, { address: e.target.value })} />
                 <label className="settings-links-form__label">Sort</label>

@@ -47,6 +47,59 @@
   font-size: 14px;
 }
 
+.settings-links-form__file-input {
+  display: none;
+}
+
+.settings-links-form__icon-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-links-form__icon-upload {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #bfc9e8;
+  background: #fff;
+  color: #374264;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-links-form__icon-preview-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-links-form__icon-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #d8deed;
+}
+
+.settings-links-form__icon-remove {
+  border: 1px solid #d2daef;
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.settings-links-form__icon-empty {
+  font-size: 12px;
+  color: #6b7288;
+}
+
 .settings-links-form__remove-btn,
 .settings-links-form__add-btn {
   align-self: flex-start;

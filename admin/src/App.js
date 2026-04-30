@@ -11,9 +11,11 @@ import ActorForm from './components/ActorForm/ActorForm';
 import MovieForm from './components/MovieForm/MovieForm';
 import SettingsLinksForm from './components/SettingsLinksForm/SettingsLinksForm';
 import TranslationSettingsForm from './components/TranslationSettingsForm/TranslationSettingsForm';
+import ContentSectionPage from './components/ContentSectionPage/ContentSectionPage';
 
 function App() {
   const [activeModal, setActiveModal] = useState('');
+  const [activeView, setActiveView] = useState('dashboard');
 
   const onActionClick = (actionId) => {
     if (actionId === 'banner' || actionId === 'genre' || actionId === 'ad' || actionId === 'actor' || actionId === 'movie') {
@@ -49,10 +51,28 @@ function App() {
         lastName: 'Foydalanuvchi',
       }}
       onSettingsClick={onSettingsClick}
+      activeNav={activeView}
+      onMainNavigate={setActiveView}
     >
-      <DashboardHome />
-      <QuickActions onActionClick={onActionClick} />
-      <RecentItemsSection />
+      {activeView === 'dashboard' ? (
+        <>
+          <DashboardHome />
+          <QuickActions onActionClick={onActionClick} />
+          <RecentItemsSection />
+        </>
+      ) : activeView === 'movies' ? (
+        <ContentSectionPage section="movies" />
+      ) : activeView === 'actors' ? (
+        <ContentSectionPage section="actors" />
+      ) : activeView === 'banners' ? (
+        <ContentSectionPage section="banners" />
+      ) : activeView === 'ads' ? (
+        <ContentSectionPage section="ads" />
+      ) : activeView === 'genres' ? (
+        <ContentSectionPage section="genres" />
+      ) : (
+        <ContentSectionPage section="movies" />
+      )}
 
       <ElementAddModal
         isOpen={Boolean(activeModal)}

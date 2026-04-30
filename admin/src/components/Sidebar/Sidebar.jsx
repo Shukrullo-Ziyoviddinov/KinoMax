@@ -20,6 +20,8 @@ export default function Sidebar({
   onCloseMobile,
   ariaHiddenOverlay = false,
   onSettingsClick,
+  activeNav = 'dashboard',
+  onMainNavigate,
 }) {
   return (
     <aside
@@ -45,14 +47,17 @@ export default function Sidebar({
         <nav className="sidebar__nav">
           <button
             type="button"
-            className="sidebar__nav-btn sidebar__nav-btn--active"
-            onClick={() => onCloseMobile?.()}
+            className={`sidebar__nav-btn${activeNav === 'dashboard' ? ' sidebar__nav-btn--active' : ''}`}
+            onClick={() => {
+              onMainNavigate?.('dashboard');
+              onCloseMobile?.();
+            }}
           >
             <DashboardIcon />
             <span>Dashboard</span>
           </button>
           <span className="sidebar__section-title">Asosiy</span>
-          <SidebarMain onCloseMobile={onCloseMobile} />
+          <SidebarMain onCloseMobile={onCloseMobile} activeNav={activeNav} onNavigate={onMainNavigate} />
           <span className="sidebar__section-title">Sozlamalar</span>
           <SidebarSettings onCloseMobile={onCloseMobile} onSettingsClick={onSettingsClick} />
           <span className="sidebar__section-title">Foydali</span>

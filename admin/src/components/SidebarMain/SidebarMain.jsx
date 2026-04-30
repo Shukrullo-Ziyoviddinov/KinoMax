@@ -64,15 +64,18 @@ const NAV_LINKS = [
 /**
  * Asosiy bo‘lim navigatsiyasi (keyin router / sahifalar ulanadi).
  */
-export default function SidebarMain({ onCloseMobile }) {
+export default function SidebarMain({ onCloseMobile, activeNav = 'dashboard', onNavigate }) {
   return (
     <>
       {NAV_LINKS.map((item) => (
         <button
           key={item.id}
           type="button"
-          className="sidebar__nav-btn"
-          onClick={() => onCloseMobile?.()}
+          className={`sidebar__nav-btn${activeNav === item.id ? ' sidebar__nav-btn--active' : ''}`}
+          onClick={() => {
+            onNavigate?.(item.id);
+            onCloseMobile?.();
+          }}
         >
           {item.icon}
           <span>{item.label}</span>

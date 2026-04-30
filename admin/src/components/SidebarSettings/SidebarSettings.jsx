@@ -52,7 +52,7 @@ const SETTINGS_LINKS = [
 /**
  * Sozlamalar bo‘limi (keyin router / sahifalar ulanadi).
  */
-export default function SidebarSettings({ onCloseMobile }) {
+export default function SidebarSettings({ onCloseMobile, onSettingsClick }) {
   return (
     <>
       {SETTINGS_LINKS.map((item) => (
@@ -60,7 +60,10 @@ export default function SidebarSettings({ onCloseMobile }) {
           key={item.id}
           type="button"
           className="sidebar__nav-btn"
-          onClick={() => onCloseMobile?.()}
+          onClick={() => {
+            onSettingsClick?.(item.id);
+            onCloseMobile?.();
+          }}
         >
           {item.icon}
           <span>{item.label}</span>

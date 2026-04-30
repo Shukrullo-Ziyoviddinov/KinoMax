@@ -19,7 +19,7 @@ function getMobileServerSnapshot() {
   return false;
 }
 
-export default function AdminLayout({ children, profile }) {
+export default function AdminLayout({ children, profile, onSettingsClick }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useSyncExternalStore(subscribeMobile, getMobileSnapshot, getMobileServerSnapshot);
 
@@ -65,6 +65,7 @@ export default function AdminLayout({ children, profile }) {
         isMobileOpen={mobileMenuOpen}
         onCloseMobile={closeMobileMenu}
         ariaHiddenOverlay={isMobile && !mobileMenuOpen}
+        onSettingsClick={onSettingsClick}
       />
       <div className="admin-layout__column">
         <Navbar

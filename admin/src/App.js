@@ -9,6 +9,7 @@ import GenreForm from './components/GenreForm/GenreForm';
 import AdsForm from './components/AdsForm/AdsForm';
 import ActorForm from './components/ActorForm/ActorForm';
 import MovieForm from './components/MovieForm/MovieForm';
+import SettingsLinksForm from './components/SettingsLinksForm/SettingsLinksForm';
 
 function App() {
   const [activeModal, setActiveModal] = useState('');
@@ -19,12 +20,21 @@ function App() {
     }
   };
 
+  const onSettingsClick = (settingId) => {
+    if (settingId === 'social') setActiveModal('settings-social');
+    if (settingId === 'app-links') setActiveModal('settings-app-links');
+    if (settingId === 'contact') setActiveModal('settings-contact');
+  };
+
   const modalTitleMap = {
     banner: "Banner qo'shish",
     genre: "Janr qo'shish",
     ad: "Reklama qo'shish",
     actor: "Aktyor qo'shish",
     movie: "Kino qo'shish",
+    'settings-social': 'Ijtimoiy tarmoqlar',
+    'settings-app-links': 'Ilova havolalari',
+    'settings-contact': 'Aloqa',
   };
 
   const closeModal = () => setActiveModal('');
@@ -35,6 +45,7 @@ function App() {
         firstName: 'Admin',
         lastName: 'Foydalanuvchi',
       }}
+      onSettingsClick={onSettingsClick}
     >
       <DashboardHome />
       <QuickActions onActionClick={onActionClick} />
@@ -49,6 +60,12 @@ function App() {
           <GenreForm onCancel={closeModal} onSaved={closeModal} />
         ) : activeModal === 'movie' ? (
           <MovieForm onCancel={closeModal} onSaved={closeModal} />
+        ) : activeModal === 'settings-social' ? (
+          <SettingsLinksForm section="social" onCancel={closeModal} onSaved={closeModal} />
+        ) : activeModal === 'settings-app-links' ? (
+          <SettingsLinksForm section="app-links" onCancel={closeModal} onSaved={closeModal} />
+        ) : activeModal === 'settings-contact' ? (
+          <SettingsLinksForm section="contact" onCancel={closeModal} onSaved={closeModal} />
         ) : activeModal === 'actor' ? (
           <ActorForm onCancel={closeModal} onSaved={closeModal} />
         ) : activeModal === 'ad' ? (

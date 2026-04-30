@@ -19,6 +19,7 @@ export default function Sidebar({
   isMobileOpen = false,
   onCloseMobile,
   ariaHiddenOverlay = false,
+  onSettingsClick,
 }) {
   return (
     <aside
@@ -53,7 +54,7 @@ export default function Sidebar({
           <span className="sidebar__section-title">Asosiy</span>
           <SidebarMain onCloseMobile={onCloseMobile} />
           <span className="sidebar__section-title">Sozlamalar</span>
-          <SidebarSettings onCloseMobile={onCloseMobile} />
+          <SidebarSettings onCloseMobile={onCloseMobile} onSettingsClick={onSettingsClick} />
           <span className="sidebar__section-title">Foydali</span>
           <SidebarFoydali onCloseMobile={onCloseMobile} />
         </nav>

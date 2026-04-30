@@ -40,9 +40,6 @@ router.put("/:type", async (req, res, next) => {
     }
 
     const rows = Array.isArray(req.body?.items) ? req.body.items : [];
-    if (!rows.length) {
-      return fail(res, "items bo'sh bo'lmasligi kerak.");
-    }
 
     const preparedRows = rows
       .filter((item) => String(item?.key || "").trim())
@@ -58,11 +55,14 @@ router.put("/:type", async (req, res, next) => {
 
     const keepKeys = [...new Set(preparedRows.map((item) => item.key))];
 
-    // Full sync: requestda yo'q keylar ushbu type uchun o'chiriladi.
-    await SocialLink.deleteMany({
-      type,
-      key: { $nin: keepKeys },
-    });
+    // Full sync: bo'sh ro'yxat kelsa shu type dagi hammasi o'chiriladi.
+    if (!keepKeys.length) {
+      await SocialLink.deleteMany({ type });
+      return success(res, [], "Linklar saqlandi.");
+    }
+
+    // Requestda yo'q keylar ushbu type uchun o'chiriladi.
+    await SocialLink.deleteMany({ type, key: { $nin: keepKeys } });
 
     const operations = preparedRows.map((item) =>
       SocialLink.findOneAndUpdate(

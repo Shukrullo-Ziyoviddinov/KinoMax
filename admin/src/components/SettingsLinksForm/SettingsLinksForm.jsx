@@ -155,8 +155,6 @@ export default function SettingsLinksForm({ section, onCancel, onSaved }) {
                     <span className="settings-links-form__icon-empty">Icon tanlanmagan</span>
                   )}
                 </div>
-                <label className="settings-links-form__label">Address</label>
-                <input className="settings-links-form__input" value={row.address} onChange={(e) => patchRow(index, { address: e.target.value })} />
                 <label className="settings-links-form__label">Sort</label>
                 <input className="settings-links-form__input" type="number" value={row.sortOrder} onChange={(e) => patchRow(index, { sortOrder: e.target.value })} />
               </div>

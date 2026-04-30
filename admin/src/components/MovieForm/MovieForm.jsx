@@ -193,6 +193,9 @@ export default function MovieForm({ onCancel, onSaved }) {
       .map((v) => v.trim())
       .filter(Boolean);
 
+  const genresUzText = form.description?.uz?.genre?.join(", ") || "";
+  const genresRuText = form.description?.ru?.genre?.join(", ") || "";
+
   const renderUploadField = ({ keyName, label, accept, onFile }) => {
     const upload = uploadState[keyName] || {};
     const selectedText = upload.fileName
@@ -360,6 +363,32 @@ export default function MovieForm({ onCancel, onSaved }) {
         <input className="movie-form__input" type="number" value={form.description.uz.duration} onChange={(e) => patch({ description: { ...form.description, uz: { ...form.description.uz, duration: toNumberOrDefault(e.target.value, "") } } })} />
         <label className="movie-form__label">Duration RU</label>
         <input className="movie-form__input" type="number" value={form.description.ru.duration} onChange={(e) => patch({ description: { ...form.description, ru: { ...form.description.ru, duration: toNumberOrDefault(e.target.value, "") } } })} />
+        <label className="movie-form__label">Genre UZ (vergul bilan)</label>
+        <input
+          className="movie-form__input"
+          value={genresUzText}
+          onChange={(e) =>
+            patch({
+              description: {
+                ...form.description,
+                uz: { ...form.description.uz, genre: normalizeCommaText(e.target.value) },
+              },
+            })
+          }
+        />
+        <label className="movie-form__label">Genre RU (vergul bilan)</label>
+        <input
+          className="movie-form__input"
+          value={genresRuText}
+          onChange={(e) =>
+            patch({
+              description: {
+                ...form.description,
+                ru: { ...form.description.ru, genre: normalizeCommaText(e.target.value) },
+              },
+            })
+          }
+        />
       </div>
       </div>
 

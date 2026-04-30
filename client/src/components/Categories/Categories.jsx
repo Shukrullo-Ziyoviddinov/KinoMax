@@ -11,7 +11,7 @@ const Categories = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoading: catalogLoading } = useMoviesCatalog();
-``
+
   const categories = [
     { id: 'romantika', key: 'romantika' },
     { id: 'multfilimlar', key: 'multfilimlar' },

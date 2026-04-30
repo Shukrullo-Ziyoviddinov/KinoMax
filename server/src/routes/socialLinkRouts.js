@@ -44,27 +44,44 @@ router.put("/:type", async (req, res, next) => {
       return fail(res, "items bo'sh bo'lmasligi kerak.");
     }
 
-    const operations = rows
+    const preparedRows = rows
       .filter((item) => String(item?.key || "").trim())
-      .map((item, idx) => {
-        const key = String(item.key).trim();
-        return SocialLink.findOneAndUpdate(
-          { type, key },
-          {
-            $set: {
-              type,
-              key,
-              link: String(item.link || "").trim(),
-              label: String(item.label || "").trim(),
-              icon: String(item.icon || "").trim(),
-              address: String(item.address || "").trim(),
-              isActive: item.isActive !== false,
-              sortOrder: Number.isFinite(Number(item.sortOrder)) ? Number(item.sortOrder) : idx + 1,
-            },
+      .map((item, idx) => ({
+        key: String(item.key).trim(),
+        link: String(item.link || "").trim(),
+        label: String(item.label || "").trim(),
+        icon: String(item.icon || "").trim(),
+        address: String(item.address || "").trim(),
+        isActive: item.isActive !== false,
+        sortOrder: Number.isFinite(Number(item.sortOrder)) ? Number(item.sortOrder) : idx + 1,
+      }));
+
+    const keepKeys = [...new Set(preparedRows.map((item) => item.key))];
+
+    // Full sync: requestda yo'q keylar ushbu type uchun o'chiriladi.
+    await SocialLink.deleteMany({
+      type,
+      key: { $nin: keepKeys },
+    });
+
+    const operations = preparedRows.map((item) =>
+      SocialLink.findOneAndUpdate(
+        { type, key: item.key },
+        {
+          $set: {
+            type,
+            key: item.key,
+            link: item.link,
+            label: item.label,
+            icon: item.icon,
+            address: item.address,
+            isActive: item.isActive,
+            sortOrder: item.sortOrder,
           },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-      });
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    );
 
     const saved = await Promise.all(operations);
     return success(res, saved, "Linklar saqlandi.");

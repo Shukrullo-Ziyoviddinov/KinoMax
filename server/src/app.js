@@ -50,7 +50,9 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "15mb" }));
+const bodyLimit = process.env.BODY_LIMIT || "200mb";
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 app.use("/api/banners", bannerRoutes);
 app.use("/api/actors", actorsRoutes);
 app.use("/api/genres", genresRoutes);

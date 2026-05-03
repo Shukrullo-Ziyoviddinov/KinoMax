@@ -12,18 +12,19 @@ function LogoutIcon() {
 /**
  * Chiqish (keyin sessiya / API bilan ulanadi).
  */
-export default function SidebarLogout({ onCloseMobile }) {
+export default function SidebarLogout({ onCloseMobile, onLogout }) {
   return (
     <div className="sidebar__logout">
       <button
         type="button"
         className="sidebar__logout-btn"
         onClick={() => {
+          onLogout?.();
           onCloseMobile?.();
         }}
       >
         <LogoutIcon />
-        <span>Chiqish</span>
+        <span>Profildan chiqish</span>
       </button>
     </div>
   );

@@ -22,6 +22,7 @@ export default function Sidebar({
   onSettingsClick,
   activeNav = 'dashboard',
   onMainNavigate,
+  onLogout,
 }) {
   return (
     <aside
@@ -63,7 +64,7 @@ export default function Sidebar({
           <span className="sidebar__section-title">Foydali</span>
           <SidebarFoydali onCloseMobile={onCloseMobile} />
         </nav>
-        <SidebarLogout onCloseMobile={onCloseMobile} />
+        <SidebarLogout onCloseMobile={onCloseMobile} onLogout={onLogout} />
       </div>
     </aside>
   );

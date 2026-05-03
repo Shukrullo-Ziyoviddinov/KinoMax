@@ -19,7 +19,14 @@ function getMobileServerSnapshot() {
   return false;
 }
 
-export default function AdminLayout({ children, profile, onSettingsClick, activeNav = 'dashboard', onMainNavigate }) {
+export default function AdminLayout({
+  children,
+  profile,
+  onSettingsClick,
+  activeNav = 'dashboard',
+  onMainNavigate,
+  onLogout,
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useSyncExternalStore(subscribeMobile, getMobileSnapshot, getMobileServerSnapshot);
 
@@ -68,6 +75,7 @@ export default function AdminLayout({ children, profile, onSettingsClick, active
         onSettingsClick={onSettingsClick}
         activeNav={activeNav}
         onMainNavigate={onMainNavigate}
+        onLogout={onLogout}
       />
       <div className="admin-layout__column">
         <Navbar

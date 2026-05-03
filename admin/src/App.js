@@ -12,10 +12,26 @@ import MovieForm from './components/MovieForm/MovieForm';
 import SettingsLinksForm from './components/SettingsLinksForm/SettingsLinksForm';
 import TranslationSettingsForm from './components/TranslationSettingsForm/TranslationSettingsForm';
 import ContentSectionPage from './components/ContentSectionPage/ContentSectionPage';
+import AdminAuthModal from './components/AdminAuthModal/AdminAuthModal';
+
+const SESSION_KEY = 'kinomax_admin_session';
+
+function getInitialSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.firstName || !parsed?.lastName) return null;
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+}
 
 function App() {
   const [activeModal, setActiveModal] = useState('');
   const [activeView, setActiveView] = useState('dashboard');
+  const [session, setSession] = useState(getInitialSession);
 
   const onActionClick = (actionId) => {
     if (actionId === 'banner' || actionId === 'genre' || actionId === 'ad' || actionId === 'actor' || actionId === 'movie') {
@@ -44,62 +60,80 @@ function App() {
 
   const closeModal = () => setActiveModal('');
 
-  return (
-    <AdminLayout
-      profile={{
-        firstName: 'Admin',
-        lastName: 'Foydalanuvchi',
-      }}
-      onSettingsClick={onSettingsClick}
-      activeNav={activeView}
-      onMainNavigate={setActiveView}
-    >
-      {activeView === 'dashboard' ? (
-        <>
-          <DashboardHome />
-          <QuickActions onActionClick={onActionClick} />
-          <RecentItemsSection />
-        </>
-      ) : activeView === 'movies' ? (
-        <ContentSectionPage section="movies" />
-      ) : activeView === 'actors' ? (
-        <ContentSectionPage section="actors" />
-      ) : activeView === 'banners' ? (
-        <ContentSectionPage section="banners" />
-      ) : activeView === 'ads' ? (
-        <ContentSectionPage section="ads" />
-      ) : activeView === 'genres' ? (
-        <ContentSectionPage section="genres" />
-      ) : (
-        <ContentSectionPage section="movies" />
-      )}
+  const onLoginSuccess = (profile) => {
+    setSession(profile);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
+  };
 
-      <ElementAddModal
-        isOpen={Boolean(activeModal)}
-        title={modalTitleMap[activeModal] || "Element qo'shish"}
-        onClose={closeModal}
+  const onLogout = () => {
+    setSession(null);
+    localStorage.removeItem(SESSION_KEY);
+    setActiveModal('');
+    setActiveView('dashboard');
+  };
+
+  return (
+    <>
+      <AdminLayout
+        profile={{
+          firstName: session?.firstName || 'Admin',
+          lastName: session?.lastName || 'Foydalanuvchi',
+        }}
+        onSettingsClick={onSettingsClick}
+        activeNav={activeView}
+        onMainNavigate={setActiveView}
+        onLogout={onLogout}
       >
-        {activeModal === 'genre' ? (
-          <GenreForm onCancel={closeModal} onSaved={closeModal} />
-        ) : activeModal === 'movie' ? (
-          <MovieForm onCancel={closeModal} onSaved={closeModal} />
-        ) : activeModal === 'settings-social' ? (
-          <SettingsLinksForm section="social" onCancel={closeModal} onSaved={closeModal} />
-        ) : activeModal === 'settings-app-links' ? (
-          <SettingsLinksForm section="app-links" onCancel={closeModal} onSaved={closeModal} />
-        ) : activeModal === 'settings-language' ? (
-          <TranslationSettingsForm onCancel={closeModal} onSaved={closeModal} />
-        ) : activeModal === 'settings-contact' ? (
-          <SettingsLinksForm section="contact" onCancel={closeModal} onSaved={closeModal} />
-        ) : activeModal === 'actor' ? (
-          <ActorForm onCancel={closeModal} onSaved={closeModal} />
-        ) : activeModal === 'ad' ? (
-          <AdsForm onCancel={closeModal} onSaved={closeModal} />
+        {activeView === 'dashboard' ? (
+          <>
+            <DashboardHome />
+            <QuickActions onActionClick={onActionClick} />
+            <RecentItemsSection />
+          </>
+        ) : activeView === 'movies' ? (
+          <ContentSectionPage section="movies" />
+        ) : activeView === 'actors' ? (
+          <ContentSectionPage section="actors" />
+        ) : activeView === 'banners' ? (
+          <ContentSectionPage section="banners" />
+        ) : activeView === 'ads' ? (
+          <ContentSectionPage section="ads" />
+        ) : activeView === 'genres' ? (
+          <ContentSectionPage section="genres" />
+        ) : activeView === 'ads' ? (
+          <ContentSectionPage section="ads" />
         ) : (
-          <BannerForm onCancel={closeModal} onSaved={closeModal} />
+          <ContentSectionPage section="movies" />
         )}
-      </ElementAddModal>
-    </AdminLayout>
+
+        <ElementAddModal
+          isOpen={Boolean(activeModal)}
+          title={modalTitleMap[activeModal] || "Element qo'shish"}
+          onClose={closeModal}
+        >
+          {activeModal === 'genre' ? (
+            <GenreForm onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'movie' ? (
+            <MovieForm onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'settings-social' ? (
+            <SettingsLinksForm section="social" onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'settings-app-links' ? (
+            <SettingsLinksForm section="app-links" onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'settings-language' ? (
+            <TranslationSettingsForm onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'settings-contact' ? (
+            <SettingsLinksForm section="contact" onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'actor' ? (
+            <ActorForm onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'ad' ? (
+            <AdsForm onCancel={closeModal} onSaved={closeModal} />
+          ) : (
+            <BannerForm onCancel={closeModal} onSaved={closeModal} />
+          )}
+        </ElementAddModal>
+      </AdminLayout>
+      {!session ? <AdminAuthModal onSuccess={onLoginSuccess} /> : null}
+    </>
   );
 }
 

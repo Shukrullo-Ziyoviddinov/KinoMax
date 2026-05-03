@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(10, 12, 24, 0.72);
+  background: #0b1020;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,6 +40,34 @@
   border-radius: 10px;
   padding: 9px 12px;
   font-size: 14px;
+}
+
+.admin-auth-modal__password-wrap {
+  position: relative;
+}
+
+.admin-auth-modal__input--password {
+  padding-right: 46px;
+}
+
+.admin-auth-modal__eye-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.admin-auth-modal__eye-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #5a637d;
 }
 
 .admin-auth-modal__error {

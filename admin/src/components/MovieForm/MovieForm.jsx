@@ -50,6 +50,117 @@ const emptySeason = (seasonNumber = 1) => ({
   episodes: [{ uz: "", ru: "" }],
 });
 
+function normalizeInitialMovie(data = {}) {
+  const safeTrailers = Array.isArray(data.trailersVideo) && data.trailersVideo.length
+    ? data.trailersVideo.map((item, idx) => ({
+        id: item?.id ?? Date.now() + idx,
+        trailers: {
+          uz: item?.trailers?.uz || "",
+          ru: item?.trailers?.ru || "",
+        },
+        title: {
+          uz: item?.title?.uz || "",
+          ru: item?.title?.ru || "",
+        },
+        text: {
+          uz: item?.text?.uz || "",
+          ru: item?.text?.ru || "",
+        },
+        like: String(item?.like ?? ""),
+        dislike: String(item?.dislike ?? ""),
+        typeTrailers: item?.typeTrailers || "action",
+      }))
+    : [emptyTrailer()];
+
+  const safeSeasons = Array.isArray(data.seasons) && data.seasons.length
+    ? data.seasons.map((season, idx) => ({
+        seasonNumber: Number(season?.seasonNumber) || idx + 1,
+        title: {
+          uz: season?.title?.uz || `Mavsum ${idx + 1}`,
+          ru: season?.title?.ru || `Сезон ${idx + 1}`,
+        },
+        episodes: Array.isArray(season?.episodes) && season.episodes.length
+          ? season.episodes.map((ep) => ({ uz: ep?.uz || "", ru: ep?.ru || "" }))
+          : [{ uz: "", ru: "" }],
+      }))
+    : [emptySeason(1)];
+
+  const safeDescription = typeof data.description === "object" && data.description
+    ? data.description
+    : {};
+
+  return {
+    ...data,
+    movieId: String(data.movieId ?? data.id ?? ""),
+    movieCode: String(data.movieCode ?? ""),
+    title: {
+      uz: data?.title?.uz || "",
+      ru: data?.title?.ru || "",
+    },
+    titleImg: {
+      uz: data?.titleImg?.uz || "",
+      ru: data?.titleImg?.ru || "",
+    },
+    homeImg: {
+      uz: data?.homeImg?.uz || "",
+      ru: data?.homeImg?.ru || "",
+    },
+    movieMedia: {
+      uz: {
+        video: {
+          type: "video",
+          src: data?.movieMedia?.uz?.video?.src || "",
+        },
+      },
+      ru: {
+        video: {
+          type: "video",
+          src: data?.movieMedia?.ru?.video?.src || "",
+        },
+      },
+    },
+    description: {
+      uz: {
+        text: safeDescription?.uz?.text || "",
+        year: safeDescription?.uz?.year ?? "",
+        country: safeDescription?.uz?.country || "",
+        duration: safeDescription?.uz?.duration ?? "",
+        genre: Array.isArray(safeDescription?.uz?.genre) ? safeDescription.uz.genre : [],
+        director: safeDescription?.uz?.director || "",
+      },
+      ru: {
+        text: safeDescription?.ru?.text || "",
+        year: safeDescription?.ru?.year ?? "",
+        country: safeDescription?.ru?.country || "",
+        duration: safeDescription?.ru?.duration ?? "",
+        genre: Array.isArray(safeDescription?.ru?.genre) ? safeDescription.ru.genre : [],
+        director: safeDescription?.ru?.director || "",
+      },
+    },
+    trailersVideo: safeTrailers,
+    watchVideo: {
+      uz: data?.watchVideo?.uz || "",
+      ru: data?.watchVideo?.ru || "",
+    },
+    seasons: safeSeasons,
+    actors: Array.isArray(data.actors) ? data.actors.map((v) => Number(v)).filter(Number.isFinite) : [],
+    typeCategory: Array.isArray(data.typeCategory) ? data.typeCategory : [],
+    filterGenre: Array.isArray(data.filterGenre) ? data.filterGenre : [],
+    filterCountry: data?.filterCountry || "",
+    like: String(data?.like ?? ""),
+    dislike: String(data?.dislike ?? ""),
+    specs: {
+      duration: data?.specs?.duration ?? "",
+      ageRating: data?.specs?.ageRating || "",
+      year: data?.specs?.year ?? "",
+      countries: Array.isArray(data?.specs?.countries) ? data.specs.countries : [],
+      languages: Array.isArray(data?.specs?.languages) ? data.specs.languages : [],
+    },
+    categoryName: data?.categoryName || "",
+    category: data?.category || "",
+  };
+}
+
 export default function MovieForm({ onCancel, onSaved, mode = "create", initialData = null, onSubmitData }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -102,12 +213,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       try {
         const [moviesRows, actorRows] = await Promise.all([fetchMovies(), fetchActorsForMovie()]);
         if (mode === "edit" && initialData) {
-          setForm((prev) => ({
-            ...prev,
-            ...initialData,
-            movieId: String(initialData.movieId ?? initialData.id ?? ""),
-            movieCode: String(initialData.movieCode ?? ""),
-          }));
+          setForm((prev) => ({ ...prev, ...normalizeInitialMovie(initialData) }));
         } else {
           const maxId = moviesRows.reduce((max, item) => Math.max(max, Number(item.id || item.movieId) || 0), 0);
           setForm((prev) => ({ ...prev, movieId: String(maxId + 1) }));

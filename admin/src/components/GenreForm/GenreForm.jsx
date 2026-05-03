@@ -32,7 +32,7 @@ function toDataUrl(file) {
   });
 }
 
-export default function GenreForm({ onCancel, onSaved }) {
+export default function GenreForm({ onCancel, onSaved, mode = "create", initialData = null, onSubmitData }) {
   const fileRef = useRef(null);
   const genrePickerRef = useRef(null);
   const [saving, setSaving] = useState(false);
@@ -49,6 +49,20 @@ export default function GenreForm({ onCancel, onSaved }) {
   });
 
   useEffect(() => {
+    if (mode === "edit" && initialData) {
+      setForm((prev) => ({
+        ...prev,
+        genreId: String(initialData.genreId || ""),
+        titleUz: initialData?.title?.uz || "",
+        titleRu: initialData?.title?.ru || "",
+        filterGenre: Array.isArray(initialData?.filterGenre) ? (initialData.filterGenre[0] || "") : "",
+        sortOrder: String(initialData?.sortOrder || 1),
+        img: initialData?.img || "",
+        imgPreview: initialData?.img || "",
+      }));
+      return;
+    }
+
     const loadNextOrder = async () => {
       try {
         const genres = await fetchGenres();
@@ -59,7 +73,7 @@ export default function GenreForm({ onCancel, onSaved }) {
       }
     };
     loadNextOrder();
-  }, []);
+  }, [mode, initialData]);
 
   useEffect(() => {
     const onOutside = (event) => {
@@ -116,7 +130,7 @@ export default function GenreForm({ onCancel, onSaved }) {
     setError("");
     setSaving(true);
     try {
-      await createGenre({
+      const payload = {
         genreId: form.genreId.trim(),
         title: {
           uz: form.titleUz.trim(),
@@ -126,7 +140,12 @@ export default function GenreForm({ onCancel, onSaved }) {
         filterGenre: [form.filterGenre],
         isActive: true,
         sortOrder: Number(form.sortOrder) || 0,
-      });
+      };
+      if (mode === "edit" && onSubmitData) {
+        await onSubmitData(payload);
+      } else {
+        await createGenre(payload);
+      }
       onSaved?.();
     } catch (e) {
       setError(e.message || "Saqlashda xatolik.");

@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchRecentItems } from '../../services/recentItemsApi';
-import { deleteRecentItem } from '../../services/recentItemCrudApi';
+import { deleteRecentItem, updateRecentItem } from '../../services/recentItemCrudApi';
 import RecentItemsTabs from './RecentItemsTabs';
 import RecentItemsList from './RecentItemsList';
-import RecentItemEditForm from './RecentItemEditForm';
 import ElementAddModal from '../ElementAddModal/ElementAddModal';
+import MovieForm from '../MovieForm/MovieForm';
+import ActorForm from '../ActorForm/ActorForm';
+import BannerForm from '../BannerForm/BannerForm';
+import AdsForm from '../AdsForm/AdsForm';
+import GenreForm from '../GenreForm/GenreForm';
 import './RecentItemsSection.css';
 
 export default function RecentItemsSection() {
@@ -72,11 +76,56 @@ export default function RecentItemsSection() {
         title="Elementni tahrirlash"
         onClose={() => setEditItem(null)}
       >
-        {editItem ? (
-          <RecentItemEditForm
-            section={activeTab}
-            item={editItem}
+        {editItem && activeTab === 'movies' ? (
+          <MovieForm
+            mode="edit"
+            initialData={editItem.raw}
             onCancel={() => setEditItem(null)}
+            onSubmitData={(payload) => updateRecentItem('movies', editItem, payload)}
+            onSaved={async () => {
+              setEditItem(null);
+              await loadData();
+            }}
+          />
+        ) : editItem && activeTab === 'actors' ? (
+          <ActorForm
+            mode="edit"
+            initialData={editItem.raw}
+            onCancel={() => setEditItem(null)}
+            onSubmitData={(payload) => updateRecentItem('actors', editItem, payload)}
+            onSaved={async () => {
+              setEditItem(null);
+              await loadData();
+            }}
+          />
+        ) : editItem && activeTab === 'banners' ? (
+          <BannerForm
+            mode="edit"
+            initialData={editItem.raw}
+            onCancel={() => setEditItem(null)}
+            onSubmitData={(payload) => updateRecentItem('banners', editItem, payload)}
+            onSaved={async () => {
+              setEditItem(null);
+              await loadData();
+            }}
+          />
+        ) : editItem && activeTab === 'ads' ? (
+          <AdsForm
+            mode="edit"
+            initialData={editItem.raw}
+            onCancel={() => setEditItem(null)}
+            onSubmitData={(payload) => updateRecentItem('ads', editItem, payload)}
+            onSaved={async () => {
+              setEditItem(null);
+              await loadData();
+            }}
+          />
+        ) : editItem && activeTab === 'genres' ? (
+          <GenreForm
+            mode="edit"
+            initialData={editItem.raw}
+            onCancel={() => setEditItem(null)}
+            onSubmitData={(payload) => updateRecentItem('genres', editItem, payload)}
             onSaved={async () => {
               setEditItem(null);
               await loadData();

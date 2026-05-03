@@ -50,7 +50,7 @@ const emptySeason = (seasonNumber = 1) => ({
   episodes: [{ uz: "", ru: "" }],
 });
 
-export default function MovieForm({ onCancel, onSaved }) {
+export default function MovieForm({ onCancel, onSaved, mode = "create", initialData = null, onSubmitData }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [actors, setActors] = useState([]);
@@ -101,15 +101,24 @@ export default function MovieForm({ onCancel, onSaved }) {
     const run = async () => {
       try {
         const [moviesRows, actorRows] = await Promise.all([fetchMovies(), fetchActorsForMovie()]);
-        const maxId = moviesRows.reduce((max, item) => Math.max(max, Number(item.id || item.movieId) || 0), 0);
-        setForm((prev) => ({ ...prev, movieId: String(maxId + 1) }));
+        if (mode === "edit" && initialData) {
+          setForm((prev) => ({
+            ...prev,
+            ...initialData,
+            movieId: String(initialData.movieId ?? initialData.id ?? ""),
+            movieCode: String(initialData.movieCode ?? ""),
+          }));
+        } else {
+          const maxId = moviesRows.reduce((max, item) => Math.max(max, Number(item.id || item.movieId) || 0), 0);
+          setForm((prev) => ({ ...prev, movieId: String(maxId + 1) }));
+        }
         setActors(actorRows);
       } catch (e) {
         setError(e.message || "Boshlang'ich ma'lumotlarni olishda xatolik.");
       }
     };
     run();
-  }, []);
+  }, [mode, initialData]);
 
   useEffect(() => {
     const onOutside = (event) => {
@@ -271,7 +280,11 @@ export default function MovieForm({ onCancel, onSaved }) {
         },
         isActive: Boolean(form.isActive),
       };
-      await createMovie(payload);
+      if (mode === "edit" && onSubmitData) {
+        await onSubmitData(payload);
+      } else {
+        await createMovie(payload);
+      }
       onSaved?.();
     } catch (e) {
       setError(e.message || "Saqlashda xatolik.");

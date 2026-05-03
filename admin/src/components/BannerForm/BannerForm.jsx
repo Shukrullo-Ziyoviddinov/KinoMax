@@ -106,7 +106,7 @@ const EMPTY_LANG = {
   sortOrder: '1',
 };
 
-export default function BannerForm({ onCancel, onSaved }) {
+export default function BannerForm({ onCancel, onSaved, mode = 'create', initialData = null, onSubmitData }) {
   const [langTab, setLangTab] = useState('uz');
   const [movies, setMovies] = useState([]);
   const [loadingMovies, setLoadingMovies] = useState(true);
@@ -123,6 +123,19 @@ export default function BannerForm({ onCancel, onSaved }) {
   const activeForm = formByLang[langTab];
 
   useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      const base = {
+        movieId: String(initialData.movieId ?? ''),
+        movieTitle: resolveMovieTitle(initialData, 'uz'),
+        moviePoster: resolveMoviePoster(initialData, 'uz'),
+        image: initialData.image || '',
+        imagePreview: initialData.image || '',
+        sortOrder: String(initialData.sortOrder || 1),
+      };
+      setFormByLang({ uz: { ...base }, ru: { ...base } });
+      return;
+    }
+
     const run = async () => {
       setLoadingMovies(true);
       try {
@@ -135,7 +148,7 @@ export default function BannerForm({ onCancel, onSaved }) {
       }
     };
     run();
-  }, []);
+  }, [mode, initialData]);
 
   useEffect(() => {
     const onOutside = (event) => {
@@ -191,20 +204,29 @@ export default function BannerForm({ onCancel, onSaved }) {
     setError('');
     setSaving(true);
     try {
-      const baseBannerId = Date.now();
-      await Promise.all(
-        ['uz', 'ru'].map((lang) => {
-          const item = formByLang[lang];
-          return createBanner({
-            bannerId: baseBannerId,
-            movieId: Number(item.movieId),
-            image: item.image,
-            lang,
-            isActive: true,
-            sortOrder: Number(item.sortOrder),
-          });
-        })
-      );
+      if (mode === 'edit' && onSubmitData) {
+        const item = formByLang[langTab];
+        await onSubmitData({
+          movieId: Number(item.movieId),
+          image: item.image,
+          sortOrder: Number(item.sortOrder),
+        });
+      } else {
+        const baseBannerId = Date.now();
+        await Promise.all(
+          ['uz', 'ru'].map((lang) => {
+            const item = formByLang[lang];
+            return createBanner({
+              bannerId: baseBannerId,
+              movieId: Number(item.movieId),
+              image: item.image,
+              lang,
+              isActive: true,
+              sortOrder: Number(item.sortOrder),
+            });
+          })
+        );
+      }
       onSaved?.();
     } catch (e) {
       setError(e.message || 'Saqlashda xatolik yuz berdi.');

@@ -28,7 +28,7 @@ function toDataUrl(file, onProgress) {
   });
 }
 
-export default function AdsForm({ onCancel, onSaved }) {
+export default function AdsForm({ onCancel, onSaved, mode = "create", initialData = null, onSubmitData }) {
   const fileRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -42,6 +42,16 @@ export default function AdsForm({ onCancel, onSaved }) {
   });
 
   useEffect(() => {
+    if (mode === "edit" && initialData) {
+      setForm((prev) => ({
+        ...prev,
+        videoUrl: initialData.videoUrl || "",
+        sortOrder: String(initialData.sortOrder || 1),
+        isActive: initialData.isActive !== false,
+      }));
+      return;
+    }
+
     const loadNextOrder = async () => {
       try {
         const ads = await fetchAds();
@@ -52,7 +62,7 @@ export default function AdsForm({ onCancel, onSaved }) {
       }
     };
     loadNextOrder();
-  }, []);
+  }, [mode, initialData]);
 
   const canSave = useMemo(() => form.videoUrl && form.sortOrder, [form.videoUrl, form.sortOrder]);
 
@@ -90,11 +100,16 @@ export default function AdsForm({ onCancel, onSaved }) {
     setError("");
     setSaving(true);
     try {
-      await createAd({
+      const payload = {
         videoUrl: form.videoUrl,
         isActive: form.isActive,
         sortOrder: Number(form.sortOrder) || 1,
-      });
+      };
+      if (mode === "edit" && onSubmitData) {
+        await onSubmitData(payload);
+      } else {
+        await createAd(payload);
+      }
       onSaved?.();
     } catch (e) {
       setError(e.message || "Saqlashda xatolik.");

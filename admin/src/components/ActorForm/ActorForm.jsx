@@ -22,7 +22,7 @@ function toDataUrl(file) {
   });
 }
 
-export default function ActorForm({ onCancel, onSaved }) {
+export default function ActorForm({ onCancel, onSaved, mode = "create", initialData = null, onSubmitData }) {
   const fileRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +38,21 @@ export default function ActorForm({ onCancel, onSaved }) {
   });
 
   useEffect(() => {
+    if (mode === "edit" && initialData) {
+      setForm((prev) => ({
+        ...prev,
+        actorId: String(initialData.actorId ?? ""),
+        nameUz: initialData?.name?.uz || "",
+        nameRu: initialData?.name?.ru || "",
+        image: initialData?.image || "",
+        imagePreview: initialData?.image || "",
+        infoUz: initialData?.info?.uz || "",
+        infoRu: initialData?.info?.ru || "",
+        isActive: initialData?.isActive !== false,
+      }));
+      return;
+    }
+
     const loadNextId = async () => {
       try {
         const actors = await fetchActors();
@@ -48,7 +63,7 @@ export default function ActorForm({ onCancel, onSaved }) {
       }
     };
     loadNextId();
-  }, []);
+  }, [mode, initialData]);
 
   const canSave = useMemo(() => {
     return form.nameUz.trim() && form.nameRu.trim() && form.image;
@@ -72,7 +87,7 @@ export default function ActorForm({ onCancel, onSaved }) {
     setError("");
     setSaving(true);
     try {
-      await createActor({
+      const payload = {
         actorId: Number(form.actorId) || undefined,
         name: {
           uz: form.nameUz.trim(),
@@ -84,7 +99,12 @@ export default function ActorForm({ onCancel, onSaved }) {
           ru: form.infoRu.trim(),
         },
         isActive: form.isActive,
-      });
+      };
+      if (mode === "edit" && onSubmitData) {
+        await onSubmitData(payload);
+      } else {
+        await createActor(payload);
+      }
       onSaved?.();
     } catch (e) {
       setError(e.message || "Saqlashda xatolik.");

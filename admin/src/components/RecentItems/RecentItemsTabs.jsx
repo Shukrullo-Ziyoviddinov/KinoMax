@@ -1,3 +1,5 @@
+import ScrollTouch from '../ScrollTouch/ScrollTouch';
+
 const TABS = [
   { id: 'movies', label: 'Kinolar' },
   { id: 'actors', label: 'Aktyorlar' },
@@ -8,7 +10,7 @@ const TABS = [
 
 export default function RecentItemsTabs({ activeTab, onChange }) {
   return (
-    <div className="recent-items__tabs" role="tablist" aria-label="Tarkiblar kategoriyalari">
+    <ScrollTouch className="recent-items__tabs" role="tablist" aria-label="Tarkiblar kategoriyalari" allowInteractiveDrag>
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -21,6 +23,6 @@ export default function RecentItemsTabs({ activeTab, onChange }) {
           {tab.label}
         </button>
       ))}
-    </div>
+    </ScrollTouch>
   );
 }

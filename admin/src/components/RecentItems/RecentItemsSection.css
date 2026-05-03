@@ -20,7 +20,7 @@
   gap: 6px;
   border-bottom: 1px solid #eceff4;
   margin-bottom: 14px;
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .recent-items__tab {
@@ -42,7 +42,7 @@
 }
 
 .recent-items__table-wrap {
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .recent-items__table {

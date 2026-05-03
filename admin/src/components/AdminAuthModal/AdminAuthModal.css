@@ -86,3 +86,8 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+.admin-auth-modal__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

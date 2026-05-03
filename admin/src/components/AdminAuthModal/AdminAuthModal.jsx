@@ -1,7 +1,6 @@
 import { useState } from 'react';
+import { adminLogin } from '../../services/adminAuthApi';
 import './AdminAuthModal.css';
-
-const ADMIN_PASSWORD = 'ShZ03_ZH04';
 
 export default function AdminAuthModal({ onSuccess }) {
   const [firstName, setFirstName] = useState('');
@@ -9,21 +8,30 @@ export default function AdminAuthModal({ onSuccess }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (!firstName.trim() || !lastName.trim() || !password) {
       setError("Ism, familiya va parolni to'ldiring.");
       return;
     }
-    if (password !== ADMIN_PASSWORD) {
-      setError("Parol noto'g'ri.");
-      return;
-    }
     setError('');
-    onSuccess?.({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-    });
+    setLoading(true);
+    try {
+      const data = await adminLogin({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        password,
+      });
+      onSuccess?.({
+        firstName: data.firstName,
+        lastName: data.lastName,
+      });
+    } catch (e) {
+      setError(e?.message || "Kirishda xatolik.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,8 +94,13 @@ export default function AdminAuthModal({ onSuccess }) {
           </button>
         </div>
         {error ? <p className="admin-auth-modal__error">{error}</p> : null}
-        <button type="button" className="admin-auth-modal__submit" onClick={onSubmit}>
-          Kirish
+        <button
+          type="button"
+          className="admin-auth-modal__submit"
+          onClick={onSubmit}
+          disabled={loading}
+        >
+          {loading ? 'Kutilmoqda…' : 'Kirish'}
         </button>
       </div>
     </div>

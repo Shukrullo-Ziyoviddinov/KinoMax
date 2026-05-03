@@ -14,6 +14,7 @@ const moviesRoutes = require("./routes/moviesRouts");
 const adsRoutes = require("./routes/adsRouts");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
+const adminRoutes = require("./routes/adminRouts");
 const { success, fail } = require("./utils/apiResponse");
 const { notFoundHandler, errorHandler } = require("./middlewares/errorHandler");
 require("dotenv").config();
@@ -64,6 +65,7 @@ app.use("/api/movies", moviesRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/health", (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;

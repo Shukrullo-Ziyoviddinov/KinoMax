@@ -49,8 +49,9 @@
 
 .recent-items__table {
   width: 100%;
-  min-width: 720px;
+  min-width: 620px;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .recent-items__table thead th {
@@ -58,16 +59,31 @@
   font-size: 12px;
   font-weight: 700;
   color: #7a7f92;
-  padding: 10px 8px;
+  padding: 8px 6px;
   border-bottom: 1px solid #ebedf2;
 }
 
 .recent-items__table tbody td {
   font-size: 14px;
   color: #272a3b;
-  padding: 10px 8px;
+  padding: 8px 6px;
   border-bottom: 1px solid #f1f3f7;
   vertical-align: middle;
+}
+
+.recent-items__table th:nth-child(1),
+.recent-items__table td:nth-child(1) {
+  width: 44px;
+}
+
+.recent-items__table th:nth-child(2),
+.recent-items__table td:nth-child(2) {
+  width: 54px;
+}
+
+.recent-items__table th:nth-child(5),
+.recent-items__table td:nth-child(5) {
+  width: 78px;
 }
 
 .recent-items__poster {
@@ -122,6 +138,16 @@
   .recent-items {
     margin-top: 14px;
     padding: 16px;
+  }
+
+  .recent-items__table {
+    min-width: 560px;
+  }
+
+  .recent-items__table thead th,
+  .recent-items__table tbody td {
+    padding: 7px 5px;
+    font-size: 13px;
   }
 }
 

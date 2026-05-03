@@ -16,6 +16,7 @@ export default function RecentItemsSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editItem, setEditItem] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState({
     movies: [],
@@ -45,8 +46,6 @@ export default function RecentItemsSection() {
   const activeItems = useMemo(() => data[activeTab] || [], [data, activeTab]);
 
   const onDelete = async (item) => {
-    const ok = window.confirm("Rostdan ham o'chirmoqchimisiz?");
-    if (!ok) return;
     setBusy(true);
     setError('');
     try {
@@ -68,7 +67,7 @@ export default function RecentItemsSection() {
         items={activeItems}
         loading={loading || busy}
         onEdit={(item) => setEditItem(item)}
-        onDelete={onDelete}
+        onDelete={(item) => setDeleteItem(item)}
       />
 
       <ElementAddModal
@@ -131,6 +130,38 @@ export default function RecentItemsSection() {
               await loadData();
             }}
           />
+        ) : null}
+      </ElementAddModal>
+
+      <ElementAddModal
+        isOpen={Boolean(deleteItem)}
+        title="Tasdiqlash"
+        onClose={() => setDeleteItem(null)}
+      >
+        {deleteItem ? (
+          <div className="recent-items__confirm">
+            <p className="recent-items__confirm-text">Chindan ham o'chirmoqchimisiz?</p>
+            <div className="recent-items__confirm-actions">
+              <button
+                type="button"
+                className="recent-items__confirm-cancel"
+                onClick={() => setDeleteItem(null)}
+              >
+                Bekor qilish
+              </button>
+              <button
+                type="button"
+                className="recent-items__confirm-delete"
+                onClick={async () => {
+                  const target = deleteItem;
+                  setDeleteItem(null);
+                  await onDelete(target);
+                }}
+              >
+                O'chirish
+              </button>
+            </div>
+          </div>
         ) : null}
       </ElementAddModal>
     </section>

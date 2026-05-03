@@ -20,7 +20,8 @@
   gap: 6px;
   border-bottom: 1px solid #eceff4;
   margin-bottom: 14px;
-  overflow: visible;
+  width: 100%;
+  max-width: 100%;
 }
 
 .recent-items__tab {
@@ -42,11 +43,13 @@
 }
 
 .recent-items__table-wrap {
-  overflow: visible;
+  width: 100%;
+  max-width: 100%;
 }
 
 .recent-items__table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
 }
 

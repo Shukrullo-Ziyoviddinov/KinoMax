@@ -102,4 +102,41 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put("/:actorId", async (req, res, next) => {
+  try {
+    const actorId = Number(req.params.actorId);
+    if (!Number.isFinite(actorId)) {
+      return fail(res, "Noto'g'ri actorId.", 400);
+    }
+
+    const updated = await Actor.findOneAndUpdate(
+      { actorId },
+      { $set: req.body || {} },
+      { new: true, runValidators: true }
+    );
+    if (!updated) {
+      return fail(res, "Actor topilmadi.", 404);
+    }
+    return success(res, updated, "Actor yangilandi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/:actorId", async (req, res, next) => {
+  try {
+    const actorId = Number(req.params.actorId);
+    if (!Number.isFinite(actorId)) {
+      return fail(res, "Noto'g'ri actorId.", 400);
+    }
+    const deleted = await Actor.findOneAndDelete({ actorId });
+    if (!deleted) {
+      return fail(res, "Actor topilmadi.", 404);
+    }
+    return success(res, null, "Actor o'chirildi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = router;

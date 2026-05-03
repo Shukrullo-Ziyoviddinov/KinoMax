@@ -96,4 +96,38 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put("/:genreId", async (req, res, next) => {
+  try {
+    const genreId = String(req.params.genreId || "").trim();
+    if (!genreId) return fail(res, "Noto'g'ri genreId.", 400);
+
+    const updated = await Genre.findOneAndUpdate(
+      { genreId },
+      { $set: req.body || {} },
+      { new: true, runValidators: true }
+    );
+    if (!updated) {
+      return fail(res, "Janr topilmadi.", 404);
+    }
+    return success(res, updated, "Janr yangilandi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/:genreId", async (req, res, next) => {
+  try {
+    const genreId = String(req.params.genreId || "").trim();
+    if (!genreId) return fail(res, "Noto'g'ri genreId.", 400);
+
+    const deleted = await Genre.findOneAndDelete({ genreId });
+    if (!deleted) {
+      return fail(res, "Janr topilmadi.", 404);
+    }
+    return success(res, null, "Janr o'chirildi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = router;

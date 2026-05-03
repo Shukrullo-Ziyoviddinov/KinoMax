@@ -75,6 +75,34 @@
   background: #eff2f7;
 }
 
+.recent-items__actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.recent-items__icon-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d7dded;
+  border-radius: 8px;
+  background: #fff;
+  color: #4f5a77;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.recent-items__icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.recent-items__icon-btn--danger {
+  color: #c7365d;
+  border-color: #ecc9d5;
+}
+
 .recent-items__empty {
   padding: 18px 8px;
   color: #6f7487;

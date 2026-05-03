@@ -67,4 +67,40 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put("/:adId", async (req, res, next) => {
+  try {
+    const adId = Number(req.params.adId);
+    if (!Number.isFinite(adId)) {
+      return fail(res, "Noto'g'ri adId.", 400);
+    }
+    const updated = await Ads.findOneAndUpdate(
+      { adId },
+      { $set: req.body || {} },
+      { new: true, runValidators: true }
+    );
+    if (!updated) {
+      return fail(res, "Reklama topilmadi.", 404);
+    }
+    return success(res, updated, "Reklama yangilandi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/:adId", async (req, res, next) => {
+  try {
+    const adId = Number(req.params.adId);
+    if (!Number.isFinite(adId)) {
+      return fail(res, "Noto'g'ri adId.", 400);
+    }
+    const deleted = await Ads.findOneAndDelete({ adId });
+    if (!deleted) {
+      return fail(res, "Reklama topilmadi.", 404);
+    }
+    return success(res, null, "Reklama o'chirildi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = router;

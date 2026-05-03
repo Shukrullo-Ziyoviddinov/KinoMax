@@ -79,4 +79,31 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
+router.put("/by-banner-id/:bannerId", async (req, res, next) => {
+  try {
+    const bannerId = Number(req.params.bannerId);
+    if (!Number.isFinite(bannerId)) {
+      return fail(res, "Noto'g'ri bannerId.", 400);
+    }
+    await Banner.updateMany({ bannerId }, { $set: req.body || {} });
+    const rows = await Banner.find({ bannerId }).select("-__v").lean();
+    return success(res, rows, "Bannerlar yangilandi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/by-banner-id/:bannerId", async (req, res, next) => {
+  try {
+    const bannerId = Number(req.params.bannerId);
+    if (!Number.isFinite(bannerId)) {
+      return fail(res, "Noto'g'ri bannerId.", 400);
+    }
+    await Banner.deleteMany({ bannerId });
+    return success(res, null, "Banner o'chirildi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = router;

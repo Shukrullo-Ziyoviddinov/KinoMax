@@ -134,6 +134,42 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put("/:id", async (req, res, next) => {
+  try {
+    const movieId = Number(req.params.id);
+    if (!Number.isFinite(movieId)) {
+      return fail(res, "Noto'g'ri movieId.", 400);
+    }
+    const updated = await Movie.findOneAndUpdate(
+      { movieId },
+      { $set: req.body || {} },
+      { new: true, runValidators: false }
+    ).lean();
+    if (!updated) {
+      return fail(res, "Kino topilmadi.", 404);
+    }
+    return success(res, updated, "Kino yangilandi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const movieId = Number(req.params.id);
+    if (!Number.isFinite(movieId)) {
+      return fail(res, "Noto'g'ri movieId.", 400);
+    }
+    const deleted = await Movie.findOneAndDelete({ movieId });
+    if (!deleted) {
+      return fail(res, "Kino topilmadi.", 404);
+    }
+    return success(res, null, "Kino o'chirildi.");
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.get("/:movieId/comments", validateIdParam("movieId"), async (req, res, next) => {
   try {
     const currentUserId = await getOptionalUserId(req);

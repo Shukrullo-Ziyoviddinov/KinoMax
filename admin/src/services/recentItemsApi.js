@@ -139,46 +139,56 @@ export async function fetchRecentItems() {
     movies: sortNewestFirst(
       collapsedMovies.map((item) => ({
         id: item.id ?? item.movieId,
+        section: 'movies',
         title: localized(item.title),
         subtitle: localized(item.title?.ru),
         image: toImageUrl(localized(item.homeImg) || item.image || item.poster),
         createdAt: item.createdAt,
+        raw: item,
       }))
     ),
     actors: sortNewestFirst(
       collapsedActors.map((item) => ({
         id: item.actorId,
+        section: 'actors',
         title: localized(item.name),
         subtitle: localized(item.name?.ru),
         image: toImageUrl(item.image),
         createdAt: item.createdAt,
+        raw: item,
       }))
     ),
     banners: sortNewestFirst(
       collapsedBanners.map((item) => ({
         id: item.bannerId,
+        section: 'banners',
         title: movieTitleById.get(Number(item.movieId))?.uz || '',
         subtitle: movieTitleById.get(Number(item.movieId))?.ru || '',
         image: toImageUrl(item.image),
         createdAt: item.createdAt,
+        raw: item,
       }))
     ),
     ads: sortNewestFirst(
       collapsedAds.map((item) => ({
         id: item.adId,
+        section: 'ads',
         title: 'Reklama',
         subtitle: '',
         image: '',
         createdAt: item.createdAt,
+        raw: item,
       }))
     ),
     genres: sortNewestFirst(
       collapsedGenres.map((item) => ({
         id: item.genreId,
+        section: 'genres',
         title: localized(item.title),
         subtitle: localized(item.title?.ru),
         image: toImageUrl(item.img),
         createdAt: item.createdAt,
+        raw: item,
       }))
     ),
   };

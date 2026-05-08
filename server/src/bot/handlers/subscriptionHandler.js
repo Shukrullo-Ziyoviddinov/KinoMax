@@ -4,11 +4,19 @@ const { sendMainMenu } = require("./menuHandler");
 
 const CHECK_SUBSCRIPTION_CALLBACK = "check_subscription";
 const TELEGRAM_HOST_RE = /(?:^|\.)t(?:elegram)?\.me$/i;
-const TELEGRAM_PATH_RE = /^\/(?:joinchat\/|\+)?([a-zA-Z0-9_]{4,})\/?$/;
+const TELEGRAM_PATH_RE = /^\/(?:s\/)?(?:joinchat\/|\+)?([a-zA-Z0-9_]{4,})\/?$/;
+const TELEGRAM_USERNAME_RE = /^@([a-zA-Z0-9_]{4,})$/;
 
 function normalizeUrl(rawLink = "") {
   const value = String(rawLink || "").trim();
   if (!value) return null;
+  const usernameMatch = value.match(TELEGRAM_USERNAME_RE);
+  if (usernameMatch) {
+    return `https://t.me/${usernameMatch[1]}`;
+  }
+  if (/^t(?:elegram)?\.me\//i.test(value)) {
+    return `https://${value}`;
+  }
   if (/^https?:\/\//i.test(value)) {
     return value;
   }
@@ -17,6 +25,12 @@ function normalizeUrl(rawLink = "") {
 
 function getTelegramChatFromLink(rawLink = "") {
   try {
+    const input = String(rawLink || "").trim();
+    const usernameMatch = input.match(TELEGRAM_USERNAME_RE);
+    if (usernameMatch?.[1]) {
+      return `@${usernameMatch[1]}`;
+    }
+
     const normalized = normalizeUrl(rawLink);
     if (!normalized) return null;
     const parsed = new URL(normalized);
@@ -38,6 +52,14 @@ function getTelegramChatFromLink(rawLink = "") {
   } catch (_error) {
     return null;
   }
+}
+
+function isUserSubscribedStatus(member = {}) {
+  const status = member?.status;
+  if (["creator", "administrator", "member"].includes(status)) {
+    return true;
+  }
+  return status === "restricted" && member?.is_member === true;
 }
 
 async function getSubscriptionLinks() {
@@ -90,8 +112,7 @@ async function hasUserSubscribedToAllRequiredTelegramChannels(
   for (const chatId of requiredChannelIds) {
     try {
       const member = await bot.getChatMember(chatId, userId);
-      const status = member?.status;
-      if (!["creator", "administrator", "member"].includes(status)) {
+      if (!isUserSubscribedStatus(member)) {
         return false;
       }
     } catch (_error) {
@@ -118,6 +139,17 @@ async function sendSubscriptionPrompt(bot, chatId, language) {
     const isAdmin = await isBotAdminInChannel(bot, me.id, item.telegramChatId);
     if (isAdmin) {
       requiredChannelIds.push(item.telegramChatId);
+    }
+  }
+
+  const clearKeyboardMessage = await bot.sendMessage(chatId, "🔒", {
+    reply_markup: { remove_keyboard: true },
+  });
+  if (clearKeyboardMessage?.message_id) {
+    try {
+      await bot.deleteMessage(chatId, clearKeyboardMessage.message_id);
+    } catch (_error) {
+      // delete bo'lmasa ham davom etamiz
     }
   }
 

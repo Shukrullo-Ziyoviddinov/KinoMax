@@ -19,6 +19,11 @@ const translations = {
     menuPrompt:
       "Botdan foydalanish uchun qo'yidagilardan birini tanlang va o'zingizga kerakli kinoni qidiring.",
     searchPrompt: "Filterlash uchun kerakli tugmani tanlang.",
+    subscribeRequired:
+      "⚠️ Botdan to'liq foydalanish uchun quyidagi kanallarga obuna bo'ling!",
+    checkSubscriptionButton: "✅ Tekshirish",
+    telegramSubscriptionMissing:
+      "❗️Siz barcha majburiy Telegram kanallarga obuna bo'lmagansiz.",
   },
   ru: {
     chooseLanguage:
@@ -41,6 +46,11 @@ const translations = {
     menuPrompt:
       "Чтобы пользоваться ботом, выберите один из пунктов ниже и найдите нужный фильм.",
     searchPrompt: "Выберите нужную кнопку для фильтрации.",
+    subscribeRequired:
+      "⚠️ Для полного использования бота подпишитесь на следующие каналы!",
+    checkSubscriptionButton: "✅ Проверить",
+    telegramSubscriptionMissing:
+      "❗️Вы подписались не на все обязательные Telegram-каналы.",
   },
 };
 

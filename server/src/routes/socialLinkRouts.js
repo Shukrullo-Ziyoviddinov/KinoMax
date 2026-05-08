@@ -15,6 +15,7 @@ router.get("/", async (_req, res, next) => {
       contact: {},
       social: {},
       appStore: {},
+      subscription: {},
     };
 
     rows.forEach((row) => {
@@ -35,7 +36,7 @@ router.get("/", async (_req, res, next) => {
 router.put("/:type", async (req, res, next) => {
   try {
     const type = String(req.params.type || "").trim();
-    if (!["contact", "social", "appStore"].includes(type)) {
+    if (!["contact", "social", "appStore", "subscription"].includes(type)) {
       return fail(res, "Noto'g'ri type.");
     }
 

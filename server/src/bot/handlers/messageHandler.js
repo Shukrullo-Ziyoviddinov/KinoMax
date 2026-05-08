@@ -6,6 +6,10 @@ const { normalizeLanguage, t } = require("../../utils/i18n");
 const { sendLanguageSelector } = require("./callbackHandlers");
 const { isLanguageButton } = require("../keyboards/mainKeyboard");
 const { handleSearchMenu, isSearchMenuButton } = require("./menuHandler");
+const {
+  hasUserPassedSubscription,
+  sendSubscriptionPrompt,
+} = require("./subscriptionHandler");
 
 const clientPublicPath = path.resolve(__dirname, "../../../../client/public");
 const telegramVideoCache = new Map();
@@ -388,6 +392,12 @@ async function messageHandler(bot, msg) {
 
   if (isLanguageButton(text)) {
     await sendLanguageSelector(bot, chatId);
+    return;
+  }
+
+  const isSubscribed = await hasUserPassedSubscription(bot, msg?.from?.id);
+  if (!isSubscribed) {
+    await sendSubscriptionPrompt(bot, chatId, language);
     return;
   }
 

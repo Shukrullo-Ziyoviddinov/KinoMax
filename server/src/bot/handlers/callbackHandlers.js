@@ -1,6 +1,10 @@
-const { setUserLanguage } = require("../../utils/userState");
+const { setUserLanguage, getUserLanguage } = require("../../utils/userState");
 const { normalizeLanguage, t } = require("../../utils/i18n");
-const { sendMainMenu } = require("./menuHandler");
+const {
+  CHECK_SUBSCRIPTION_CALLBACK,
+  handleSubscriptionCheck,
+  sendSubscriptionPrompt,
+} = require("./subscriptionHandler");
 
 const LANGUAGE_CALLBACK_PREFIX = "set_lang:";
 
@@ -51,6 +55,12 @@ async function callbackHandler(bot, query) {
   const userId = query?.from?.id;
   const chatId = query?.message?.chat?.id;
 
+  if (callbackData === CHECK_SUBSCRIPTION_CALLBACK) {
+    const currentLanguage = normalizeLanguage(getUserLanguage(userId) || "uz");
+    await handleSubscriptionCheck(bot, query, currentLanguage);
+    return;
+  }
+
   if (!callbackData.startsWith(LANGUAGE_CALLBACK_PREFIX)) {
     return;
   }
@@ -65,7 +75,7 @@ async function callbackHandler(bot, query) {
 
   if (chatId) {
     await clearLanguageSelectorMessage(bot, query);
-    await sendMainMenu(bot, chatId, language);
+    await sendSubscriptionPrompt(bot, chatId, language);
   }
 }
 

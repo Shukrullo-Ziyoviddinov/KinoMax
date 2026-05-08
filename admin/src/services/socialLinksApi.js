@@ -14,7 +14,7 @@ export async function fetchSocialLinks() {
     headers: { Accept: "application/json" },
   });
   const payload = await toJson(response);
-  return payload?.data || { social: {}, appStore: {}, contact: {} };
+  return payload?.data || { social: {}, appStore: {}, contact: {}, subscription: {} };
 }
 
 export async function saveSocialLinks(type, items) {

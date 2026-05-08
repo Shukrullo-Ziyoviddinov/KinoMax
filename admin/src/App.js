@@ -11,6 +11,7 @@ import ActorForm from './components/ActorForm/ActorForm';
 import MovieForm from './components/MovieForm/MovieForm';
 import SettingsLinksForm from './components/SettingsLinksForm/SettingsLinksForm';
 import TranslationSettingsForm from './components/TranslationSettingsForm/TranslationSettingsForm';
+import SubscriptionChannelsForm from './components/SubscriptionChannelsForm/SubscriptionChannelsForm';
 import ContentSectionPage from './components/ContentSectionPage/ContentSectionPage';
 import AdminAuthModal from './components/AdminAuthModal/AdminAuthModal';
 
@@ -44,6 +45,7 @@ function App() {
     if (settingId === 'app-links') setActiveModal('settings-app-links');
     if (settingId === 'language') setActiveModal('settings-language');
     if (settingId === 'contact') setActiveModal('settings-contact');
+    if (settingId === 'subscription') setActiveModal('settings-subscription');
   };
 
   const modalTitleMap = {
@@ -56,6 +58,7 @@ function App() {
     'settings-app-links': 'Ilova havolalari',
     'settings-language': 'Til sozlamalari',
     'settings-contact': 'Aloqa',
+    'settings-subscription': 'Kanallarga obuna',
   };
 
   const closeModal = () => setActiveModal('');
@@ -123,6 +126,8 @@ function App() {
             <TranslationSettingsForm onCancel={closeModal} onSaved={closeModal} />
           ) : activeModal === 'settings-contact' ? (
             <SettingsLinksForm section="contact" onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'settings-subscription' ? (
+            <SubscriptionChannelsForm onCancel={closeModal} onSaved={closeModal} />
           ) : activeModal === 'actor' ? (
             <ActorForm onCancel={closeModal} onSaved={closeModal} />
           ) : activeModal === 'ad' ? (

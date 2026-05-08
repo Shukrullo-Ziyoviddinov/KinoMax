@@ -4,7 +4,7 @@ const socialLinkSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["contact", "social", "appStore"],
+      enum: ["contact", "social", "appStore", "subscription"],
       required: true,
       index: true,
     },

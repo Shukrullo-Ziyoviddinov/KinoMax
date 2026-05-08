@@ -47,6 +47,18 @@ const SETTINGS_LINKS = [
       </svg>
     ),
   },
+  {
+    id: "subscription",
+    label: "Kanallarga obuna",
+    icon: (
+      <svg className="sidebar__nav-icon" viewBox="0 0 24 24" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M21 6.5a2.5 2.5 0 0 0-2.5-2.5h-13A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h13a2.5 2.5 0 0 0 2.5-2.5v-11zM6 8h12v2H6V8zm0 4h7v2H6v-2z"
+        />
+      </svg>
+    ),
+  },
 ];
 
 /**

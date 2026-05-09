@@ -82,6 +82,7 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
   const [dragY, setDragY] = useState(0);
   const startYRef = useRef(0);
   const commentsListRef = useRef(null);
+  const likePendingRef = useRef(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +186,11 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
   };
 
   const handleToggleCommentLike = async (commentId) => {
+    const key = String(commentId);
+    if (likePendingRef.current.has(key)) {
+      return;
+    }
+
     if (!getAuthToken()) {
       openAuthModal();
       return;
@@ -192,6 +198,8 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
 
     let previous = null;
     let optimistic = null;
+
+    likePendingRef.current.add(key);
 
     setComments((prev) => {
       const updateInTree = (list) =>
@@ -260,6 +268,8 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
           });
         return rollbackTree(prev);
       });
+    } finally {
+      likePendingRef.current.delete(key);
     }
   };
 

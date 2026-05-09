@@ -116,6 +116,12 @@
   font-size: 13px;
 }
 
+.bot-broadcast-form__hint {
+  margin: 0;
+  color: #44506f;
+  font-size: 13px;
+}
+
 .bot-broadcast-form__actions {
   display: flex;
   justify-content: space-between;

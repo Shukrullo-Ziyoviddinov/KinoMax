@@ -28,6 +28,7 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
   const [openPickerIndex, setOpenPickerIndex] = useState(null);
   const [movieSearch, setMovieSearch] = useState({});
   const [error, setError] = useState("");
+  const [resultInfo, setResultInfo] = useState(null);
   const [form, setForm] = useState({
     title: "",
     text: "",
@@ -115,6 +116,7 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
 
   const onSubmit = async () => {
     setError("");
+    setResultInfo(null);
     const movieButtons = form.movieButtons
       .map((item) => ({
         type: "movie",
@@ -137,13 +139,22 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
 
     setSaving(true);
     try {
-      await sendBotBroadcast({
+      const result = await sendBotBroadcast({
         title: form.title,
         text: form.text,
         mediaType: form.mediaType || null,
         mediaDataUrl: form.mediaDataUrl || null,
         buttons: [...movieButtons, ...linkButtons],
       });
+      setResultInfo(result || null);
+      if ((result?.total || 0) === 0) {
+        setError("Hozircha bot foydalanuvchilari ro'yxatda yo'q (total: 0). User botga qayta /start bossa ro'yxatga tushadi.");
+        return;
+      }
+      if ((result?.success || 0) === 0) {
+        setError("Reklama yuborildi, lekin hech kimga yetib bormadi. Total/failed natijasini tekshiring.");
+        return;
+      }
       onSaved?.();
     } catch (e) {
       setError(e.message || "Yuborishda xatolik.");
@@ -264,6 +275,12 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
       </div>
 
       {error ? <p className="bot-broadcast-form__error">{error}</p> : null}
+      {resultInfo ? (
+        <p className="bot-broadcast-form__hint">
+          Natija: total {resultInfo.total || 0}, success {resultInfo.success || 0}, failed{" "}
+          {resultInfo.failed || 0}
+        </p>
+      ) : null}
 
       <div className="bot-broadcast-form__actions">
         <button type="button" className="bot-broadcast-form__cancel-btn" onClick={onCancel}>

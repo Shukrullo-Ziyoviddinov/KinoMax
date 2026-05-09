@@ -6,6 +6,7 @@ const {
   sendLanguageSelector,
 } = require("./handlers/callbackHandlers");
 const { inlineQueryHandler } = require("./handlers/inlineQueryHandler");
+const { touchBotUser } = require("./handlers/botUserTracker");
 
 dotenv.config();
 
@@ -26,6 +27,11 @@ if (!token) {
 
   bot.onText(/^\/start$/, async (msg) => {
     try {
+      try {
+        await touchBotUser(msg, "uz");
+      } catch (_error) {
+        // tracking xatoliklari asosiy oqimni to'xtatmasin
+      }
       await sendLanguageSelector(bot, msg.chat.id);
     } catch (error) {
       console.error("/start handler xatoligi:", error?.message || error);
@@ -51,6 +57,14 @@ if (!token) {
     }
 
     try {
+      try {
+        await touchBotUser(
+          msg,
+          msg?.from?.language_code?.toLowerCase()?.startsWith("ru") ? "ru" : "uz"
+        );
+      } catch (_error) {
+        // tracking xatoliklari asosiy oqimni to'xtatmasin
+      }
       await messageHandler(bot, msg);
     } catch (error) {
       console.error("message handler xatoligi:", error?.message || error);

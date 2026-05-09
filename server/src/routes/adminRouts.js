@@ -2,6 +2,8 @@ const express = require("express");
 const AdminProfile = require("../models/adminProfile");
 const AdminLoginLog = require("../models/adminLoginLog");
 const { success, fail } = require("../utils/apiResponse");
+const bot = require("../bot/bot");
+const { sendBroadcastToAll } = require("../bot/handlers/broadcastSender");
 
 const router = express.Router();
 
@@ -72,6 +74,42 @@ router.get("/profile", async (req, res, next) => {
       lastName: profile.lastName,
       lastLoginAt: profile.lastLoginAt,
     });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post("/bot-broadcast", async (req, res, next) => {
+  try {
+    if (!bot) {
+      return fail(res, "Bot ishga tushmagan.", 503);
+    }
+
+    const title = String(req.body?.title || "").trim();
+    const text = String(req.body?.text || "").trim();
+    const mediaType = String(req.body?.mediaType || "").trim();
+    const mediaDataUrl = String(req.body?.mediaDataUrl || "").trim();
+    const buttons = Array.isArray(req.body?.buttons) ? req.body.buttons : [];
+
+    if (!title && !text && !mediaDataUrl) {
+      return fail(res, "Kamida title, text yoki media bo'lishi kerak.", 400);
+    }
+    if (mediaType && !["photo", "video"].includes(mediaType)) {
+      return fail(res, "mediaType noto'g'ri.", 400);
+    }
+    if (mediaDataUrl && !mediaType) {
+      return fail(res, "Media turi tanlanmagan.", 400);
+    }
+
+    const result = await sendBroadcastToAll(bot, {
+      title,
+      text,
+      mediaType: mediaType || null,
+      mediaDataUrl: mediaDataUrl || null,
+      buttons,
+    });
+
+    return success(res, result, "Reklama yuborildi.");
   } catch (err) {
     return next(err);
   }

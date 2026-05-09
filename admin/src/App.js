@@ -12,6 +12,7 @@ import MovieForm from './components/MovieForm/MovieForm';
 import SettingsLinksForm from './components/SettingsLinksForm/SettingsLinksForm';
 import TranslationSettingsForm from './components/TranslationSettingsForm/TranslationSettingsForm';
 import SubscriptionChannelsForm from './components/SubscriptionChannelsForm/SubscriptionChannelsForm';
+import BotBroadcastForm from './components/BotBroadcastForm/BotBroadcastForm';
 import ContentSectionPage from './components/ContentSectionPage/ContentSectionPage';
 import AdminAuthModal from './components/AdminAuthModal/AdminAuthModal';
 
@@ -46,6 +47,7 @@ function App() {
     if (settingId === 'language') setActiveModal('settings-language');
     if (settingId === 'contact') setActiveModal('settings-contact');
     if (settingId === 'subscription') setActiveModal('settings-subscription');
+    if (settingId === 'bot-broadcast') setActiveModal('settings-bot-broadcast');
   };
 
   const modalTitleMap = {
@@ -59,6 +61,7 @@ function App() {
     'settings-language': 'Til sozlamalari',
     'settings-contact': 'Aloqa',
     'settings-subscription': 'Kanallarga obuna',
+    'settings-bot-broadcast': 'Botga reklama yuborish',
   };
 
   const closeModal = () => setActiveModal('');
@@ -128,6 +131,8 @@ function App() {
             <SettingsLinksForm section="contact" onCancel={closeModal} onSaved={closeModal} />
           ) : activeModal === 'settings-subscription' ? (
             <SubscriptionChannelsForm onCancel={closeModal} onSaved={closeModal} />
+          ) : activeModal === 'settings-bot-broadcast' ? (
+            <BotBroadcastForm onCancel={closeModal} onSaved={closeModal} />
           ) : activeModal === 'actor' ? (
             <ActorForm onCancel={closeModal} onSaved={closeModal} />
           ) : activeModal === 'ad' ? (

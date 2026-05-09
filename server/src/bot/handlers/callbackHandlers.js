@@ -1,5 +1,6 @@
 const { setUserLanguage, getUserLanguage } = require("../../utils/userState");
 const { normalizeLanguage, t } = require("../../utils/i18n");
+const { touchBotUser } = require("./botUserTracker");
 const {
   CHECK_SUBSCRIPTION_CALLBACK,
   handleSubscriptionCheck,
@@ -68,6 +69,17 @@ async function callbackHandler(bot, query) {
   const selected = callbackData.replace(LANGUAGE_CALLBACK_PREFIX, "");
   const language = normalizeLanguage(selected);
   setUserLanguage(userId, language);
+  try {
+    await touchBotUser(
+      {
+        from: query?.from,
+        chat: query?.message?.chat,
+      },
+      language
+    );
+  } catch (_error) {
+    // tracking xatoliklari asosiy oqimni to'xtatmasin
+  }
 
   await bot.answerCallbackQuery(query.id, {
     text: t(language, "languageSaved"),

@@ -59,6 +59,18 @@ const SETTINGS_LINKS = [
       </svg>
     ),
   },
+  {
+    id: "bot-broadcast",
+    label: "Botga reklama yuborish",
+    icon: (
+      <svg className="sidebar__nav-icon" viewBox="0 0 24 24" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M2 21l20-9L2 3v7l14 2-14 2v7z"
+        />
+      </svg>
+    ),
+  },
 ];
 
 /**

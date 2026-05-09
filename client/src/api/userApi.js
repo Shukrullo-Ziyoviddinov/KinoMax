@@ -1,6 +1,6 @@
 import { BASE_URL } from '../config/api';
 import { createApiError, normalizeApiError } from '../utils/errorHandler';
-import { getAuthToken } from '../utils/authStorage';
+import { clearAuthSession, getAuthToken } from '../utils/authStorage';
 
 const getBase = () => BASE_URL.replace(/\/$/, '');
 const toUrl = (path) => `${getBase()}${path.startsWith('/') ? path : `/${path}`}`;
@@ -18,11 +18,20 @@ const authHeaders = () => ({
   Authorization: `Bearer ${getAuthToken()}`,
 });
 
+const hasToken = () => Boolean(getAuthToken());
+const handleUnauthorized = (response) => {
+  if (response?.status === 401) {
+    clearAuthSession();
+  }
+};
+
 export const fetchWishlist = async () => {
   try {
+    if (!hasToken()) return [];
     const response = await fetch(toUrl('/api/user/wishlist'), { headers: authHeaders() });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return Array.isArray(json?.data?.wishlist) ? json.data.wishlist : [];
@@ -33,9 +42,11 @@ export const fetchWishlist = async () => {
 
 export const fetchUserProfile = async () => {
   try {
+    if (!hasToken()) return null;
     const response = await fetch(toUrl('/api/user/profile'), { headers: authHeaders() });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data || null;
@@ -46,6 +57,7 @@ export const fetchUserProfile = async () => {
 
 export const updateUserProfile = async ({ firstName, lastName, avatar }) => {
   try {
+    if (!hasToken()) throw createApiError('Unauthorized', 401);
     const response = await fetch(toUrl('/api/user/profile'), {
       method: 'PUT',
       headers: authHeaders(),
@@ -53,6 +65,7 @@ export const updateUserProfile = async ({ firstName, lastName, avatar }) => {
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data || null;
@@ -63,6 +76,7 @@ export const updateUserProfile = async ({ firstName, lastName, avatar }) => {
 
 export const addWishlist = async (movieId) => {
   try {
+    if (!hasToken()) throw createApiError('Unauthorized', 401);
     const response = await fetch(toUrl('/api/user/wishlist'), {
       method: 'POST',
       headers: authHeaders(),
@@ -70,6 +84,7 @@ export const addWishlist = async (movieId) => {
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return Array.isArray(json?.data?.wishlist) ? json.data.wishlist : [];
@@ -80,12 +95,14 @@ export const addWishlist = async (movieId) => {
 
 export const removeWishlist = async (movieId) => {
   try {
+    if (!hasToken()) throw createApiError('Unauthorized', 401);
     const response = await fetch(toUrl(`/api/user/wishlist/${movieId}`), {
       method: 'DELETE',
       headers: authHeaders(),
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return Array.isArray(json?.data?.wishlist) ? json.data.wishlist : [];
@@ -96,9 +113,11 @@ export const removeWishlist = async (movieId) => {
 
 export const fetchMovieReaction = async (movieId) => {
   try {
+    if (!hasToken()) return null;
     const response = await fetch(toUrl(`/api/user/reactions/movie/${movieId}`), { headers: authHeaders() });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data?.reaction || null;
@@ -109,6 +128,7 @@ export const fetchMovieReaction = async (movieId) => {
 
 export const setMovieReaction = async (movieId, reaction) => {
   try {
+    if (!hasToken()) throw createApiError('Unauthorized', 401);
     const response = await fetch(toUrl('/api/user/reactions/movie'), {
       method: 'POST',
       headers: authHeaders(),
@@ -116,6 +136,7 @@ export const setMovieReaction = async (movieId, reaction) => {
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data?.reaction || null;
@@ -126,12 +147,14 @@ export const setMovieReaction = async (movieId, reaction) => {
 
 export const removeMovieReaction = async (movieId) => {
   try {
+    if (!hasToken()) throw createApiError('Unauthorized', 401);
     const response = await fetch(toUrl(`/api/user/reactions/movie/${movieId}`), {
       method: 'DELETE',
       headers: authHeaders(),
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return null;
@@ -142,9 +165,11 @@ export const removeMovieReaction = async (movieId) => {
 
 export const fetchTrailerReactions = async (movieId) => {
   try {
+    if (!hasToken()) return {};
     const response = await fetch(toUrl(`/api/user/reactions/trailer?movieId=${movieId}`), { headers: authHeaders() });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data?.reactions || {};
@@ -155,6 +180,7 @@ export const fetchTrailerReactions = async (movieId) => {
 
 export const setTrailerReaction = async ({ movieId, trailerId, reaction }) => {
   try {
+    if (!hasToken()) throw createApiError('Unauthorized', 401);
     const response = await fetch(toUrl('/api/user/reactions/trailer'), {
       method: 'POST',
       headers: authHeaders(),
@@ -162,6 +188,7 @@ export const setTrailerReaction = async ({ movieId, trailerId, reaction }) => {
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data?.reaction || null;
@@ -172,12 +199,14 @@ export const setTrailerReaction = async ({ movieId, trailerId, reaction }) => {
 
 export const removeTrailerReaction = async ({ movieId, trailerId }) => {
   try {
+    if (!hasToken()) throw createApiError('Unauthorized', 401);
     const response = await fetch(toUrl(`/api/user/reactions/trailer/${movieId}/${trailerId}`), {
       method: 'DELETE',
       headers: authHeaders(),
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return null;
@@ -188,6 +217,7 @@ export const removeTrailerReaction = async ({ movieId, trailerId }) => {
 
 export const addViewedMovie = async (movieId) => {
   try {
+    if (!hasToken()) return [];
     const response = await fetch(toUrl('/api/user/viewed-movies'), {
       method: 'POST',
       headers: authHeaders(),
@@ -195,6 +225,7 @@ export const addViewedMovie = async (movieId) => {
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return Array.isArray(json?.data?.viewedMovies) ? json.data.viewedMovies : [];

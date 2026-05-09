@@ -168,6 +168,9 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
         return replaceTemp(prev);
       });
     } catch (_error) {
+      if (_error?.status === 401) {
+        openAuthModal();
+      }
       setComments((prev) => {
         const removeTemp = (list) =>
           list
@@ -256,6 +259,9 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
         });
       }
     } catch (_error) {
+      if (_error?.status === 401) {
+        openAuthModal();
+      }
       if (!previous) return;
       setComments((prev) => {
         const rollbackTree = (list) =>

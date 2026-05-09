@@ -1,5 +1,5 @@
 import { BASE_URL } from '../config/api';
-import { getAuthToken } from '../utils/authStorage';
+import { clearAuthSession, getAuthToken } from '../utils/authStorage';
 import { createApiError, normalizeApiError } from '../utils/errorHandler';
 
 const getBase = () => BASE_URL.replace(/\/$/, '');
@@ -9,6 +9,13 @@ const parseJsonSafe = async (res) => {
     return await res.json();
   } catch (_error) {
     return null;
+  }
+};
+const authHeaders = (token) => (token ? { Authorization: `Bearer ${token}` } : undefined);
+
+const handleUnauthorized = (response) => {
+  if (response?.status === 401) {
+    clearAuthSession();
   }
 };
 
@@ -27,10 +34,11 @@ export const fetchComments = async (movieId) => {
   try {
     const token = getAuthToken();
     const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments`), {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers: authHeaders(token),
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     const list = json?.data;
@@ -46,16 +54,21 @@ export const fetchComments = async (movieId) => {
  */
 export const createComment = async (movieId, payload) => {
   try {
+    const token = getAuthToken();
+    if (!token) {
+      throw createApiError('Unauthorized', 401);
+    }
     const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${getAuthToken()}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data || null;
@@ -66,15 +79,20 @@ export const createComment = async (movieId, payload) => {
 
 export const likeComment = async (movieId, commentId) => {
   try {
+    const token = getAuthToken();
+    if (!token) {
+      throw createApiError('Unauthorized', 401);
+    }
     const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments/${commentId}/like`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${getAuthToken()}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data || { likes: 0, likedByMe: true };
@@ -85,15 +103,20 @@ export const likeComment = async (movieId, commentId) => {
 
 export const unlikeComment = async (movieId, commentId) => {
   try {
+    const token = getAuthToken();
+    if (!token) {
+      throw createApiError('Unauthorized', 401);
+    }
     const response = await fetch(toUrl(`/api/movies/${toMovieKey(movieId)}/comments/${commentId}/like`), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${getAuthToken()}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     const json = await parseJsonSafe(response);
     if (!response.ok || !(json?.success ?? json?.ok)) {
+      handleUnauthorized(response);
       throw createApiError(json?.message || `HTTP ${response.status}`, response.status, json);
     }
     return json?.data || { likes: 0, likedByMe: false };

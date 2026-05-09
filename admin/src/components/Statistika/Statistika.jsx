@@ -112,6 +112,7 @@ export default function Statistika() {
             totalUsers={bot.totalUsers}
             activeUsers={bot.activeUsers}
             visits={bot.visits}
+            registrations={bot.registrations}
           />
 
           <StatBlock

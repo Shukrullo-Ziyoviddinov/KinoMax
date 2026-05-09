@@ -31,7 +31,8 @@ async function buildBotStatistics() {
 
   return {
     totalUsers,
-    visits: { day: new1d, week: new7d, month: new30d, year: new365d },
+    visits: { day: active1d, week: active7d, month: active30d, year: active365d },
+    registrations: { day: new1d, week: new7d, month: new30d, year: new365d },
     activeUsers: { day: active1d, week: active7d, month: active30d, year: active365d },
   };
 }

@@ -20,6 +20,9 @@ function createLinkButton() {
   return { label: "", url: "" };
 }
 
+const MAX_IMAGE_MB = 5;
+const MAX_VIDEO_MB = 50;
+
 export default function BotBroadcastForm({ onCancel, onSaved }) {
   const mediaRef = useRef(null);
   const [saving, setSaving] = useState(false);
@@ -78,6 +81,15 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
     const mediaType = mime.startsWith("video/") ? "video" : mime.startsWith("image/") ? "photo" : "";
     if (!mediaType) {
       setError("Faqat rasm yoki video yuklang.");
+      return;
+    }
+    const fileSizeMb = Number(file.size || 0) / (1024 * 1024);
+    if (mediaType === "photo" && fileSizeMb > MAX_IMAGE_MB) {
+      setError(`Rasm hajmi juda katta. Maksimal ${MAX_IMAGE_MB}MB.`);
+      return;
+    }
+    if (mediaType === "video" && fileSizeMb > MAX_VIDEO_MB) {
+      setError(`Video hajmi juda katta. Maksimal ${MAX_VIDEO_MB}MB.`);
       return;
     }
     try {

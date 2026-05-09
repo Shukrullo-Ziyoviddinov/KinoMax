@@ -1,0 +1,138 @@
+.statistika {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.statistika__header {
+  background: linear-gradient(135deg, #1f2858 0%, #2f3fa6 55%, #5b3fe7 100%);
+  border-radius: 18px;
+  padding: 20px 22px;
+  color: #fff;
+}
+
+.statistika__header h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.statistika__header p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.statistika__layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.statistika__block {
+  background: #fff;
+  border: 1px solid #e6eaf5;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(24, 31, 62, 0.06);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.statistika__block-head h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #1d2442;
+}
+
+.statistika__block-head p {
+  margin: 6px 0 0;
+  color: #596280;
+  font-size: 13px;
+}
+
+.statistika__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.statistika__card {
+  border-radius: 14px;
+  padding: 12px;
+  color: #fff;
+}
+
+.statistika__card--purple { background: linear-gradient(135deg, #6f3df0, #7f57ff); }
+.statistika__card--blue { background: linear-gradient(135deg, #2a5ce4, #4f8bff); }
+.statistika__card--green { background: linear-gradient(135deg, #18995e, #31bf84); }
+.statistika__card--orange { background: linear-gradient(135deg, #d2761f, #f0a33f); }
+
+.statistika__card-title {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.92;
+}
+
+.statistika__card-value {
+  margin: 7px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.statistika__tables {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.statistika__table {
+  border: 1px solid #e6ebf6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fbfcff;
+}
+
+.statistika__table h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #2d3758;
+}
+
+.statistika__period-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px dashed #e4e8f2;
+  font-size: 13px;
+  color: #4d5674;
+}
+
+.statistika__period-row:first-of-type {
+  border-top: none;
+}
+
+.statistika__period-row strong {
+  color: #232a45;
+}
+
+.statistika__state {
+  margin: 0;
+  color: #435176;
+}
+
+.statistika__state--error {
+  color: #c7254d;
+}
+
+@media (min-width: 900px) {
+  .statistika__cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .statistika__tables {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

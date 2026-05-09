@@ -15,6 +15,7 @@ import SubscriptionChannelsForm from './components/SubscriptionChannelsForm/Subs
 import BotBroadcastForm from './components/BotBroadcastForm/BotBroadcastForm';
 import ContentSectionPage from './components/ContentSectionPage/ContentSectionPage';
 import AdminAuthModal from './components/AdminAuthModal/AdminAuthModal';
+import Statistika from './components/Statistika/Statistika';
 
 const SESSION_KEY = 'kinomax_admin_session';
 
@@ -98,6 +99,8 @@ function App() {
           </>
         ) : activeView === 'movies' ? (
           <ContentSectionPage section="movies" />
+        ) : activeView === 'statistics' ? (
+          <Statistika />
         ) : activeView === 'actors' ? (
           <ContentSectionPage section="actors" />
         ) : activeView === 'banners' ? (

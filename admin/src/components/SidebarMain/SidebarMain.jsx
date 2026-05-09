@@ -1,5 +1,17 @@
 const NAV_LINKS = [
   {
+    id: 'statistics',
+    label: 'Statistika',
+    icon: (
+      <svg className="sidebar__nav-icon" viewBox="0 0 24 24" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M3 3h2v18H3V3zm16 8h2v10h-2V11zM11 7h2v14h-2V7zm-4 5h2v9H7v-9zm8-9h2v18h-2V3z"
+        />
+      </svg>
+    ),
+  },
+  {
     id: 'movies',
     label: 'Kinolar',
     icon: (

@@ -1,11 +1,80 @@
 const express = require("express");
 const AdminProfile = require("../models/adminProfile");
 const AdminLoginLog = require("../models/adminLoginLog");
+const BotUser = require("../models/BotUser");
+const User = require("../models/User");
 const { success, fail } = require("../utils/apiResponse");
 const bot = require("../bot/bot");
 const { sendBroadcastToAll } = require("../bot/handlers/broadcastSender");
 
 const router = express.Router();
+
+const getDateBeforeDays = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
+};
+
+async function buildBotStatistics() {
+  const [totalUsers, active1d, active7d, active30d, active365d, new1d, new7d, new30d, new365d] =
+    await Promise.all([
+      BotUser.countDocuments({ isActive: true }),
+      BotUser.countDocuments({ isActive: true, lastSeenAt: { $gte: getDateBeforeDays(1) } }),
+      BotUser.countDocuments({ isActive: true, lastSeenAt: { $gte: getDateBeforeDays(7) } }),
+      BotUser.countDocuments({ isActive: true, lastSeenAt: { $gte: getDateBeforeDays(30) } }),
+      BotUser.countDocuments({ isActive: true, lastSeenAt: { $gte: getDateBeforeDays(365) } }),
+      BotUser.countDocuments({ isActive: true, createdAt: { $gte: getDateBeforeDays(1) } }),
+      BotUser.countDocuments({ isActive: true, createdAt: { $gte: getDateBeforeDays(7) } }),
+      BotUser.countDocuments({ isActive: true, createdAt: { $gte: getDateBeforeDays(30) } }),
+      BotUser.countDocuments({ isActive: true, createdAt: { $gte: getDateBeforeDays(365) } }),
+    ]);
+
+  return {
+    totalUsers,
+    visits: { day: new1d, week: new7d, month: new30d, year: new365d },
+    activeUsers: { day: active1d, week: active7d, month: active30d, year: active365d },
+  };
+}
+
+async function buildSiteStatistics() {
+  const [totalUsers, new1d, new7d, new30d, new365d, active1d, active7d, active30d, active365d] =
+    await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ createdAt: { $gte: getDateBeforeDays(1) } }),
+      User.countDocuments({ createdAt: { $gte: getDateBeforeDays(7) } }),
+      User.countDocuments({ createdAt: { $gte: getDateBeforeDays(30) } }),
+      User.countDocuments({ createdAt: { $gte: getDateBeforeDays(365) } }),
+      User.countDocuments({ "viewedMovies.viewedAt": { $gte: getDateBeforeDays(1) } }),
+      User.countDocuments({ "viewedMovies.viewedAt": { $gte: getDateBeforeDays(7) } }),
+      User.countDocuments({ "viewedMovies.viewedAt": { $gte: getDateBeforeDays(30) } }),
+      User.countDocuments({ "viewedMovies.viewedAt": { $gte: getDateBeforeDays(365) } }),
+    ]);
+
+  const visitAgg = await User.aggregate([
+    { $unwind: "$viewedMovies" },
+    {
+      $facet: {
+        day: [{ $match: { "viewedMovies.viewedAt": { $gte: getDateBeforeDays(1) } } }, { $count: "count" }],
+        week: [{ $match: { "viewedMovies.viewedAt": { $gte: getDateBeforeDays(7) } } }, { $count: "count" }],
+        month: [{ $match: { "viewedMovies.viewedAt": { $gte: getDateBeforeDays(30) } } }, { $count: "count" }],
+        year: [{ $match: { "viewedMovies.viewedAt": { $gte: getDateBeforeDays(365) } } }, { $count: "count" }],
+      },
+    },
+  ]);
+
+  const visits = visitAgg?.[0] || {};
+  return {
+    totalUsers,
+    registrations: { day: new1d, week: new7d, month: new30d, year: new365d },
+    activeUsers: { day: active1d, week: active7d, month: active30d, year: active365d },
+    visits: {
+      day: visits?.day?.[0]?.count || 0,
+      week: visits?.week?.[0]?.count || 0,
+      month: visits?.month?.[0]?.count || 0,
+      year: visits?.year?.[0]?.count || 0,
+    },
+  };
+}
 
 /**
  * POST /api/admin/login
@@ -110,6 +179,18 @@ router.post("/bot-broadcast", async (req, res, next) => {
     });
 
     return success(res, result, "Reklama yuborildi.");
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.get("/statistics", async (_req, res, next) => {
+  try {
+    const [botStats, siteStats] = await Promise.all([
+      buildBotStatistics(),
+      buildSiteStatistics(),
+    ]);
+    return success(res, { bot: botStats, site: siteStats }, "Statistika olindi.");
   } catch (err) {
     return next(err);
   }

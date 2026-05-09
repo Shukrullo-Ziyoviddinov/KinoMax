@@ -15,8 +15,14 @@ const getDateBeforeDays = (days) => {
   return date;
 };
 
+const getStartOfCurrentMonth = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+};
+
 async function buildBotStatistics() {
-  const [totalUsers, active1d, active7d, active30d, active365d, new1d, new7d, new30d, new365d] =
+  const startOfMonth = getStartOfCurrentMonth();
+  const [totalUsers, active1d, active7d, active30d, active365d, new1d, new7d, new30d, new365d, totalBeforeThisMonth] =
     await Promise.all([
       BotUser.countDocuments({ isActive: true }),
       BotUser.countDocuments({ isActive: true, lastSeenAt: { $gte: getDateBeforeDays(1) } }),
@@ -27,10 +33,12 @@ async function buildBotStatistics() {
       BotUser.countDocuments({ isActive: true, createdAt: { $gte: getDateBeforeDays(7) } }),
       BotUser.countDocuments({ isActive: true, createdAt: { $gte: getDateBeforeDays(30) } }),
       BotUser.countDocuments({ isActive: true, createdAt: { $gte: getDateBeforeDays(365) } }),
+      BotUser.countDocuments({ isActive: true, createdAt: { $lt: startOfMonth } }),
     ]);
 
   return {
     totalUsers,
+    totalBeforeThisMonth,
     visits: { day: active1d, week: active7d, month: active30d, year: active365d },
     registrations: { day: new1d, week: new7d, month: new30d, year: new365d },
     activeUsers: { day: active1d, week: active7d, month: active30d, year: active365d },
@@ -38,7 +46,8 @@ async function buildBotStatistics() {
 }
 
 async function buildSiteStatistics() {
-  const [totalUsers, new1d, new7d, new30d, new365d, active1d, active7d, active30d, active365d] =
+  const startOfMonth = getStartOfCurrentMonth();
+  const [totalUsers, new1d, new7d, new30d, new365d, active1d, active7d, active30d, active365d, totalBeforeThisMonth] =
     await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ createdAt: { $gte: getDateBeforeDays(1) } }),
@@ -49,6 +58,7 @@ async function buildSiteStatistics() {
       User.countDocuments({ "viewedMovies.viewedAt": { $gte: getDateBeforeDays(7) } }),
       User.countDocuments({ "viewedMovies.viewedAt": { $gte: getDateBeforeDays(30) } }),
       User.countDocuments({ "viewedMovies.viewedAt": { $gte: getDateBeforeDays(365) } }),
+      User.countDocuments({ createdAt: { $lt: startOfMonth } }),
     ]);
 
   const visitAgg = await User.aggregate([
@@ -66,6 +76,7 @@ async function buildSiteStatistics() {
   const visits = visitAgg?.[0] || {};
   return {
     totalUsers,
+    totalBeforeThisMonth,
     registrations: { day: new1d, week: new7d, month: new30d, year: new365d },
     activeUsers: { day: active1d, week: active7d, month: active30d, year: active365d },
     visits: {

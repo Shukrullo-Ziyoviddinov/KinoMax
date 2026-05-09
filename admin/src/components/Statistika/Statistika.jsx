@@ -56,7 +56,15 @@ function PeriodRow({ label, data }) {
   );
 }
 
-function StatBlock({ title, subtitle, totalUsers, activeUsers = {}, visits = {}, registrations = null }) {
+function StatBlock({
+  title,
+  subtitle,
+  totalUsers,
+  totalBeforeThisMonth = 0,
+  activeUsers = {},
+  visits = {},
+  registrations = null,
+}) {
   const dayProgress = toPercent(activeUsers.day, totalUsers);
   const weekProgress = toPercent(activeUsers.week, totalUsers);
   const monthProgress = toPercent(activeUsers.month, totalUsers);
@@ -64,7 +72,7 @@ function StatBlock({ title, subtitle, totalUsers, activeUsers = {}, visits = {},
   const dayTrend = toTrend(activeUsers.day, Math.round((Number(activeUsers.week) || 0) / 7));
   const weekTrend = toTrend(activeUsers.week, Math.round((Number(activeUsers.month) || 0) / 4));
   const monthTrend = toTrend(activeUsers.month, Math.round((Number(activeUsers.year) || 0) / 12));
-  const totalTrend = toTrend(totalUsers, registrations?.year || 0);
+  const totalTrend = toTrend(totalUsers, totalBeforeThisMonth);
 
   return (
     <section className="statistika__block">
@@ -175,6 +183,7 @@ export default function Statistika() {
             title="Bot statistikasi"
             subtitle="Telegram bot foydalanuvchilari bo'yicha ko'rsatkichlar"
             totalUsers={bot.totalUsers}
+            totalBeforeThisMonth={bot.totalBeforeThisMonth}
             activeUsers={bot.activeUsers}
             visits={bot.visits}
             registrations={bot.registrations}
@@ -184,6 +193,7 @@ export default function Statistika() {
             title="Sayt statistikasi"
             subtitle="KinoMax web app foydalanuvchilari bo'yicha ko'rsatkichlar"
             totalUsers={site.totalUsers}
+            totalBeforeThisMonth={site.totalBeforeThisMonth}
             activeUsers={site.activeUsers}
             visits={site.visits}
             registrations={site.registrations}

@@ -25,6 +25,8 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [loadingMovies, setLoadingMovies] = useState(false);
   const [movies, setMovies] = useState([]);
+  const [openPickerIndex, setOpenPickerIndex] = useState(null);
+  const [movieSearch, setMovieSearch] = useState({});
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     title: "",
@@ -62,6 +64,11 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
     [movies]
   );
 
+  const getMovieTitleById = (movieId) => {
+    const found = movieOptions.find((item) => String(item.id) === String(movieId));
+    return found?.title || "";
+  };
+
   const onPickMedia = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -90,6 +97,12 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
     patch({
       movieButtons: form.movieButtons.map((item, i) => (i === index ? { ...item, ...patchData } : item)),
     });
+
+  const getFilteredMovieOptions = (index) => {
+    const searchText = String(movieSearch[index] || "").trim().toLowerCase();
+    if (!searchText) return movieOptions;
+    return movieOptions.filter((item) => item.title.toLowerCase().includes(searchText));
+  };
 
   const addLinkButton = () =>
     patch({ linkButtons: [...form.linkButtons, createLinkButton()] });
@@ -177,19 +190,43 @@ export default function BotBroadcastForm({ onCancel, onSaved }) {
               value={item.label}
               onChange={(e) => patchMovieButton(index, { label: e.target.value })}
             />
-            <select
-              className="bot-broadcast-form__input"
-              value={item.movieId}
-              onChange={(e) => patchMovieButton(index, { movieId: e.target.value })}
-              disabled={loadingMovies}
-            >
-              <option value="">Kinoni tanlang</option>
-              {movieOptions.map((movie) => (
-                <option key={movie.id} value={movie.id}>
-                  {movie.title}
-                </option>
-              ))}
-            </select>
+            <div className="bot-broadcast-form__picker-wrap">
+              <input
+                className="bot-broadcast-form__input"
+                placeholder={loadingMovies ? "Kinolar yuklanmoqda..." : "Kinoni tanlang"}
+                value={
+                  openPickerIndex === index
+                    ? String(movieSearch[index] || "")
+                    : getMovieTitleById(item.movieId)
+                }
+                onFocus={() => setOpenPickerIndex(index)}
+                onChange={(e) => {
+                  setOpenPickerIndex(index);
+                  setMovieSearch((prev) => ({ ...prev, [index]: e.target.value }));
+                }}
+              />
+              {openPickerIndex === index ? (
+                <div className="bot-broadcast-form__picker-list">
+                  {getFilteredMovieOptions(index).slice(0, 40).map((movie) => (
+                    <button
+                      key={movie.id}
+                      type="button"
+                      className="bot-broadcast-form__picker-item"
+                      onClick={() => {
+                        patchMovieButton(index, { movieId: movie.id });
+                        setMovieSearch((prev) => ({ ...prev, [index]: movie.title }));
+                        setOpenPickerIndex(null);
+                      }}
+                    >
+                      {movie.title}
+                    </button>
+                  ))}
+                  {!getFilteredMovieOptions(index).length ? (
+                    <div className="bot-broadcast-form__picker-empty">Kino topilmadi</div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
             <button type="button" className="bot-broadcast-form__remove-btn" onClick={() => removeMovieButton(index)}>
               O'chirish
             </button>

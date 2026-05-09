@@ -6,11 +6,43 @@ function fmt(value) {
   return new Intl.NumberFormat("ru-RU").format(Number(value) || 0);
 }
 
-function StatCard({ title, value, tone = "blue" }) {
+function toPercent(value, total) {
+  const v = Number(value) || 0;
+  const t = Number(total) || 0;
+  if (t <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((v / t) * 100)));
+}
+
+function toTrend(current, previous) {
+  const c = Number(current) || 0;
+  const p = Number(previous) || 0;
+  if (p <= 0) return { direction: c > 0 ? "up" : "flat", value: c > 0 ? 100 : 0 };
+  const diff = ((c - p) / p) * 100;
+  if (Math.abs(diff) < 0.5) return { direction: "flat", value: 0 };
+  return {
+    direction: diff > 0 ? "up" : "down",
+    value: Math.abs(Math.round(diff)),
+  };
+}
+
+function StatCard({ title, value, tone = "blue", progress = 0, trend = { direction: "flat", value: 0 } }) {
+  const ringStyle = { "--progress": `${Math.max(0, Math.min(100, progress))}%` };
   return (
     <div className={`statistika__card statistika__card--${tone}`}>
-      <p className="statistika__card-title">{title}</p>
-      <p className="statistika__card-value">{fmt(value)}</p>
+      <div className="statistika__card-head">
+        <p className="statistika__card-title">{title}</p>
+        <div className={`statistika__trend statistika__trend--${trend.direction}`}>
+          <span>{trend.direction === "up" ? "↗" : trend.direction === "down" ? "↘" : "•"}</span>
+          <b>{trend.value}%</b>
+        </div>
+      </div>
+
+      <div className="statistika__card-body">
+        <div className="statistika__ring" style={ringStyle}>
+          <div className="statistika__ring-inner">{progress}%</div>
+        </div>
+        <p className="statistika__card-value">{fmt(value)}</p>
+      </div>
     </div>
   );
 }
@@ -25,6 +57,15 @@ function PeriodRow({ label, data }) {
 }
 
 function StatBlock({ title, subtitle, totalUsers, activeUsers = {}, visits = {}, registrations = null }) {
+  const dayProgress = toPercent(activeUsers.day, totalUsers);
+  const weekProgress = toPercent(activeUsers.week, totalUsers);
+  const monthProgress = toPercent(activeUsers.month, totalUsers);
+  const totalProgress = 100;
+  const dayTrend = toTrend(activeUsers.day, Math.round((Number(activeUsers.week) || 0) / 7));
+  const weekTrend = toTrend(activeUsers.week, Math.round((Number(activeUsers.month) || 0) / 4));
+  const monthTrend = toTrend(activeUsers.month, Math.round((Number(activeUsers.year) || 0) / 12));
+  const totalTrend = toTrend(totalUsers, registrations?.year || 0);
+
   return (
     <section className="statistika__block">
       <div className="statistika__block-head">
@@ -33,10 +74,34 @@ function StatBlock({ title, subtitle, totalUsers, activeUsers = {}, visits = {},
       </div>
 
       <div className="statistika__cards">
-        <StatCard title="Umumiy userlar" value={totalUsers} tone="purple" />
-        <StatCard title="Bugungi faol userlar" value={activeUsers.day} tone="blue" />
-        <StatCard title="Haftalik faol userlar" value={activeUsers.week} tone="green" />
-        <StatCard title="Oylik faol userlar" value={activeUsers.month} tone="orange" />
+        <StatCard
+          title="Umumiy userlar"
+          value={totalUsers}
+          tone="purple"
+          progress={totalProgress}
+          trend={totalTrend}
+        />
+        <StatCard
+          title="Bugungi faol userlar"
+          value={activeUsers.day}
+          tone="blue"
+          progress={dayProgress}
+          trend={dayTrend}
+        />
+        <StatCard
+          title="Haftalik faol userlar"
+          value={activeUsers.week}
+          tone="green"
+          progress={weekProgress}
+          trend={weekTrend}
+        />
+        <StatCard
+          title="Oylik faol userlar"
+          value={activeUsers.month}
+          tone="orange"
+          progress={monthProgress}
+          trend={monthTrend}
+        />
       </div>
 
       <div className="statistika__tables">

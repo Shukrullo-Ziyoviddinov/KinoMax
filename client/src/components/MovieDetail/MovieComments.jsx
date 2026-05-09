@@ -40,6 +40,28 @@ const insertReplyInTree = (list, parentId, reply) =>
     return { ...item, replies: insertReplyInTree(item.replies, parentId, reply) };
   });
 
+const findCommentInTree = (list, commentId) => {
+  for (const item of list) {
+    if (String(item.id) === String(commentId)) {
+      return item;
+    }
+    if (item.replies?.length) {
+      const found = findCommentInTree(item.replies, commentId);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+const patchCommentInTree = (list, commentId, patch) =>
+  list.map((item) => {
+    if (String(item.id) === String(commentId)) {
+      return { ...item, ...patch };
+    }
+    if (!item.replies?.length) return item;
+    return { ...item, replies: patchCommentInTree(item.replies, commentId, patch) };
+  });
+
 const PREVIEW_LIMIT = 4;
 
 /** Jami kommentlar soni (asosiy + barcha javoblar, ichki javoblar bilan) */
@@ -199,81 +221,45 @@ const MovieComments = forwardRef(({ movieId, onCountChange }, ref) => {
       return;
     }
 
-    let previous = null;
-    let optimistic = null;
+    const current = findCommentInTree(comments, commentId);
+    if (!current) return;
+
+    const previous = {
+      likes: current.likes || 0,
+      likedByMe: Boolean(current.likedByMe),
+    };
+    const nextLiked = !previous.likedByMe;
+    const optimistic = {
+      likes: Math.max(0, previous.likes + (nextLiked ? 1 : -1)),
+      likedByMe: nextLiked,
+    };
 
     likePendingRef.current.add(key);
-
-    setComments((prev) => {
-      const updateInTree = (list) =>
-        list.map((item) => {
-          if (String(item.id) === String(commentId)) {
-            previous = { likes: item.likes || 0, likedByMe: Boolean(item.likedByMe) };
-            const nextLiked = !Boolean(item.likedByMe);
-            optimistic = {
-              likes: Math.max(0, (item.likes || 0) + (nextLiked ? 1 : -1)),
-              likedByMe: nextLiked,
-            };
-            return { ...item, ...optimistic };
-          }
-          if (!item.replies?.length) return item;
-          return { ...item, replies: updateInTree(item.replies) };
-        });
-      return updateInTree(prev);
-    });
+    setComments((prev) => patchCommentInTree(prev, commentId, optimistic));
 
     try {
-      if (optimistic?.likedByMe) {
+      if (nextLiked) {
         const result = await commentsApi.likeComment(movieId, commentId);
-        setComments((prev) => {
-          const syncTree = (list) =>
-            list.map((item) => {
-              if (String(item.id) === String(commentId)) {
-                return {
-                  ...item,
-                  likes: typeof result?.likes === 'number' ? result.likes : item.likes,
-                  likedByMe: Boolean(result?.likedByMe),
-                };
-              }
-              if (!item.replies?.length) return item;
-              return { ...item, replies: syncTree(item.replies) };
-            });
-          return syncTree(prev);
-        });
+        setComments((prev) =>
+          patchCommentInTree(prev, commentId, {
+            likes: typeof result?.likes === 'number' ? result.likes : optimistic.likes,
+            likedByMe: typeof result?.likedByMe === 'boolean' ? result.likedByMe : true,
+          })
+        );
       } else {
         const result = await commentsApi.unlikeComment(movieId, commentId);
-        setComments((prev) => {
-          const syncTree = (list) =>
-            list.map((item) => {
-              if (String(item.id) === String(commentId)) {
-                return {
-                  ...item,
-                  likes: typeof result?.likes === 'number' ? result.likes : item.likes,
-                  likedByMe: Boolean(result?.likedByMe),
-                };
-              }
-              if (!item.replies?.length) return item;
-              return { ...item, replies: syncTree(item.replies) };
-            });
-          return syncTree(prev);
-        });
+        setComments((prev) =>
+          patchCommentInTree(prev, commentId, {
+            likes: typeof result?.likes === 'number' ? result.likes : optimistic.likes,
+            likedByMe: typeof result?.likedByMe === 'boolean' ? result.likedByMe : false,
+          })
+        );
       }
     } catch (_error) {
       if (_error?.status === 401) {
         openAuthModal();
       }
-      if (!previous) return;
-      setComments((prev) => {
-        const rollbackTree = (list) =>
-          list.map((item) => {
-            if (String(item.id) === String(commentId)) {
-              return { ...item, likes: previous.likes, likedByMe: previous.likedByMe };
-            }
-            if (!item.replies?.length) return item;
-            return { ...item, replies: rollbackTree(item.replies) };
-          });
-        return rollbackTree(prev);
-      });
+      setComments((prev) => patchCommentInTree(prev, commentId, previous));
     } finally {
       likePendingRef.current.delete(key);
     }

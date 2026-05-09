@@ -15,17 +15,6 @@ function DashboardIcon() {
   );
 }
 
-function StatisticsIcon() {
-  return (
-    <svg className="sidebar__nav-icon" viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M3 3h2v18H3V3zm16 8h2v10h-2V11zM11 7h2v14h-2V7zm-4 5h2v9H7v-9zm8-9h2v18h-2V3z"
-      />
-    </svg>
-  );
-}
-
 export default function Sidebar({
   isMobileOpen = false,
   onCloseMobile,
@@ -70,22 +59,14 @@ export default function Sidebar({
           </button>
           <span className="sidebar__section-title">Asosiy</span>
           <SidebarMain onCloseMobile={onCloseMobile} activeNav={activeNav} onNavigate={onMainNavigate} />
-          <span className="sidebar__section-title">Statistika</span>
-          <button
-            type="button"
-            className={`sidebar__nav-btn${activeNav === 'statistics' ? ' sidebar__nav-btn--active' : ''}`}
-            onClick={() => {
-              onMainNavigate?.('statistics');
-              onCloseMobile?.();
-            }}
-          >
-            <StatisticsIcon />
-            <span>Statistika</span>
-          </button>
           <span className="sidebar__section-title">Sozlamalar</span>
           <SidebarSettings onCloseMobile={onCloseMobile} onSettingsClick={onSettingsClick} />
           <span className="sidebar__section-title">Foydali</span>
-          <SidebarFoydali onCloseMobile={onCloseMobile} />
+          <SidebarFoydali
+            onCloseMobile={onCloseMobile}
+            activeNav={activeNav}
+            onNavigate={onMainNavigate}
+          />
         </nav>
         <SidebarLogout onCloseMobile={onCloseMobile} onLogout={onLogout} />
       </div>

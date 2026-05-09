@@ -142,16 +142,9 @@ async function sendSubscriptionPrompt(bot, chatId, language) {
     }
   }
 
-  const clearKeyboardMessage = await bot.sendMessage(chatId, "🔒", {
+  await bot.sendMessage(chatId, t(lang, "subscriptionRequiredKeyboardHidden"), {
     reply_markup: { remove_keyboard: true },
   });
-  if (clearKeyboardMessage?.message_id) {
-    try {
-      await bot.deleteMessage(chatId, clearKeyboardMessage.message_id);
-    } catch (_error) {
-      // delete bo'lmasa ham davom etamiz
-    }
-  }
 
   await bot.sendMessage(chatId, t(lang, "subscribeRequired"), {
     reply_markup: buildSubscriptionKeyboard(links, lang),

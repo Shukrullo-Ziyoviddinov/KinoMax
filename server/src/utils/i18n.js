@@ -24,6 +24,8 @@ const translations = {
     checkSubscriptionButton: "✅ Tekshirish",
     telegramSubscriptionMissing:
       "❗️Siz barcha majburiy Telegram kanallarga obuna bo'lmagansiz.",
+    subscriptionRequiredKeyboardHidden:
+      "⚠️ Obuna talab qilinadi. Avval kanallarga obuna bo'ling.",
   },
   ru: {
     chooseLanguage:
@@ -51,6 +53,8 @@ const translations = {
     checkSubscriptionButton: "✅ Проверить",
     telegramSubscriptionMissing:
       "❗️Вы подписались не на все обязательные Telegram-каналы.",
+    subscriptionRequiredKeyboardHidden:
+      "⚠️ Требуется подписка. Сначала подпишитесь на каналы.",
   },
 };
 

@@ -36,8 +36,8 @@ export default function Sidebar({
           <div className="sidebar__logo-wrap">
             <img
               className="sidebar__logo-mark"
-              src={`${process.env.PUBLIC_URL}/img/KinoMaxLogo_preview_rev_1.png`}
-              alt="KinoMax"
+              src={`${process.env.PUBLIC_URL}/img/chosontv_preview_rev_1.png`}
+              alt="ChosonTV"
             />
           </div>
           <div className="sidebar__title-block">

@@ -7,6 +7,17 @@
   box-shadow: 0 4px 24px rgba(18, 18, 43, 0.06);
 }
 
+.dashboard-home__error {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .dashboard-home__stats {
   display: flex;
   flex-direction: row;

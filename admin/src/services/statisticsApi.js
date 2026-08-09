@@ -16,3 +16,21 @@ export async function fetchStatistics() {
   const payload = await toJson(response);
   return payload?.data || { bot: {}, site: {} };
 }
+
+export async function fetchDashboardCounts() {
+  const response = await fetch(`${API_BASE}/api/admin/dashboard-counts`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  const payload = await toJson(response);
+  return (
+    payload?.data || {
+      movies: 0,
+      actors: 0,
+      banners: 0,
+      ads: 0,
+      genres: 0,
+      trillers: 0,
+    }
+  );
+}

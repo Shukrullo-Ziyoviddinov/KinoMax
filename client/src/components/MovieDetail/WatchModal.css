@@ -282,7 +282,6 @@
 .watch-modal-embed-start:focus-visible .watch-modal-embed-play svg {
   transform: scale(1.06);
 }
-}
 
 /* Mobil: video-wrapper va video uchun touch qo'llab-quvvatlash */
 @media (hover: none) {

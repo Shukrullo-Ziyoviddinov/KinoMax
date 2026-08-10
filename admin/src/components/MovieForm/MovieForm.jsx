@@ -64,6 +64,18 @@ function normalizeInitialMovie(data = {}) {
       uz: data?.homeImg?.uz || "",
       ru: data?.homeImg?.ru || "",
     },
+    genre: {
+      uz: Array.isArray(data?.genre?.uz)
+        ? data.genre.uz
+        : Array.isArray(safeDescription?.uz?.genre)
+        ? safeDescription.uz.genre
+        : [],
+      ru: Array.isArray(data?.genre?.ru)
+        ? data.genre.ru
+        : Array.isArray(safeDescription?.ru?.genre)
+        ? safeDescription.ru.genre
+        : [],
+    },
     movieMedia: {
       uz: {
         img: {
@@ -276,8 +288,10 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       .map((v) => v.trim())
       .filter(Boolean);
 
-  const genresUzText = form.description?.uz?.genre?.join(", ") || "";
-  const genresRuText = form.description?.ru?.genre?.join(", ") || "";
+  const genresUzText =
+    (form.genre?.uz?.length ? form.genre.uz : form.description?.uz?.genre)?.join(", ") || "";
+  const genresRuText =
+    (form.genre?.ru?.length ? form.genre.ru : form.description?.ru?.genre)?.join(", ") || "";
 
   const Field = ({ label, help, required, children }) => (
     <div className="movie-form__field">
@@ -778,23 +792,28 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
                   />
                 </Field>
                 <Field
-                  label="Janrlar"
-                  help="Vergul bilan ajrating. Masalan: Drama, Triller, Jangari"
+                  label="Saytda chiqadigan janrlar"
+                  help="Kino detail sahifasidagi “Janr:” yonidagi badge’lar. Vergul bilan yozing. Masalan: Drama, Triller, Jangari"
                 >
                   <input
                     className="movie-form__input"
                     value={genreText}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const nextGenres = normalizeCommaText(e.target.value);
                       patch({
+                        genre: {
+                          ...form.genre,
+                          [lang]: nextGenres,
+                        },
                         description: {
                           ...form.description,
                           [lang]: {
                             ...form.description[lang],
-                            genre: normalizeCommaText(e.target.value),
+                            genre: nextGenres,
                           },
                         },
-                      })
-                    }
+                      });
+                    }}
                   />
                 </Field>
               </div>

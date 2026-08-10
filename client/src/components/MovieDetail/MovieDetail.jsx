@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchMovieById } from '../../api/moviesApi';
@@ -74,6 +74,17 @@ const MovieSpecIcon = ({ type }) => {
     </svg>
   );
 };
+
+const hasEpisodeVideo = (ep) => {
+  const uz = String(ep?.uz || '').trim();
+  const ru = String(ep?.ru || '').trim();
+  return (Boolean(uz) && uz !== 'none') || (Boolean(ru) && ru !== 'none');
+};
+
+const getSeasonsWithEpisodes = (seasons) =>
+  (Array.isArray(seasons) ? seasons : []).filter((season) =>
+    (season?.episodes || []).some(hasEpisodeVideo)
+  );
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -178,27 +189,38 @@ const MovieDetail = () => {
     };
   }, [movie]);
 
+  const seasonsWithEpisodes = useMemo(
+    () => getSeasonsWithEpisodes(movie?.seasons),
+    [movie?.seasons]
+  );
+
   useEffect(() => {
-    if (!movie?.seasons?.length) {
+    if (!seasonsWithEpisodes.length) {
       setSelectedSeason(null);
       return;
     }
     if (selectedSeason === null) {
-      setSelectedSeason(movie?.seasons?.[0]?.seasonNumber);
+      setSelectedSeason(seasonsWithEpisodes[0]?.seasonNumber);
     } else {
-      const exists = movie?.seasons?.some((s) => s.seasonNumber === selectedSeason);
-      if (!exists) setSelectedSeason(movie?.seasons?.[0]?.seasonNumber);
+      const exists = seasonsWithEpisodes.some((s) => s.seasonNumber === selectedSeason);
+      if (!exists) setSelectedSeason(seasonsWithEpisodes[0]?.seasonNumber);
     }
-  }, [movie, selectedSeason]);
+  }, [seasonsWithEpisodes, selectedSeason]);
 
   useEffect(() => {
-    if (!movie?.seasons?.length || selectedSeason == null) return;
-    const currentSeason = movie?.seasons?.find((s) => s.seasonNumber === selectedSeason);
-    const hasUz = currentSeason?.episodes?.some((ep) => ep.uz && ep.uz !== 'none');
-    const hasRu = currentSeason?.episodes?.some((ep) => ep.ru && ep.ru !== 'none');
+    if (!seasonsWithEpisodes.length || selectedSeason == null) return;
+    const currentSeason = seasonsWithEpisodes.find((s) => s.seasonNumber === selectedSeason);
+    const hasUz = currentSeason?.episodes?.some((ep) => {
+      const v = String(ep?.uz || '').trim();
+      return Boolean(v) && v !== 'none';
+    });
+    const hasRu = currentSeason?.episodes?.some((ep) => {
+      const v = String(ep?.ru || '').trim();
+      return Boolean(v) && v !== 'none';
+    });
     if (seasonsLang === 'ru' && !hasRu) setSeasonsLang('uz');
     else if (seasonsLang === 'uz' && !hasUz && hasRu) setSeasonsLang('ru');
-  }, [movie, selectedSeason, seasonsLang]);
+  }, [seasonsWithEpisodes, selectedSeason, seasonsLang]);
 
   useEffect(() => {
     if (!movie) return;
@@ -833,12 +855,18 @@ const MovieDetail = () => {
                 </div>
               </div>
 
-              {movie?.seasons?.length > 0 && (() => {
+              {seasonsWithEpisodes.length > 0 && (() => {
                 const currentSeason = selectedSeason != null
-                  ? movie.seasons?.find((s) => s.seasonNumber === selectedSeason)
-                  : movie.seasons?.[0];
-                const hasUzEpisodes = currentSeason?.episodes?.some((ep) => ep.uz && ep.uz !== 'none');
-                const hasRuEpisodes = currentSeason?.episodes?.some((ep) => ep.ru && ep.ru !== 'none');
+                  ? seasonsWithEpisodes.find((s) => s.seasonNumber === selectedSeason)
+                  : seasonsWithEpisodes[0];
+                const hasUzEpisodes = currentSeason?.episodes?.some((ep) => {
+                  const v = String(ep?.uz || '').trim();
+                  return Boolean(v) && v !== 'none';
+                });
+                const hasRuEpisodes = currentSeason?.episodes?.some((ep) => {
+                  const v = String(ep?.ru || '').trim();
+                  return Boolean(v) && v !== 'none';
+                });
                 return (
                 <div className="movie-detail-seasons">
                   <div className="movie-detail-seasons-header">
@@ -862,7 +890,7 @@ const MovieDetail = () => {
                     </div>
                     <div className="movie-detail-season-buttons">
                       <ScrollTouch key={i18n.language} className="movie-detail-season-buttons-scroll">
-                        {movie.seasons?.map((season) => (
+                        {seasonsWithEpisodes.map((season) => (
                           <button
                             key={`${season.seasonNumber}-${i18n.language}`}
                             className={`movie-detail-season-btn ${selectedSeason === season.seasonNumber ? 'active' : ''}`}
@@ -875,7 +903,7 @@ const MovieDetail = () => {
                     </div>
                   </div>
                   <div className="movie-detail-season-block">
-                    {selectedSeason != null && movie.seasons?.filter((s) => s.seasonNumber === selectedSeason)
+                    {selectedSeason != null && seasonsWithEpisodes.filter((s) => s.seasonNumber === selectedSeason)
                       ?.map((season) => (
                         <ScrollTouch key={season.seasonNumber} className="movie-detail-episodes-scroll">
                           {(season.episodes || []).map((ep, epIndex) => {

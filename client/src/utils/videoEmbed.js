@@ -81,10 +81,12 @@ export function getYouTubeEmbedUrl(url, { autoplay = false } = {}) {
   return `https://www.youtube.com/embed/${id}?${params.toString()}`;
 }
 
-export function getMoverEmbedUrl(url) {
+export function getMoverEmbedUrl(url, { autoplay = false } = {}) {
   const id = getMoverVideoId(url);
   if (!id) return '';
-  return `https://mover.uz/video/embed/${id}`;
+  const base = `https://mover.uz/video/embed/${id}`;
+  // Mover ba'zi embedlarda autoplay qo'llab-quvvatlaydi; yo'q bo'lsa e'tiborsiz qoladi.
+  return autoplay ? `${base}?autoplay=1` : base;
 }
 
 /**
@@ -104,7 +106,7 @@ export function getVideoEmbed(url, options = {}) {
   if (isMoverUrl(raw)) {
     return {
       provider: 'mover',
-      embedUrl: getMoverEmbedUrl(raw),
+      embedUrl: getMoverEmbedUrl(raw, options),
     };
   }
 

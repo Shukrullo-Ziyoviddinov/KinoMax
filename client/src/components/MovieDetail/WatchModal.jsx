@@ -1,8 +1,9 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useViewedMovies } from '../../context/ViewedMoviesContext';
 import { fetchActiveAd } from '../../api/adsApi';
+import { getVideoEmbed } from '../../utils/videoEmbed';
 import VideoLoader from '../VideoLoader/VideoLoader';
 import './WatchModal.css';
 
@@ -52,6 +53,38 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
     }
     if (movie.watchUrl) return movie.watchUrl;
     return '';
+  };
+
+  const watchSrc = getWatchVideo();
+  const videoEmbed = useMemo(
+    () => getVideoEmbed(watchSrc, { autoplay: true }),
+    [watchSrc]
+  );
+  const isEmbedPlayer = Boolean(videoEmbed?.embedUrl);
+  const [embedStarted, setEmbedStarted] = useState(false);
+
+  const embedPoster = useMemo(() => {
+    const lang = contentLang === 'ru' ? 'ru' : 'uz';
+    return (
+      movie?.homeImg?.[lang] ||
+      movie?.homeImg?.uz ||
+      movie?.homeImg?.ru ||
+      movie?.movieMedia?.[lang]?.img?.src ||
+      movie?.movieMedia?.uz?.img?.src ||
+      movie?.movieMedia?.ru?.img?.src ||
+      ''
+    );
+  }, [movie, contentLang]);
+
+  useEffect(() => {
+    setEmbedStarted(false);
+  }, [watchSrc, movie?.id]);
+
+  const handleStartEmbed = () => {
+    setEmbedStarted(true);
+    if (movie) {
+      addMovie(movie);
+    }
   };
 
   const videoRef = useRef(null);
@@ -585,14 +618,51 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
             <div 
               ref={videoWrapperRef}
               className={`watch-modal-video-wrapper ${isPseudoFullscreen ? 'watch-modal-video-wrapper--pseudo-fullscreen' : ''}`}
-              onMouseMove={('ontouchstart' in window) ? undefined : () => showControlsWithDelay()}
-              onMouseLeave={('ontouchstart' in window) ? undefined : () => isPlaying && setShowControls(false)}
-              onTouchStart={handleVideoWrapperTouchStart}
-              onTouchEnd={handleVideoWrapperTouchEnd}
+              onMouseMove={('ontouchstart' in window) || isEmbedPlayer ? undefined : () => showControlsWithDelay()}
+              onMouseLeave={('ontouchstart' in window) || isEmbedPlayer ? undefined : () => isPlaying && setShowControls(false)}
+              onTouchStart={isEmbedPlayer ? undefined : handleVideoWrapperTouchStart}
+              onTouchEnd={isEmbedPlayer ? undefined : handleVideoWrapperTouchEnd}
             >
+              {isEmbedPlayer ? (
+                embedStarted ? (
+                  <iframe
+                    key={videoEmbed.embedUrl}
+                    className="watch-modal-video watch-modal-video--embed"
+                    src={videoEmbed.embedUrl}
+                    title={movie?.title?.[contentLang] || movie?.title?.uz || 'Video'}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-fullscreen"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className="watch-modal-embed-start"
+                    onClick={handleStartEmbed}
+                    aria-label={t('player.play')}
+                  >
+                    {embedPoster ? (
+                      <img
+                        className="watch-modal-embed-poster"
+                        src={embedPoster}
+                        alt=""
+                      />
+                    ) : (
+                      <div className="watch-modal-embed-poster watch-modal-embed-poster--empty" />
+                    )}
+                    <span className="watch-modal-embed-play" aria-hidden>
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                    </span>
+                  </button>
+                )
+              ) : (
+                <>
               <video
                 ref={videoRef}
-                src={getWatchVideo()}
+                src={watchSrc}
                 className="watch-modal-video"
                 onLoadStart={() => setIsVideoBuffering(true)}
                 onWaiting={() => setIsVideoBuffering(true)}
@@ -747,6 +817,8 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
                   </div>
                 </div>
               </div>
+                </>
+              )}
             </div>
           </div>
           {dualWatchAvailable && (

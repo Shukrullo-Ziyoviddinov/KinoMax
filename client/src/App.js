@@ -16,6 +16,7 @@ import { LoadingProvider } from './context/LoadingContext';
 import { MoviesCatalogProvider } from './context/MoviesCatalogContext';
 import { ToastProvider } from './context/ToastContext';
 import { AuthModalProvider } from './context/AuthModalContext';
+import TelegramBackButton from './components/TelegramBackButton/TelegramBackButton';
 import './App.css';
 
 function App() {
@@ -87,6 +88,7 @@ function App() {
           <WishlistProvider>
           <ViewedMoviesProvider>
           <div className="App">
+            <TelegramBackButton />
             <Navbar />
             <main className="App-main">
               <Routes>

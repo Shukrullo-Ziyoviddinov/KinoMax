@@ -218,7 +218,7 @@ async function inlineQueryHandler(bot, query) {
   const queryText = (query?.query || "").trim();
   const offset = Number.parseInt(query?.offset || "0", 10) || 0;
   const pageSize = 50;
-  const movies = getAllMovies();
+  const movies = await getAllMovies();
   const filtered = filterMovies(movies, queryText, language);
   const page = filtered.slice(offset, offset + pageSize);
   const results = page.map((movie, index) =>

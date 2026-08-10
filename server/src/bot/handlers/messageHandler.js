@@ -510,7 +510,7 @@ async function messageHandler(bot, msg) {
     statusMessageId = null;
   }
 
-  const movie = getMovieByCode(code);
+  const movie = await getMovieByCode(code);
 
   if (!movie) {
     if (statusMessageId) {

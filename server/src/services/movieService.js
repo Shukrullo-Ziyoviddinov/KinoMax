@@ -1,11 +1,17 @@
-const movies = require("../../../client/src/data/movies.json");
+const Movie = require("../models/movies");
 
-function getMovieByCode(code) {
-  return movies.find((movie) => movie.movieCode === code) || null;
+async function getMovieByCode(code) {
+  const numericCode = Number(code);
+  if (!Number.isFinite(numericCode)) {
+    return null;
+  }
+
+  const movie = await Movie.findOne({ movieCode: numericCode }).select("-__v").lean();
+  return movie || null;
 }
 
-function getAllMovies() {
-  return movies;
+async function getAllMovies() {
+  return Movie.find().sort({ movieId: 1 }).select("-__v").lean();
 }
 
 module.exports = {

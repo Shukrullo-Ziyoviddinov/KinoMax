@@ -4,7 +4,6 @@ import { uploadToR2, UPLOAD_FOLDERS } from "../../services/uploadApi";
 import {
   CATEGORY_NAME_OPTIONS,
   CATEGORY_NAME_TO_SECTION,
-  CATEGORY_OPTIONS,
   FILTER_GENRE_OPTIONS,
   isAnonsCategory,
   TYPE_CATEGORY_OPTIONS,
@@ -128,7 +127,6 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   const [filterGenreOpen, setFilterGenreOpen] = useState(false);
   const [typeCategoryOpen, setTypeCategoryOpen] = useState(false);
   const [categoryNameOpen, setCategoryNameOpen] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
   const [uploadState, setUploadState] = useState({});
   const [form, setForm] = useState({
     movieId: "",
@@ -187,7 +185,6 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
         setFilterGenreOpen(false);
         setTypeCategoryOpen(false);
         setCategoryNameOpen(false);
-        setCategoryOpen(false);
       }
     };
     document.addEventListener("mousedown", onOutside);
@@ -215,11 +212,6 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   const selectCategoryName = (value) => {
     patch({ categoryName: value, category: value });
     setCategoryNameOpen(false);
-  };
-
-  const selectCategory = (value) => {
-    patch({ category: value, categoryName: value });
-    setCategoryOpen(false);
   };
 
   const buildTypeCategoryForSection = (section, previous = []) => {
@@ -287,7 +279,30 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   const genresUzText = form.description?.uz?.genre?.join(", ") || "";
   const genresRuText = form.description?.ru?.genre?.join(", ") || "";
 
-  const renderUploadField = ({ keyName, label, accept, onFile, previewUrl }) => {
+  const Field = ({ label, help, required, children }) => (
+    <div className="movie-form__field">
+      <label className="movie-form__label">
+        {label}
+        {required ? <span className="movie-form__req"> *</span> : null}
+      </label>
+      {help ? <span className="movie-form__help">{help}</span> : null}
+      {children}
+    </div>
+  );
+
+  const Block = ({ step, title, help, children }) => (
+    <section className="movie-form__block">
+      <header className="movie-form__block-head">
+        <h4 className="movie-form__section">
+          {step ? `${step}. ${title}` : title}
+        </h4>
+        {help ? <p className="movie-form__block-help">{help}</p> : null}
+      </header>
+      <div className="movie-form__section-card">{children}</div>
+    </section>
+  );
+
+  const renderUploadField = ({ keyName, label, help, accept, onFile, previewUrl }) => {
     const upload = uploadState[keyName] || {};
     const selectedText = upload.fileName
       ? upload.fileName
@@ -299,33 +314,34 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
 
     return (
       <div className="movie-form__upload-row" key={keyName}>
-        <label className="movie-form__label">{label}</label>
-        <label className="movie-form__upload-field">
-          <input
-            className="movie-form__file-input"
-            type="file"
-            accept={accept}
-            onChange={(e) => onFile(e.target.files?.[0])}
-          />
-          <div className="movie-form__upload-head">
-            <UploadIcon />
-            <div className="movie-form__upload-meta">
-              <strong>{isVideo ? "Video yuklash" : "Rasm yuklash"}</strong>
-              <span>{selectedText}</span>
+        <Field label={label} help={help}>
+          <label className="movie-form__upload-field">
+            <input
+              className="movie-form__file-input"
+              type="file"
+              accept={accept}
+              onChange={(e) => onFile(e.target.files?.[0])}
+            />
+            <div className="movie-form__upload-head">
+              <UploadIcon />
+              <div className="movie-form__upload-meta">
+                <strong>{isVideo ? "Faylni tanlang" : "Rasmni tanlang"}</strong>
+                <span>{selectedText}</span>
+              </div>
             </div>
-          </div>
-          {previewSrc && !isVideo ? (
-            <img className="movie-form__upload-preview" src={previewSrc} alt="" />
-          ) : null}
-          <UploadProgress show={upload.uploading || upload.progress > 0} progress={upload.progress} />
-        </label>
+            {previewSrc && !isVideo ? (
+              <img className="movie-form__upload-preview" src={previewSrc} alt="" />
+            ) : null}
+            <UploadProgress show={upload.uploading || upload.progress > 0} progress={upload.progress} />
+          </label>
+        </Field>
       </div>
     );
   };
 
   const onSubmit = async () => {
     if (!canSave) {
-      setError("Title, Home Img, Category va Category Name majburiy.");
+      setError("Majburiy maydonlar: kino nomi (UZ/RU), asosiy poster (UZ/RU) va bo‘lim.");
       return;
     }
     setError("");
@@ -410,417 +426,762 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
 
   return (
     <div className="movie-form" ref={wrappersRef}>
-      <div className="movie-form__section-card movie-form__section-card--compact">
-      <div className="movie-form__grid">
-        {mode === "edit" && form.movieId ? (
-          <>
-            <label className="movie-form__label">Movie ID</label>
-            <input className="movie-form__input" value={form.movieId} readOnly disabled />
-          </>
-        ) : null}
-        <label className="movie-form__label">Movie Code (ixtiyoriy)</label>
-        <input className="movie-form__input" type="number" value={form.movieCode} onChange={(e) => patch({ movieCode: e.target.value })} />
+      <p className="movie-form__intro">
+        Quyidagi bo‘limlarni ketma-ket to‘ldiring. <span className="movie-form__req">*</span> belgisi
+        majburiy maydon. O‘zbekcha (UZ) va ruscha (RU) qiymatlar sayt tiliga qarab chiqadi.
+      </p>
 
-        <label className="movie-form__label">Title UZ</label>
-        <input className="movie-form__input" value={form.title.uz} onChange={(e) => patch({ title: { ...form.title, uz: e.target.value } })} />
-        <label className="movie-form__label">Title RU</label>
-        <input className="movie-form__input" value={form.title.ru} onChange={(e) => patch({ title: { ...form.title, ru: e.target.value } })} />
-      </div>
-      </div>
+      <Block
+        step="1"
+        title="Asosiy ma’lumotlar"
+        help="Kino qanday nomlanishi va bot orqali qidirish kodi."
+      >
+        <div className="movie-form__grid">
+          {mode === "edit" && form.movieId ? (
+            <Field
+              label="Tizim ID"
+              help="Avtomatik beriladi. O‘zgartirilmaydi."
+            >
+              <input className="movie-form__input" value={form.movieId} readOnly disabled />
+            </Field>
+          ) : null}
 
-      <h4 className="movie-form__section">Rasmlar</h4>
-      <div className="movie-form__section-card movie-form__upload-grid">
-      {["titleImg.uz", "titleImg.ru", "homeImg.uz", "homeImg.ru"].map((key) => {
-        const [root, lang] = key.split(".");
-        return renderUploadField({
-          keyName: key,
-          label: key,
-          accept: "image/*",
-          previewUrl: form?.[root]?.[lang],
-          onFile: (file) =>
-            onPickFile(key, (prev, data) => ({ ...prev, [root]: { ...prev[root], [lang]: data } }), file),
-        });
-      })}
-      </div>
+          <Field
+            label="Kino kodi (bot uchun)"
+            help="Ixtiyoriy. Foydalanuvchi Telegram botga shu raqamni yuborsa shu kino chiqadi. Masalan: 100."
+          >
+            <input
+              className="movie-form__input"
+              type="number"
+              placeholder="Masalan: 100"
+              value={form.movieCode}
+              onChange={(e) => patch({ movieCode: e.target.value })}
+            />
+          </Field>
 
-      <h4 className="movie-form__section">Detail rasm (movieMedia)</h4>
-      <div className="movie-form__section-card movie-form__upload-grid">
-      {["movieMedia.uz", "movieMedia.ru"].map((key) => {
-        const lang = key.endsWith(".uz") ? "uz" : "ru";
-        return renderUploadField({
-          keyName: key,
-          label: key,
-          accept: "image/*",
-          previewUrl: form?.movieMedia?.[lang]?.img?.src,
-          onFile: (file) =>
-            onPickFile(
-              key,
-              (prev, data) => {
-                return {
+          <Field
+            label="Kino nomi — o‘zbekcha"
+            help="Saytda o‘zbek tilida ko‘rinadigan asosiy nom."
+            required
+          >
+            <input
+              className="movie-form__input"
+              placeholder="Masalan: Inception"
+              value={form.title.uz}
+              onChange={(e) => patch({ title: { ...form.title, uz: e.target.value } })}
+            />
+          </Field>
+
+          <Field
+            label="Kino nomi — ruscha"
+            help="Saytda rus tilida ko‘rinadigan asosiy nom."
+            required
+          >
+            <input
+              className="movie-form__input"
+              placeholder="Masalan: Начало"
+              value={form.title.ru}
+              onChange={(e) => patch({ title: { ...form.title, ru: e.target.value } })}
+            />
+          </Field>
+        </div>
+      </Block>
+
+      <Block
+        step="2"
+        title="Rasmlar"
+        help="3 xil rasm: sarlavha logosi, ro‘yxat posteri va batafsil sahifa foni. Har biri uchun UZ va RU alohida."
+      >
+        <div className="movie-form__upload-grid">
+          {renderUploadField({
+            keyName: "titleImg.uz",
+            label: "Sarlavha rasmi — o‘zbekcha",
+            help: "Kino nomi ustiga/yoniga chiqadigan yozuvli logo (title image).",
+            accept: "image/*",
+            previewUrl: form.titleImg.uz,
+            onFile: (file) =>
+              onPickFile(
+                "titleImg.uz",
+                (prev, data) => ({ ...prev, titleImg: { ...prev.titleImg, uz: data } }),
+                file
+              ),
+          })}
+          {renderUploadField({
+            keyName: "titleImg.ru",
+            label: "Sarlavha rasmi — ruscha",
+            help: "Rus tilidagi sarlavha/logo rasmi.",
+            accept: "image/*",
+            previewUrl: form.titleImg.ru,
+            onFile: (file) =>
+              onPickFile(
+                "titleImg.ru",
+                (prev, data) => ({ ...prev, titleImg: { ...prev.titleImg, ru: data } }),
+                file
+              ),
+          })}
+          {renderUploadField({
+            keyName: "homeImg.uz",
+            label: "Asosiy poster — o‘zbekcha",
+            help: "Bosh sahifa va ro‘yxatlarda chiqadigan asosiy rasm. Majburiy.",
+            accept: "image/*",
+            previewUrl: form.homeImg.uz,
+            onFile: (file) =>
+              onPickFile(
+                "homeImg.uz",
+                (prev, data) => ({ ...prev, homeImg: { ...prev.homeImg, uz: data } }),
+                file
+              ),
+          })}
+          {renderUploadField({
+            keyName: "homeImg.ru",
+            label: "Asosiy poster — ruscha",
+            help: "Rus tilidagi asosiy poster. Majburiy.",
+            accept: "image/*",
+            previewUrl: form.homeImg.ru,
+            onFile: (file) =>
+              onPickFile(
+                "homeImg.ru",
+                (prev, data) => ({ ...prev, homeImg: { ...prev.homeImg, ru: data } }),
+                file
+              ),
+          })}
+          {renderUploadField({
+            keyName: "movieMedia.uz",
+            label: "Batafsil fon rasmi — o‘zbekcha",
+            help: "Kino ichki sahifasidagi katta fon/detal rasmi.",
+            accept: "image/*",
+            previewUrl: form?.movieMedia?.uz?.img?.src,
+            onFile: (file) =>
+              onPickFile(
+                "movieMedia.uz",
+                (prev, data) => ({
                   ...prev,
                   movieMedia: {
                     ...prev.movieMedia,
-                    [lang]: { img: { type: "img", src: data } },
+                    uz: { img: { type: "img", src: data } },
                   },
-                };
-              },
-              file
-            ),
-        });
-      })}
-      </div>
-
-      <h4 className="movie-form__section">
-        Tomosha videolari
-        {isAnons ? (
-          <span className="movie-form__optional-hint"> (ixtiyoriy — anons)</span>
-        ) : null}
-      </h4>
-      <div className="movie-form__section-card movie-form__upload-grid">
-      {isAnons && (
-        <p className="movie-form__hint">
-          Anons bo‘limida video majburiy emas. Keyinroq video qo‘shib boshqa
-          bo‘limga o‘tkazsangiz, kino anonsdan chiqib yangi bo‘limga tushadi.
-        </p>
-      )}
-      <p className="movie-form__hint">
-        Har til uchun bitta qiymat (`watchVideo.uz` / `watchVideo.ru`): Mover/YouTube
-        URL yozing <strong>yoki</strong> qurilmadan R2 ga yuklang. Ikkalasi birga
-        emas — oxirgi kiritilgan qiymat saqlanadi.
-      </p>
-      {["uz", "ru"].map((lang) => {
-        const keyName = `watchVideo.${lang}`;
-        const label = isAnons ? `watchVideo.${lang} (ixtiyoriy)` : `watchVideo.${lang}`;
-        const videoRaw = String(form.watchVideo?.[lang] || "").trim();
-        const embed = getVideoEmbed(videoRaw);
-        const embedUrl = embed?.embedUrl || "";
-        const isDirectVideo =
-          !embedUrl &&
-          Boolean(videoRaw) &&
-          (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(videoRaw) ||
-            videoRaw.includes("/movies/") ||
-            videoRaw.startsWith("http://") ||
-            videoRaw.startsWith("https://") ||
-            videoRaw.startsWith("data:video") ||
-            videoRaw.startsWith("blob:"));
-
-        return (
-          <div className="movie-form__video-dual" key={keyName}>
-            <label className="movie-form__label" htmlFor={`watch-video-url-${lang}`}>
-              {label} — URL (Mover / YouTube)
-            </label>
-            <input
-              id={`watch-video-url-${lang}`}
-              className="movie-form__input"
-              type="url"
-              placeholder="https://mover.uz/watch/... yoki https://youtu.be/..."
-              value={form.watchVideo?.[lang] || ""}
-              onChange={(e) => {
-                setUpload(keyName, { uploading: false, progress: 0, fileName: "" });
-                patch({
-                  watchVideo: {
-                    ...form.watchVideo,
-                    [lang]: e.target.value,
+                }),
+                file
+              ),
+          })}
+          {renderUploadField({
+            keyName: "movieMedia.ru",
+            label: "Batafsil fon rasmi — ruscha",
+            help: "Rus tilidagi ichki sahifa fon rasmi.",
+            accept: "image/*",
+            previewUrl: form?.movieMedia?.ru?.img?.src,
+            onFile: (file) =>
+              onPickFile(
+                "movieMedia.ru",
+                (prev, data) => ({
+                  ...prev,
+                  movieMedia: {
+                    ...prev.movieMedia,
+                    ru: { img: { type: "img", src: data } },
                   },
-                });
-              }}
-            />
+                }),
+                file
+              ),
+          })}
+        </div>
+      </Block>
 
-            <div className="movie-form__preview-box">
-              {embedUrl ? (
-                <iframe
-                  key={embedUrl}
-                  className="movie-form__video-preview movie-form__video-preview--embed"
-                  src={embedUrl}
-                  title={`Video preview ${lang}`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-              ) : isDirectVideo ? (
-                <video
-                  key={videoRaw}
-                  className="movie-form__video-preview"
-                  src={videoRaw}
-                  controls
-                  playsInline
-                  preload="metadata"
-                />
-              ) : (
-                <span className="movie-form__preview-empty">
-                  Mover/YouTube URL yoki R2 video — preview shu yerda
-                </span>
-              )}
-            </div>
+      <Block
+        step="3"
+        title="Tomosha videosi"
+        help={
+          isAnons
+            ? "Anons bo‘limida video ixtiyoriy. Keyin video qo‘shib boshqa bo‘limga o‘tkazishingiz mumkin."
+            : "Har til uchun bitta manba: Mover/YouTube havolasi YOKI qurilmadan video fayl. Ikkalasini birga emas."
+        }
+      >
+        <div className="movie-form__upload-grid">
+          {["uz", "ru"].map((lang) => {
+            const keyName = `watchVideo.${lang}`;
+            const langLabel = lang === "uz" ? "o‘zbekcha" : "ruscha";
+            const videoRaw = String(form.watchVideo?.[lang] || "").trim();
+            const embed = getVideoEmbed(videoRaw);
+            const embedUrl = embed?.embedUrl || "";
+            const isDirectVideo =
+              !embedUrl &&
+              Boolean(videoRaw) &&
+              (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(videoRaw) ||
+                videoRaw.includes("/movies/") ||
+                videoRaw.startsWith("http://") ||
+                videoRaw.startsWith("https://") ||
+                videoRaw.startsWith("data:video") ||
+                videoRaw.startsWith("blob:"));
 
-            <p className="movie-form__video-or">yoki R2 ga video yuklash</p>
+            return (
+              <div className="movie-form__video-dual" key={keyName}>
+                <Field
+                  label={`Tomosha videosi — ${langLabel}${isAnons ? " (ixtiyoriy)" : ""}`}
+                  help="Mover.uz yoki YouTube havolasini qo‘ying. Preview pastda chiqadi."
+                >
+                  <input
+                    id={`watch-video-url-${lang}`}
+                    className="movie-form__input"
+                    type="url"
+                    placeholder="https://mover.uz/watch/... yoki https://youtu.be/..."
+                    value={form.watchVideo?.[lang] || ""}
+                    onChange={(e) => {
+                      setUpload(keyName, { uploading: false, progress: 0, fileName: "" });
+                      patch({
+                        watchVideo: {
+                          ...form.watchVideo,
+                          [lang]: e.target.value,
+                        },
+                      });
+                    }}
+                  />
+                </Field>
 
-            {renderUploadField({
-              keyName,
-              label: `${keyName} — R2 fayl`,
-              accept: "video/*",
-              onFile: (file) =>
-                onPickFile(
+                <div className="movie-form__preview-box">
+                  {embedUrl ? (
+                    <iframe
+                      key={embedUrl}
+                      className="movie-form__video-preview movie-form__video-preview--embed"
+                      src={embedUrl}
+                      title={`Video preview ${lang}`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  ) : isDirectVideo ? (
+                    <video
+                      key={videoRaw}
+                      className="movie-form__video-preview"
+                      src={videoRaw}
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <span className="movie-form__preview-empty">
+                      Video havola yoki fayl tanlang — preview shu yerda chiqadi
+                    </span>
+                  )}
+                </div>
+
+                <p className="movie-form__video-or">yoki kompyuterdan video yuklang</p>
+
+                {renderUploadField({
                   keyName,
-                  (prev, data) => ({
-                    ...prev,
-                    watchVideo: { ...prev.watchVideo, [lang]: data },
-                  }),
-                  file
-                ),
-            })}
-          </div>
-        );
-      })}
-      </div>
-
-      <h4 className="movie-form__section">Description (UZ/RU)</h4>
-      <div className="movie-form__section-card">
-      <div className="movie-form__grid">
-        <label className="movie-form__label">Director UZ</label>
-        <input className="movie-form__input" value={form.description.uz.director} onChange={(e) => patch({ description: { ...form.description, uz: { ...form.description.uz, director: e.target.value } } })} />
-        <label className="movie-form__label">Director RU</label>
-        <input className="movie-form__input" value={form.description.ru.director} onChange={(e) => patch({ description: { ...form.description, ru: { ...form.description.ru, director: e.target.value } } })} />
-        <label className="movie-form__label">Text UZ</label>
-        <textarea className="movie-form__textarea" value={form.description.uz.text} onChange={(e) => patch({ description: { ...form.description, uz: { ...form.description.uz, text: e.target.value } } })} />
-        <label className="movie-form__label">Text RU</label>
-        <textarea className="movie-form__textarea" value={form.description.ru.text} onChange={(e) => patch({ description: { ...form.description, ru: { ...form.description.ru, text: e.target.value } } })} />
-        <label className="movie-form__label">Year UZ</label>
-        <input className="movie-form__input" type="number" value={form.description.uz.year} onChange={(e) => patch({ description: { ...form.description, uz: { ...form.description.uz, year: toNumberOrDefault(e.target.value, "") } } })} />
-        <label className="movie-form__label">Year RU</label>
-        <input className="movie-form__input" type="number" value={form.description.ru.year} onChange={(e) => patch({ description: { ...form.description, ru: { ...form.description.ru, year: toNumberOrDefault(e.target.value, "") } } })} />
-        <label className="movie-form__label">Country UZ</label>
-        <input className="movie-form__input" value={form.description.uz.country} onChange={(e) => patch({ description: { ...form.description, uz: { ...form.description.uz, country: e.target.value } } })} />
-        <label className="movie-form__label">Country RU</label>
-        <input className="movie-form__input" value={form.description.ru.country} onChange={(e) => patch({ description: { ...form.description, ru: { ...form.description.ru, country: e.target.value } } })} />
-        <label className="movie-form__label">Duration UZ</label>
-        <input className="movie-form__input" type="number" value={form.description.uz.duration} onChange={(e) => patch({ description: { ...form.description, uz: { ...form.description.uz, duration: toNumberOrDefault(e.target.value, "") } } })} />
-        <label className="movie-form__label">Duration RU</label>
-        <input className="movie-form__input" type="number" value={form.description.ru.duration} onChange={(e) => patch({ description: { ...form.description, ru: { ...form.description.ru, duration: toNumberOrDefault(e.target.value, "") } } })} />
-        <label className="movie-form__label">Genre UZ (vergul bilan)</label>
-        <input
-          className="movie-form__input"
-          value={genresUzText}
-          onChange={(e) =>
-            patch({
-              description: {
-                ...form.description,
-                uz: { ...form.description.uz, genre: normalizeCommaText(e.target.value) },
-              },
-            })
-          }
-        />
-        <label className="movie-form__label">Genre RU (vergul bilan)</label>
-        <input
-          className="movie-form__input"
-          value={genresRuText}
-          onChange={(e) =>
-            patch({
-              description: {
-                ...form.description,
-                ru: { ...form.description.ru, genre: normalizeCommaText(e.target.value) },
-              },
-            })
-          }
-        />
-      </div>
-      </div>
-
-      <h4 className="movie-form__section">Seasons</h4>
-      {form.seasons.map((season, seasonIndex) => (
-        <div className="movie-form__box" key={`season-${seasonIndex}`}>
-          <div className="movie-form__box-head">
-            <strong>Mavsum {season.seasonNumber}</strong>
-            <button type="button" className="movie-form__mini-btn" onClick={() => patch({ seasons: form.seasons.filter((_, i) => i !== seasonIndex) })} disabled={form.seasons.length === 1}>
-              O'chirish
-            </button>
-          </div>
-          <div className="movie-form__grid">
-            <label className="movie-form__label">seasonNumber</label>
-            <input className="movie-form__input" type="number" value={season.seasonNumber} onChange={(e) => updateSeason(seasonIndex, (prev) => ({ ...prev, seasonNumber: toNumberOrDefault(e.target.value, 1) }))} />
-            <label className="movie-form__label">Title UZ</label>
-            <input className="movie-form__input" value={season.title.uz} onChange={(e) => updateSeason(seasonIndex, (prev) => ({ ...prev, title: { ...prev.title, uz: e.target.value } }))} />
-            <label className="movie-form__label">Title RU</label>
-            <input className="movie-form__input" value={season.title.ru} onChange={(e) => updateSeason(seasonIndex, (prev) => ({ ...prev, title: { ...prev.title, ru: e.target.value } }))} />
-          </div>
-          {season.episodes.map((ep, epIndex) => (
-            <div className="movie-form__box movie-form__box--inner" key={`ep-${seasonIndex}-${epIndex}`}>
-              <div className="movie-form__box-head">
-                <strong>Episode {epIndex + 1}</strong>
-                <button type="button" className="movie-form__mini-btn" onClick={() => updateSeason(seasonIndex, (prev) => ({ ...prev, episodes: prev.episodes.filter((_, i) => i !== epIndex) }))} disabled={season.episodes.length === 1}>
-                  O'chirish
-                </button>
-              </div>
-              {["uz", "ru"].map((lang) => {
-                const key = `season-${seasonIndex}-ep-${epIndex}-${lang}`;
-                return renderUploadField({
-                  keyName: key,
-                  label: `Episode video ${lang.toUpperCase()}`,
+                  label: `Video fayl — ${langLabel}`,
+                  help: "Qurilmadan MP4 yuklansa, yuqoridagi URL o‘rniga shu fayl saqlanadi.",
                   accept: "video/*",
                   onFile: (file) =>
                     onPickFile(
-                      key,
-                      (prev, data) => {
-                        const seasons = [...prev.seasons];
-                        const episodes = [...seasons[seasonIndex].episodes];
-                        episodes[epIndex] = { ...episodes[epIndex], [lang]: data };
-                        seasons[seasonIndex] = { ...seasons[seasonIndex], episodes };
-                        return { ...prev, seasons };
-                      },
+                      keyName,
+                      (prev, data) => ({
+                        ...prev,
+                        watchVideo: { ...prev.watchVideo, [lang]: data },
+                      }),
                       file
                     ),
-                });
-              })}
-            </div>
-          ))}
-          <button type="button" className="movie-form__mini-btn" onClick={() => updateSeason(seasonIndex, (prev) => ({ ...prev, episodes: [...prev.episodes, { uz: "", ru: "" }] }))}>
-            + Episode qo'shish
-          </button>
+                })}
+              </div>
+            );
+          })}
         </div>
-      ))}
-      <button type="button" className="movie-form__add-btn" onClick={() => patch({ seasons: [...form.seasons, emptySeason(form.seasons.length + 1)] })}>
-        + Mavsum qo'shish
-      </button>
+      </Block>
 
-      <h4 className="movie-form__section">Tanlov maydonlari</h4>
-      <div className="movie-form__section-card">
-      <div className="movie-form__grid">
-        <label className="movie-form__label">categoryName</label>
-        <div className="movie-form__dropdown">
-          <button
-            type="button"
-            className="movie-form__dropdown-trigger"
-            onClick={() => setCategoryNameOpen((v) => !v)}
-          >
-            {form.categoryName || "Tanlang"}
-          </button>
-          {categoryNameOpen && (
-            <div className="movie-form__dropdown-menu">
-              {CATEGORY_NAME_OPTIONS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`movie-form__option-btn${form.categoryName === item ? " is-active" : ""}`}
-                  onClick={() => selectCategoryName(item)}
+      <Block
+        step="4"
+        title="Tavsif va ma’lumotlar"
+        help="Rejissyor, matn, yil, davlat, davomiylik va janrlar. UZ va RU alohida to‘ldiring."
+      >
+        <div className="movie-form__lang-grid">
+          {["uz", "ru"].map((lang) => {
+            const langTitle = lang === "uz" ? "O‘zbekcha" : "Ruscha";
+            const genreText = lang === "uz" ? genresUzText : genresRuText;
+            return (
+              <div className="movie-form__lang-col" key={lang}>
+                <h5 className="movie-form__lang-title">{langTitle}</h5>
+                <Field label="Rejissyor" help="Kinoning rejissyori.">
+                  <input
+                    className="movie-form__input"
+                    value={form.description[lang].director}
+                    onChange={(e) =>
+                      patch({
+                        description: {
+                          ...form.description,
+                          [lang]: { ...form.description[lang], director: e.target.value },
+                        },
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Qisqa tavsif" help="Kino haqida foydalanuvchiga chiqadigan matn.">
+                  <textarea
+                    className="movie-form__textarea"
+                    rows={5}
+                    value={form.description[lang].text}
+                    onChange={(e) =>
+                      patch({
+                        description: {
+                          ...form.description,
+                          [lang]: { ...form.description[lang], text: e.target.value },
+                        },
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Yil" help="Chiqiqan yili, masalan 2024.">
+                  <input
+                    className="movie-form__input"
+                    type="number"
+                    value={form.description[lang].year}
+                    onChange={(e) =>
+                      patch({
+                        description: {
+                          ...form.description,
+                          [lang]: {
+                            ...form.description[lang],
+                            year: toNumberOrDefault(e.target.value, ""),
+                          },
+                        },
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Davlat" help="Masalan: AQSH, Koreya, O‘zbekiston.">
+                  <input
+                    className="movie-form__input"
+                    value={form.description[lang].country}
+                    onChange={(e) =>
+                      patch({
+                        description: {
+                          ...form.description,
+                          [lang]: { ...form.description[lang], country: e.target.value },
+                        },
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Davomiylik (daqiqada)" help="Masalan: 120.">
+                  <input
+                    className="movie-form__input"
+                    type="number"
+                    value={form.description[lang].duration}
+                    onChange={(e) =>
+                      patch({
+                        description: {
+                          ...form.description,
+                          [lang]: {
+                            ...form.description[lang],
+                            duration: toNumberOrDefault(e.target.value, ""),
+                          },
+                        },
+                      })
+                    }
+                  />
+                </Field>
+                <Field
+                  label="Janrlar"
+                  help="Vergul bilan ajrating. Masalan: Drama, Triller, Jangari"
                 >
-                  {item}
-                </button>
-              ))}
-            </div>
-          )}
+                  <input
+                    className="movie-form__input"
+                    value={genreText}
+                    onChange={(e) =>
+                      patch({
+                        description: {
+                          ...form.description,
+                          [lang]: {
+                            ...form.description[lang],
+                            genre: normalizeCommaText(e.target.value),
+                          },
+                        },
+                      })
+                    }
+                  />
+                </Field>
+              </div>
+            );
+          })}
         </div>
-        <label className="movie-form__label">category</label>
-        <div className="movie-form__dropdown">
-          <button
-            type="button"
-            className="movie-form__dropdown-trigger"
-            onClick={() => setCategoryOpen((v) => !v)}
+      </Block>
+
+      <Block
+        step="5"
+        title="Serial mavsumlari (ixtiyoriy)"
+        help="Oddiy film uchun bo‘sh qoldirish mumkin. Serial bo‘lsa mavsum va qism videolarini qo‘shing."
+      >
+        {form.seasons.map((season, seasonIndex) => (
+          <div className="movie-form__box" key={`season-${seasonIndex}`}>
+            <div className="movie-form__box-head">
+              <strong>Mavsum {season.seasonNumber}</strong>
+              <button
+                type="button"
+                className="movie-form__mini-btn"
+                onClick={() =>
+                  patch({ seasons: form.seasons.filter((_, i) => i !== seasonIndex) })
+                }
+                disabled={form.seasons.length === 1}
+              >
+                O‘chirish
+              </button>
+            </div>
+            <div className="movie-form__grid">
+              <Field label="Mavsum raqami" help="1, 2, 3...">
+                <input
+                  className="movie-form__input"
+                  type="number"
+                  value={season.seasonNumber}
+                  onChange={(e) =>
+                    updateSeason(seasonIndex, (prev) => ({
+                      ...prev,
+                      seasonNumber: toNumberOrDefault(e.target.value, 1),
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Mavsum nomi — o‘zbekcha">
+                <input
+                  className="movie-form__input"
+                  value={season.title.uz}
+                  onChange={(e) =>
+                    updateSeason(seasonIndex, (prev) => ({
+                      ...prev,
+                      title: { ...prev.title, uz: e.target.value },
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Mavsum nomi — ruscha">
+                <input
+                  className="movie-form__input"
+                  value={season.title.ru}
+                  onChange={(e) =>
+                    updateSeason(seasonIndex, (prev) => ({
+                      ...prev,
+                      title: { ...prev.title, ru: e.target.value },
+                    }))
+                  }
+                />
+              </Field>
+            </div>
+            {season.episodes.map((ep, epIndex) => (
+              <div className="movie-form__box movie-form__box--inner" key={`ep-${seasonIndex}-${epIndex}`}>
+                <div className="movie-form__box-head">
+                  <strong>Qism {epIndex + 1}</strong>
+                  <button
+                    type="button"
+                    className="movie-form__mini-btn"
+                    onClick={() =>
+                      updateSeason(seasonIndex, (prev) => ({
+                        ...prev,
+                        episodes: prev.episodes.filter((_, i) => i !== epIndex),
+                      }))
+                    }
+                    disabled={season.episodes.length === 1}
+                  >
+                    O‘chirish
+                  </button>
+                </div>
+                {["uz", "ru"].map((lang) => {
+                  const key = `season-${seasonIndex}-ep-${epIndex}-${lang}`;
+                  return renderUploadField({
+                    keyName: key,
+                    label: `Qism videosi — ${lang === "uz" ? "o‘zbekcha" : "ruscha"}`,
+                    help: "Shu qismning video faylini yuklang.",
+                    accept: "video/*",
+                    previewUrl: ep[lang],
+                    onFile: (file) =>
+                      onPickFile(
+                        key,
+                        (prev, data) => {
+                          const seasons = [...prev.seasons];
+                          const episodes = [...seasons[seasonIndex].episodes];
+                          episodes[epIndex] = { ...episodes[epIndex], [lang]: data };
+                          seasons[seasonIndex] = { ...seasons[seasonIndex], episodes };
+                          return { ...prev, seasons };
+                        },
+                        file
+                      ),
+                  });
+                })}
+              </div>
+            ))}
+            <button
+              type="button"
+              className="movie-form__mini-btn"
+              onClick={() =>
+                updateSeason(seasonIndex, (prev) => ({
+                  ...prev,
+                  episodes: [...prev.episodes, { uz: "", ru: "" }],
+                }))
+              }
+            >
+              + Qism qo‘shish
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="movie-form__add-btn"
+          onClick={() =>
+            patch({ seasons: [...form.seasons, emptySeason(form.seasons.length + 1)] })
+          }
+        >
+          + Mavsum qo‘shish
+        </button>
+      </Block>
+
+      <Block
+        step="6"
+        title="Bo‘lim va filtrlash"
+        help="Kino qaysi bo‘limda chiqishi, qidiruv filtrlari, aktyorlar."
+      >
+        <div className="movie-form__grid">
+          <Field
+            label="Asosiy bo‘lim"
+            help="Saytdagi asosiy toifa: Dorama, Anons, Jangari va hokazo."
+            required
           >
-            {form.category || "Tanlang"}
-          </button>
-          {categoryOpen && (
-            <div className="movie-form__dropdown-menu">
-              {CATEGORY_OPTIONS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`movie-form__option-btn${form.category === item ? " is-active" : ""}`}
-                  onClick={() => selectCategory(item)}
-                >
-                  {item}
-                </button>
-              ))}
+            <div className="movie-form__dropdown">
+              <button
+                type="button"
+                className="movie-form__dropdown-trigger"
+                onClick={() => setCategoryNameOpen((v) => !v)}
+              >
+                {form.categoryName || "Bo‘limni tanlang"}
+              </button>
+              {categoryNameOpen && (
+                <div className="movie-form__dropdown-menu">
+                  {CATEGORY_NAME_OPTIONS.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className={`movie-form__option-btn${form.categoryName === item ? " is-active" : ""}`}
+                      onClick={() => selectCategoryName(item)}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </Field>
+
+          <Field
+            label="Davlat filtri"
+            help="Filtrlash uchun kalit so‘z. Masalan: korea, usa, uzb."
+          >
+            <input
+              className="movie-form__input"
+              placeholder="Masalan: korea"
+              value={form.filterCountry}
+              onChange={(e) => patch({ filterCountry: e.target.value })}
+            />
+          </Field>
+
+          <Field
+            label="Aktyorlar"
+            help="Ro‘yxatdan tegishli aktyorlarni belgilang."
+          >
+            <div className="movie-form__dropdown">
+              <button
+                type="button"
+                className="movie-form__dropdown-trigger"
+                onClick={() => setActorsOpen((v) => !v)}
+              >
+                Tanlangan: {form.actors.length}
+              </button>
+              {actorsOpen && (
+                <div className="movie-form__dropdown-menu">
+                  {actors.map((actor) => {
+                    const actorId = Number(actor.actorId || actor.id);
+                    const name = actor?.name?.uz || actor?.name?.ru || `Actor ${actorId}`;
+                    return (
+                      <label key={actorId} className="movie-form__check">
+                        <input
+                          type="checkbox"
+                          checked={form.actors.includes(actorId)}
+                          onChange={() => toggleActor(actorId)}
+                        />
+                        <span>{name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </Field>
+
+          <Field
+            label="Qidiruv janrlari"
+            help="Sayt filtrida chiqadigan janr belgilari (bir nechtasini tanlash mumkin)."
+          >
+            <div className="movie-form__dropdown">
+              <button
+                type="button"
+                className="movie-form__dropdown-trigger"
+                onClick={() => setFilterGenreOpen((v) => !v)}
+              >
+                Tanlangan: {form.filterGenre.length}
+              </button>
+              {filterGenreOpen && (
+                <div className="movie-form__dropdown-menu">
+                  {FILTER_GENRE_OPTIONS.map((item) => (
+                    <label key={item} className="movie-form__check">
+                      <input
+                        type="checkbox"
+                        checked={form.filterGenre.includes(item)}
+                        onChange={() => toggleArrayValue("filterGenre", item)}
+                      />
+                      <span>{item}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Field>
+
+          <Field
+            label="Qo‘shimcha teglar"
+            help="Kino bir nechta bo‘limda ko‘rinsin desangiz belgilang (masalan korea, drama)."
+          >
+            <div className="movie-form__dropdown">
+              <button
+                type="button"
+                className="movie-form__dropdown-trigger"
+                onClick={() => setTypeCategoryOpen((v) => !v)}
+              >
+                Tanlangan: {form.typeCategory.length}
+              </button>
+              {typeCategoryOpen && (
+                <div className="movie-form__dropdown-menu">
+                  {TYPE_CATEGORY_OPTIONS.map((item) => (
+                    <label key={item} className="movie-form__check">
+                      <input
+                        type="checkbox"
+                        checked={form.typeCategory.includes(item)}
+                        onChange={() => toggleArrayValue("typeCategory", item)}
+                      />
+                      <span>{item}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Field>
         </div>
-        <label className="movie-form__label">filterCountry</label>
-        <input className="movie-form__input" value={form.filterCountry} onChange={(e) => patch({ filterCountry: e.target.value })} />
-      </div>
-      </div>
+      </Block>
 
-      <div className="movie-form__dropdown">
-        <button type="button" className="movie-form__dropdown-trigger" onClick={() => setActorsOpen((v) => !v)}>
-          Aktyorlar ({form.actors.length})
-        </button>
-        {actorsOpen && (
-          <div className="movie-form__dropdown-menu">
-            {actors.map((actor) => {
-              const actorId = Number(actor.actorId || actor.id);
-              const name = actor?.name?.uz || actor?.name?.ru || `Actor ${actorId}`;
-              return (
-                <label key={actorId} className="movie-form__check">
-                  <input type="checkbox" checked={form.actors.includes(actorId)} onChange={() => toggleActor(actorId)} />
-                  <span>{name}</span>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="movie-form__dropdown">
-        <button type="button" className="movie-form__dropdown-trigger" onClick={() => setFilterGenreOpen((v) => !v)}>
-          filterGenre ({form.filterGenre.length})
-        </button>
-        {filterGenreOpen && (
-          <div className="movie-form__dropdown-menu">
-            {FILTER_GENRE_OPTIONS.map((item) => (
-              <label key={item} className="movie-form__check">
-                <input type="checkbox" checked={form.filterGenre.includes(item)} onChange={() => toggleArrayValue("filterGenre", item)} />
-                <span>{item}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="movie-form__dropdown">
-        <button type="button" className="movie-form__dropdown-trigger" onClick={() => setTypeCategoryOpen((v) => !v)}>
-          typeCategory ({form.typeCategory.length})
-        </button>
-        {typeCategoryOpen && (
-          <div className="movie-form__dropdown-menu">
-            {TYPE_CATEGORY_OPTIONS.map((item) => (
-              <label key={item} className="movie-form__check">
-                <input type="checkbox" checked={form.typeCategory.includes(item)} onChange={() => toggleArrayValue("typeCategory", item)} />
-                <span>{item}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <h4 className="movie-form__section">Rating / Specs</h4>
-      <div className="movie-form__section-card">
-      <div className="movie-form__grid">
-        <label className="movie-form__label">ratingImdb</label>
-        <input className="movie-form__input" type="number" step="0.1" value={form.ratingImdb} onChange={(e) => patch({ ratingImdb: e.target.value })} />
-        <label className="movie-form__label">ratingKinopoisk</label>
-        <input className="movie-form__input" type="number" step="0.1" value={form.ratingKinopoisk} onChange={(e) => patch({ ratingKinopoisk: e.target.value })} />
-        <label className="movie-form__label">ratingNetflix</label>
-        <input className="movie-form__input" type="number" step="0.1" value={form.ratingNetflix} onChange={(e) => patch({ ratingNetflix: e.target.value })} />
-        <label className="movie-form__label">ageRestriction</label>
-        <input className="movie-form__input" type="number" value={form.ageRestriction} onChange={(e) => patch({ ageRestriction: e.target.value })} />
-        <label className="movie-form__label">like</label>
-        <input className="movie-form__input" value={form.like} onChange={(e) => patch({ like: e.target.value })} />
-        <label className="movie-form__label">dislike</label>
-        <input className="movie-form__input" value={form.dislike} onChange={(e) => patch({ dislike: e.target.value })} />
-        <label className="movie-form__label">specs.duration</label>
-        <input className="movie-form__input" type="number" value={form.specs.duration} onChange={(e) => patch({ specs: { ...form.specs, duration: e.target.value } })} />
-        <label className="movie-form__label">specs.ageRating</label>
-        <input className="movie-form__input" value={form.specs.ageRating} onChange={(e) => patch({ specs: { ...form.specs, ageRating: e.target.value } })} />
-        <label className="movie-form__label">specs.year</label>
-        <input className="movie-form__input" type="number" value={form.specs.year} onChange={(e) => patch({ specs: { ...form.specs, year: e.target.value } })} />
-        <label className="movie-form__label">specs.countries (vergul)</label>
-        <input className="movie-form__input" onChange={(e) => patch({ specs: { ...form.specs, countries: normalizeCommaText(e.target.value) } })} />
-        <label className="movie-form__label">specs.languages (vergul)</label>
-        <input className="movie-form__input" onChange={(e) => patch({ specs: { ...form.specs, languages: normalizeCommaText(e.target.value) } })} />
-      </div>
-      </div>
+      <Block
+        step="7"
+        title="Reyting va texnik ma’lumot"
+        help="IMDb / Kinopoisk / Netflix ballari, yosh chegarasi va qo‘shimcha texnik maydonlar."
+      >
+        <div className="movie-form__grid movie-form__grid--two">
+          <Field label="IMDb reyting" help="Masalan: 8.4">
+            <input
+              className="movie-form__input"
+              type="number"
+              step="0.1"
+              value={form.ratingImdb}
+              onChange={(e) => patch({ ratingImdb: e.target.value })}
+            />
+          </Field>
+          <Field label="Kinopoisk reyting" help="Masalan: 8.2">
+            <input
+              className="movie-form__input"
+              type="number"
+              step="0.1"
+              value={form.ratingKinopoisk}
+              onChange={(e) => patch({ ratingKinopoisk: e.target.value })}
+            />
+          </Field>
+          <Field label="Netflix reyting" help="Masalan: 8.7">
+            <input
+              className="movie-form__input"
+              type="number"
+              step="0.1"
+              value={form.ratingNetflix}
+              onChange={(e) => patch({ ratingNetflix: e.target.value })}
+            />
+          </Field>
+          <Field label="Yosh cheklovi" help="Masalan: 16 yoki 18.">
+            <input
+              className="movie-form__input"
+              type="number"
+              value={form.ageRestriction}
+              onChange={(e) => patch({ ageRestriction: e.target.value })}
+            />
+          </Field>
+          <Field label="Like soni" help="Boshlang‘ich like qiymati (ixtiyoriy).">
+            <input
+              className="movie-form__input"
+              value={form.like}
+              onChange={(e) => patch({ like: e.target.value })}
+            />
+          </Field>
+          <Field label="Dislike soni" help="Boshlang‘ich dislike qiymati (ixtiyoriy).">
+            <input
+              className="movie-form__input"
+              value={form.dislike}
+              onChange={(e) => patch({ dislike: e.target.value })}
+            />
+          </Field>
+          <Field label="Texnik davomiylik (daq)" help="Specs uchun davomiylik.">
+            <input
+              className="movie-form__input"
+              type="number"
+              value={form.specs.duration}
+              onChange={(e) =>
+                patch({ specs: { ...form.specs, duration: e.target.value } })
+              }
+            />
+          </Field>
+          <Field label="Yosh reytingi (matn)" help="Masalan: 16+ yoki PG-13.">
+            <input
+              className="movie-form__input"
+              value={form.specs.ageRating}
+              onChange={(e) =>
+                patch({ specs: { ...form.specs, ageRating: e.target.value } })
+              }
+            />
+          </Field>
+          <Field label="Specs yili" help="Texnik yil maydoni.">
+            <input
+              className="movie-form__input"
+              type="number"
+              value={form.specs.year}
+              onChange={(e) => patch({ specs: { ...form.specs, year: e.target.value } })}
+            />
+          </Field>
+          <Field label="Davlatlar (vergul bilan)" help="Masalan: AQSH, Koreya">
+            <input
+              className="movie-form__input"
+              value={(form.specs.countries || []).join(", ")}
+              onChange={(e) =>
+                patch({
+                  specs: { ...form.specs, countries: normalizeCommaText(e.target.value) },
+                })
+              }
+            />
+          </Field>
+          <Field label="Tillar (vergul bilan)" help="Masalan: uz, ru">
+            <input
+              className="movie-form__input"
+              value={(form.specs.languages || []).join(", ")}
+              onChange={(e) =>
+                patch({
+                  specs: { ...form.specs, languages: normalizeCommaText(e.target.value) },
+                })
+              }
+            />
+          </Field>
+        </div>
+      </Block>
 
       {error ? <p className="movie-form__error">{error}</p> : null}
       <div className="movie-form__actions">
-        <button type="button" className="movie-form__cancel-btn" onClick={onCancel}>Bekor qilish</button>
+        <button type="button" className="movie-form__cancel-btn" onClick={onCancel}>
+          Bekor qilish
+        </button>
         <button
           type="button"
           className="movie-form__save-btn"

@@ -1,7 +1,91 @@
 .movie-form {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.movie-form__intro {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f3f1ff;
+  border: 1px solid #ddd6fe;
+  color: #4338ca;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.movie-form__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.movie-form__block-head .movie-form__section {
+  margin: 0;
+}
+
+.movie-form__block-help {
+  margin: 0;
+  padding: 0 14px 10px;
+  background: #eef0f6;
+  border-left: 1px solid #e0e4ef;
+  border-right: 1px solid #e0e4ef;
+  color: #5a6175;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.movie-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.movie-form__help {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.movie-form__req {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.movie-form__lang-grid {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .movie-form__lang-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .movie-form__grid--two {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.movie-form__lang-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e8ebf4;
+  border-radius: 10px;
+  background: #fafbfe;
+}
+
+.movie-form__lang-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3730a3;
 }
 
 /* —— Bo‘lim sarlavhasi + kartochka bir butun blok —— */
@@ -19,15 +103,13 @@
   border-radius: 12px 12px 0 0;
 }
 
-.movie-form__section:first-child {
-  margin-top: 0;
-}
-
-.movie-form__section + .movie-form__section-card,
-.movie-form__section + .movie-form__box,
-.movie-form__section + .movie-form__add-btn {
+.movie-form__block .movie-form__section-card {
   margin-top: 0;
   border-radius: 0 0 12px 12px;
+}
+
+.movie-form__block .movie-form__add-btn {
+  margin-top: 10px;
 }
 
 .movie-form__optional-hint {

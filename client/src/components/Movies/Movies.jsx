@@ -5,6 +5,7 @@ import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useLoading } from '../../context/LoadingContext';
+import { normalizeMediaUrl } from '../../utils/mediaUrl';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import ShowMoreButton, { getDisplayItems, shouldShowMore, DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
@@ -68,7 +69,11 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
         ) : (
           <>
             <img
-              src={movie.homeImg ? (movie.homeImg[contentLang] || movie.homeImg.uz || movie.homeImg.ru) : ''}
+              src={normalizeMediaUrl(
+                movie.homeImg
+                  ? movie.homeImg[contentLang] || movie.homeImg.uz || movie.homeImg.ru
+                  : ''
+              )}
               alt={getMovieTitle(movie)}
               className="movies-item-image"
             />

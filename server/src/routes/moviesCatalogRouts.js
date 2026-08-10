@@ -14,15 +14,17 @@ const { success } = require("../utils/apiResponse");
 const { parsePagination, buildPaginationMeta } = require("../utils/pagination");
 const { applyPagination } = require("../utils/queryOptimizer");
 const { verifyToken } = require("../utils/token");
+const { normalizeMovieMediaFields } = require("../utils/mediaUrl");
 
 const router = express.Router();
 
-const normalizeMovie = ({ _id, movieId, createdAt, updatedAt, ...movie }) => ({
-  ...movie,
-  id: movie.id || movieId,
-  // Cold-start tavsiyalar uchun (eng oxirgi joylangan)
-  createdAt,
-});
+const normalizeMovie = ({ _id, movieId, createdAt, updatedAt, ...movie }) =>
+  normalizeMovieMediaFields({
+    ...movie,
+    id: movie.id || movieId,
+    // Cold-start tavsiyalar uchun (eng oxirgi joylangan)
+    createdAt,
+  });
 
 const resolveOptionalUser = async (req) => {
   const authHeader = req.headers.authorization || "";

@@ -10,6 +10,7 @@ import {
   TYPE_CATEGORY_OPTIONS,
 } from "../../constants/movieFormOptions";
 import { getVideoEmbed } from "../../utils/videoEmbed";
+import { normalizeMediaUrl } from "../../utils/mediaUrl";
 import UploadProgress from "../UploadProgress/UploadProgress";
 import "./MovieForm.css";
 
@@ -243,7 +244,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       const { url } = await uploadToR2(file, UPLOAD_FOLDERS.movies, {
         onProgress: (progress) => setUpload(key, { progress }),
       });
-      setForm((prev) => pathUpdater(prev, url));
+      setForm((prev) => pathUpdater(prev, normalizeMediaUrl(url)));
       setUpload(key, { uploading: false, progress: 100 });
     } catch (e) {
       setUpload(key, { uploading: false, progress: 0 });
@@ -286,7 +287,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   const genresUzText = form.description?.uz?.genre?.join(", ") || "";
   const genresRuText = form.description?.ru?.genre?.join(", ") || "";
 
-  const renderUploadField = ({ keyName, label, accept, onFile }) => {
+  const renderUploadField = ({ keyName, label, accept, onFile, previewUrl }) => {
     const upload = uploadState[keyName] || {};
     const selectedText = upload.fileName
       ? upload.fileName
@@ -294,6 +295,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       ? "Fayl tanlandi"
       : "Fayl tanlanmagan";
     const isVideo = accept.includes("video");
+    const previewSrc = normalizeMediaUrl(previewUrl);
 
     return (
       <div className="movie-form__upload-row" key={keyName}>
@@ -312,6 +314,9 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
               <span>{selectedText}</span>
             </div>
           </div>
+          {previewSrc && !isVideo ? (
+            <img className="movie-form__upload-preview" src={previewSrc} alt="" />
+          ) : null}
           <UploadProgress show={upload.uploading || upload.progress > 0} progress={upload.progress} />
         </label>
       </div>
@@ -338,9 +343,28 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       const payload = {
         movieCode: form.movieCode === "" ? undefined : toNumberOrDefault(form.movieCode, 0),
         title: form.title,
-        titleImg: form.titleImg,
-        homeImg: form.homeImg,
-        movieMedia: form.movieMedia,
+        titleImg: {
+          uz: normalizeMediaUrl(form.titleImg.uz),
+          ru: normalizeMediaUrl(form.titleImg.ru),
+        },
+        homeImg: {
+          uz: normalizeMediaUrl(form.homeImg.uz),
+          ru: normalizeMediaUrl(form.homeImg.ru),
+        },
+        movieMedia: {
+          uz: {
+            img: {
+              type: "img",
+              src: normalizeMediaUrl(form.movieMedia?.uz?.img?.src),
+            },
+          },
+          ru: {
+            img: {
+              type: "img",
+              src: normalizeMediaUrl(form.movieMedia?.ru?.img?.src),
+            },
+          },
+        },
         ratingImdb: form.ratingImdb === "" ? 0 : Number(form.ratingImdb),
         ratingKinopoisk: form.ratingKinopoisk === "" ? 0 : Number(form.ratingKinopoisk),
         ratingNetflix: form.ratingNetflix === "" ? 0 : Number(form.ratingNetflix),
@@ -412,6 +436,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
           keyName: key,
           label: key,
           accept: "image/*",
+          previewUrl: form?.[root]?.[lang],
           onFile: (file) =>
             onPickFile(key, (prev, data) => ({ ...prev, [root]: { ...prev[root], [lang]: data } }), file),
         });
@@ -421,15 +446,16 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       <h4 className="movie-form__section">Detail rasm (movieMedia)</h4>
       <div className="movie-form__section-card movie-form__upload-grid">
       {["movieMedia.uz", "movieMedia.ru"].map((key) => {
+        const lang = key.endsWith(".uz") ? "uz" : "ru";
         return renderUploadField({
           keyName: key,
           label: key,
           accept: "image/*",
+          previewUrl: form?.movieMedia?.[lang]?.img?.src,
           onFile: (file) =>
             onPickFile(
               key,
               (prev, data) => {
-                const lang = key.endsWith(".uz") ? "uz" : "ru";
                 return {
                   ...prev,
                   movieMedia: {

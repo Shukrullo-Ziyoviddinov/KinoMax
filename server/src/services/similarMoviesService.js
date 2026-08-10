@@ -14,12 +14,14 @@ const hasCommonValue = (left = [], right = []) => {
   return left.some((item) => rightSet.has(item));
 };
 
+const { normalizeMovieMediaFields } = require("../utils/mediaUrl");
+
 const toPublicMovie = (row = {}) => {
   const { _id, movieId, createdAt, updatedAt, ...movie } = row;
-  return {
+  return normalizeMovieMediaFields({
     ...movie,
     id: movie.id ?? movieId,
-  };
+  });
 };
 
 const buildSimilarMovies = ({ currentMovie, candidates = [] }) => {

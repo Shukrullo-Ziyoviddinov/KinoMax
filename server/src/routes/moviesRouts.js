@@ -11,8 +11,19 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const MovieComment = require("../models/movieComment");
 const User = require("../models/User");
 const { verifyToken } = require("../utils/token");
+const {
+  normalizeMovieMediaFields,
+  normalizeLocalizedUrls,
+  normalizeMovieMedia,
+} = require("../utils/mediaUrl");
 
 const router = express.Router();
+
+const toApiMovie = ({ _id, movieId, createdAt, updatedAt, ...movie }) =>
+  normalizeMovieMediaFields({
+    ...movie,
+    id: movie.id ?? movieId,
+  });
 
 const getOptionalUserId = async (req) => {
   try {
@@ -62,10 +73,7 @@ router.get("/", async (req, res, next) => {
       Movie.find().sort({ movieId: 1 }).select("-__v"),
       pagination
     ).lean();
-    const data = rows.map(({ _id, movieId, createdAt, updatedAt, ...movie }) => ({
-      ...movie,
-      id: movie.id ?? movieId,
-    }));
+    const data = rows.map(toApiMovie);
     return success(res, data, "Kinolar ro'yxati", 200, buildPaginationMeta(total, pagination));
   } catch (error) {
     return next(error);
@@ -76,10 +84,7 @@ router.get("/top-rated", async (req, res, next) => {
   try {
     const pagination = parsePagination(req.query);
     const rows = await Movie.find().select("-__v").lean();
-    const movies = rows.map(({ _id, movieId, createdAt, updatedAt, ...movie }) => ({
-      ...movie,
-      id: movie.id ?? movieId,
-    }));
+    const movies = rows.map(toApiMovie);
 
     const topRatedMovies = buildTopRatedMovies(movies);
     const paginatedItems = topRatedMovies.slice(
@@ -135,16 +140,19 @@ router.post("/", async (req, res, next) => {
     }
 
     // watchVideo ixtiyoriy (ayniqsa anons / tez kunda kinolar uchun)
-    const watchVideo = {
+    const watchVideo = normalizeLocalizedUrls({
       uz: payload?.watchVideo?.uz || "",
       ru: payload?.watchVideo?.ru || "",
-    };
+    });
 
     const last = await Movie.findOne().sort({ movieId: -1 }).select("movieId").lean();
     const nextMovieId = Number(last?.movieId || 0) + 1;
 
     const created = await Movie.create({
       ...payload,
+      titleImg: normalizeLocalizedUrls(payload.titleImg),
+      homeImg: normalizeLocalizedUrls(payload.homeImg),
+      movieMedia: normalizeMovieMedia(payload.movieMedia),
       watchVideo,
       movieId: nextMovieId,
       id: nextMovieId,
@@ -155,7 +163,7 @@ router.post("/", async (req, res, next) => {
         : [],
     });
 
-    return success(res, created, "Kino yaratildi", 201);
+    return success(res, toApiMovie(created.toObject ? created.toObject() : created), "Kino yaratildi", 201);
   } catch (error) {
     return next(error);
   }
@@ -173,10 +181,19 @@ router.put("/:id", async (req, res, next) => {
     delete body.id;
     // watchVideo bo'sh bo'lsa ham xato bermaslik — anonsdan boshqa bo'limga o'tkazish mumkin
     if (body.watchVideo != null) {
-      body.watchVideo = {
+      body.watchVideo = normalizeLocalizedUrls({
         uz: body.watchVideo?.uz || "",
         ru: body.watchVideo?.ru || "",
-      };
+      });
+    }
+    if (body.titleImg != null) {
+      body.titleImg = normalizeLocalizedUrls(body.titleImg);
+    }
+    if (body.homeImg != null) {
+      body.homeImg = normalizeLocalizedUrls(body.homeImg);
+    }
+    if (body.movieMedia != null) {
+      body.movieMedia = normalizeMovieMedia(body.movieMedia);
     }
     const updated = await Movie.findOneAndUpdate(
       { movieId },
@@ -186,7 +203,7 @@ router.put("/:id", async (req, res, next) => {
     if (!updated) {
       return fail(res, "Kino topilmadi.", 404);
     }
-    return success(res, updated, "Kino yangilandi.");
+    return success(res, toApiMovie(updated), "Kino yangilandi.");
   } catch (error) {
     return next(error);
   }
@@ -341,15 +358,7 @@ router.get("/:id", validateIdParam("id"), async (req, res, next) => {
       return fail(res, "Kino topilmadi.", 404);
     }
 
-    const { _id, movieId, createdAt, updatedAt, ...movie } = row;
-    return success(
-      res,
-      {
-        ...movie,
-        id: movie.id ?? movieId,
-      },
-      "Kino ma'lumoti"
-    );
+    return success(res, toApiMovie(row), "Kino ma'lumoti");
   } catch (error) {
     return next(error);
   }

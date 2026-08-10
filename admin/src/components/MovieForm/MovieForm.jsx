@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createMovie, fetchActorsForMovie, fetchMovies } from "../../services/movieApi";
+import { createMovie, fetchActorsForMovie } from "../../services/movieApi";
 import { uploadToR2, UPLOAD_FOLDERS } from "../../services/uploadApi";
 import {
   CATEGORY_NAME_OPTIONS,
@@ -167,12 +167,9 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   useEffect(() => {
     const run = async () => {
       try {
-        const [moviesRows, actorRows] = await Promise.all([fetchMovies(), fetchActorsForMovie()]);
+        const actorRows = await fetchActorsForMovie();
         if (mode === "edit" && initialData) {
           setForm((prev) => ({ ...prev, ...normalizeInitialMovie(initialData) }));
-        } else {
-          const maxId = moviesRows.reduce((max, item) => Math.max(max, Number(item.id || item.movieId) || 0), 0);
-          setForm((prev) => ({ ...prev, movieId: String(maxId + 1) }));
         }
         setActors(actorRows);
       } catch (e) {
@@ -339,8 +336,6 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       };
 
       const payload = {
-        id: toNumberOrDefault(form.movieId, 0),
-        movieId: toNumberOrDefault(form.movieId, 0),
         movieCode: form.movieCode === "" ? undefined : toNumberOrDefault(form.movieCode, 0),
         title: form.title,
         titleImg: form.titleImg,
@@ -372,7 +367,12 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
         isActive: Boolean(form.isActive),
       };
       if (mode === "edit" && onSubmitData) {
-        await onSubmitData(payload);
+        await onSubmitData({
+          ...payload,
+          // Editda ID o'zgarmaydi — faqat URL bo'yicha yangilanadi
+          id: toNumberOrDefault(form.movieId, 0),
+          movieId: toNumberOrDefault(form.movieId, 0),
+        });
       } else {
         await createMovie(payload);
       }
@@ -388,8 +388,12 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
     <div className="movie-form" ref={wrappersRef}>
       <div className="movie-form__section-card movie-form__section-card--compact">
       <div className="movie-form__grid">
-        <label className="movie-form__label">Movie ID</label>
-        <input className="movie-form__input" value={form.movieId} onChange={(e) => patch({ movieId: e.target.value })} />
+        {mode === "edit" && form.movieId ? (
+          <>
+            <label className="movie-form__label">Movie ID</label>
+            <input className="movie-form__input" value={form.movieId} readOnly disabled />
+          </>
+        ) : null}
         <label className="movie-form__label">Movie Code (ixtiyoriy)</label>
         <input className="movie-form__input" type="number" value={form.movieCode} onChange={(e) => patch({ movieCode: e.target.value })} />
 

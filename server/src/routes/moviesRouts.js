@@ -140,11 +140,8 @@ router.post("/", async (req, res, next) => {
       ru: payload?.watchVideo?.ru || "",
     };
 
-    let nextMovieId = Number(payload.movieId ?? payload.id);
-    if (!Number.isFinite(nextMovieId) || nextMovieId <= 0) {
-      const last = await Movie.findOne().sort({ movieId: -1 }).select("movieId").lean();
-      nextMovieId = Number(last?.movieId || 0) + 1;
-    }
+    const last = await Movie.findOne().sort({ movieId: -1 }).select("movieId").lean();
+    const nextMovieId = Number(last?.movieId || 0) + 1;
 
     const created = await Movie.create({
       ...payload,
@@ -171,6 +168,9 @@ router.put("/:id", async (req, res, next) => {
       return fail(res, "Noto'g'ri movieId.", 400);
     }
     const body = { ...(req.body || {}) };
+    // ID doim URL dagi qiymat — client o'zgartira olmaydi
+    delete body.movieId;
+    delete body.id;
     // watchVideo bo'sh bo'lsa ham xato bermaslik — anonsdan boshqa bo'limga o'tkazish mumkin
     if (body.watchVideo != null) {
       body.watchVideo = {

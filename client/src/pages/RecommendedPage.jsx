@@ -122,8 +122,11 @@ const RecommendedPage = () => {
   const [genresConfig, setGenresConfig] = useState([]);
   const getGenresFromUrl = useCallback((g) => {
     if (!g) return [];
+    const normalized = normalizeFilterValue(g);
     const genreConfig = genresConfig.find(
-      (c) => Array.isArray(c.filterGenre) && c.filterGenre.includes(g)
+      (c) =>
+        Array.isArray(c.filterGenre) &&
+        c.filterGenre.some((fg) => normalizeFilterValue(fg) === normalized)
     );
     if (genreConfig) {
       return [...genreConfig.filterGenre];

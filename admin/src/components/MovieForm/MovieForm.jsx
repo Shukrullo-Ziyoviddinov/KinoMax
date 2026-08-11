@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createMovie, fetchActorsForMovie } from "../../services/movieApi";
+import { fetchGenres } from "../../services/genreApi";
 import { uploadToR2, UPLOAD_FOLDERS } from "../../services/uploadApi";
 import {
   CATEGORY_NAME_OPTIONS,
   CATEGORY_NAME_TO_SECTION,
-  FILTER_GENRE_OPTIONS,
   isAnonsCategory,
   TYPE_CATEGORY_OPTIONS,
 } from "../../constants/movieFormOptions";
@@ -210,6 +210,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [actors, setActors] = useState([]);
+  const [filterGenreOptions, setFilterGenreOptions] = useState([]);
   const [actorsOpen, setActorsOpen] = useState(false);
   const [filterGenreOpen, setFilterGenreOpen] = useState(false);
   const [typeCategoryOpen, setTypeCategoryOpen] = useState(false);
@@ -253,11 +254,28 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   useEffect(() => {
     const run = async () => {
       try {
-        const actorRows = await fetchActorsForMovie();
+        const [actorRows, genreRows] = await Promise.all([
+          fetchActorsForMovie(),
+          fetchGenres(),
+        ]);
         if (mode === "edit" && initialData) {
           setForm((prev) => ({ ...prev, ...normalizeInitialMovie(initialData) }));
         }
         setActors(actorRows);
+
+        const fromDb = new Set();
+        (Array.isArray(genreRows) ? genreRows : []).forEach((genre) => {
+          const values = Array.isArray(genre?.filterGenre)
+            ? genre.filterGenre
+            : genre?.filterGenre
+            ? [genre.filterGenre]
+            : [];
+          values.forEach((value) => {
+            const trimmed = String(value || "").trim();
+            if (trimmed) fromDb.add(trimmed);
+          });
+        });
+        setFilterGenreOptions(Array.from(fromDb).sort((a, b) => a.localeCompare(b, "uz")));
       } catch (e) {
         setError(e.message || "Boshlang'ich ma'lumotlarni olishda xatolik.");
       }
@@ -279,6 +297,15 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   }, []);
 
   const isAnons = isAnonsCategory(form.categoryName, form.category);
+
+  const qidiruvJanrOptions = useMemo(() => {
+    const merged = new Set(filterGenreOptions);
+    (form.filterGenre || []).forEach((value) => {
+      const trimmed = String(value || "").trim();
+      if (trimmed) merged.add(trimmed);
+    });
+    return Array.from(merged).sort((a, b) => a.localeCompare(b, "uz"));
+  }, [filterGenreOptions, form.filterGenre]);
 
   const isUploading = useMemo(
     () => Object.values(uploadState).some((item) => item?.uploading),
@@ -1093,7 +1120,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
 
           <Field
             label="Qidiruv janrlari"
-            help="Sayt filtrida chiqadigan janr belgilari (bir nechtasini tanlash mumkin)."
+            help="Searchdagi janr kartochkalarida tanlangan filter qiymatlari. Qiymat mos bo‘lsa sayt filtrida chiqadi."
           >
             <div className="movie-form__dropdown">
               <button
@@ -1105,16 +1132,22 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
               </button>
               {filterGenreOpen && (
                 <div className="movie-form__dropdown-menu">
-                  {FILTER_GENRE_OPTIONS.map((item) => (
-                    <label key={item} className="movie-form__check">
-                      <input
-                        type="checkbox"
-                        checked={form.filterGenre.includes(item)}
-                        onChange={() => toggleArrayValue("filterGenre", item)}
-                      />
-                      <span>{item}</span>
-                    </label>
-                  ))}
+                  {qidiruvJanrOptions.length === 0 ? (
+                    <p className="movie-form__hint">
+                      Hali janr yo‘q. Avval Search → Janr qo‘shib, filter janrni tanlang.
+                    </p>
+                  ) : (
+                    qidiruvJanrOptions.map((item) => (
+                      <label key={item} className="movie-form__check">
+                        <input
+                          type="checkbox"
+                          checked={form.filterGenre.includes(item)}
+                          onChange={() => toggleArrayValue("filterGenre", item)}
+                        />
+                        <span>{item}</span>
+                      </label>
+                    ))
+                  )}
                 </div>
               )}
             </div>

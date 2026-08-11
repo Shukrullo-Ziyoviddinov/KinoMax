@@ -1,16 +1,3 @@
-export const FILTER_GENRE_OPTIONS = [
-  "Romantika",
-  "Multfilim",
-  "Anime",
-  "Drama",
-  "Komediya",
-  "Jangari",
-  "Boevik",
-  "Qo'rqinchli",
-  "Sarguzasht",
-  "Fantastika",
-];
-
 export const TYPE_CATEGORY_OPTIONS = [
   "action",
   "drama",

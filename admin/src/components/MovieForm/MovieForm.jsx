@@ -24,6 +24,33 @@ function UploadIcon() {
   );
 }
 
+function Field({ label, help, required, children }) {
+  return (
+    <div className="movie-form__field">
+      <label className="movie-form__label">
+        {label}
+        {required ? <span className="movie-form__req"> *</span> : null}
+      </label>
+      {help ? <span className="movie-form__help">{help}</span> : null}
+      {children}
+    </div>
+  );
+}
+
+function Block({ step, title, help, children }) {
+  return (
+    <section className="movie-form__block">
+      <header className="movie-form__block-head">
+        <h4 className="movie-form__section">
+          {step ? `${step}. ${title}` : title}
+        </h4>
+        {help ? <p className="movie-form__block-help">{help}</p> : null}
+      </header>
+      <div className="movie-form__section-card">{children}</div>
+    </section>
+  );
+}
+
 const emptySeason = (seasonNumber = 1) => ({
   seasonNumber,
   title: { uz: `Mavsum ${seasonNumber}`, ru: `Сезон ${seasonNumber}` },
@@ -292,29 +319,6 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
     (form.genre?.uz?.length ? form.genre.uz : form.description?.uz?.genre)?.join(", ") || "";
   const genresRuText =
     (form.genre?.ru?.length ? form.genre.ru : form.description?.ru?.genre)?.join(", ") || "";
-
-  const Field = ({ label, help, required, children }) => (
-    <div className="movie-form__field">
-      <label className="movie-form__label">
-        {label}
-        {required ? <span className="movie-form__req"> *</span> : null}
-      </label>
-      {help ? <span className="movie-form__help">{help}</span> : null}
-      {children}
-    </div>
-  );
-
-  const Block = ({ step, title, help, children }) => (
-    <section className="movie-form__block">
-      <header className="movie-form__block-head">
-        <h4 className="movie-form__section">
-          {step ? `${step}. ${title}` : title}
-        </h4>
-        {help ? <p className="movie-form__block-help">{help}</p> : null}
-      </header>
-      <div className="movie-form__section-card">{children}</div>
-    </section>
-  );
 
   const renderUploadField = ({ keyName, label, help, accept, onFile, previewUrl }) => {
     const upload = uploadState[keyName] || {};

@@ -80,13 +80,6 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
     setEmbedStarted(false);
   }, [watchSrc, movie?.id]);
 
-  const handleStartEmbed = () => {
-    setEmbedStarted(true);
-    if (movie) {
-      addMovie(movie);
-    }
-  };
-
   const videoRef = useRef(null);
   const videoWrapperRef = useRef(null);
   const adVideoRef = useRef(null);
@@ -205,9 +198,21 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
     showControlsWithDelay();
   };
 
-  // Faqat .watch-modal-control-btn-play → play boshlansa «ko'rildi»
+  // Faqat .watch-modal-control-btn-play → play boshlansa «ko'rildi» (+ weekly top)
   const handleControlPlayClick = (e) => {
     e?.stopPropagation?.();
+
+    // Mover/YouTube embed: mavjud play tugmasi orqali start + viewed
+    if (isEmbedPlayer && !embedStarted) {
+      pendingMarkViewedRef.current = true;
+      setEmbedStarted(true);
+      if (movie && pendingMarkViewedRef.current) {
+        pendingMarkViewedRef.current = false;
+        addMovie(movie);
+      }
+      return;
+    }
+
     const willStartPlayback = !isPlayingRef.current && !showAdOverlay;
     if (willStartPlayback) {
       pendingMarkViewedRef.current = true;
@@ -636,12 +641,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
                     sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-fullscreen"
                   />
                 ) : (
-                  <button
-                    type="button"
-                    className="watch-modal-embed-start"
-                    onClick={handleStartEmbed}
-                    aria-label={t('player.play')}
-                  >
+                  <div className="watch-modal-embed-start">
                     {embedPoster ? (
                       <img
                         className="watch-modal-embed-poster"
@@ -651,12 +651,21 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
                     ) : (
                       <div className="watch-modal-embed-poster watch-modal-embed-poster--empty" />
                     )}
-                    <span className="watch-modal-embed-play" aria-hidden>
-                      <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                    </span>
-                  </button>
+                    <div className="watch-modal-controls-overlay show">
+                      <div className="watch-modal-controls-center">
+                        <button
+                          type="button"
+                          className="watch-modal-control-btn watch-modal-control-btn-play"
+                          onClick={handleControlPlayClick}
+                          aria-label={t('player.play')}
+                        >
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )
               ) : (
                 <>

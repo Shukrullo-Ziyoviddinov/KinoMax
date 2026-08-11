@@ -157,10 +157,11 @@ const RecommendedPage = () => {
   const [sectionLoadingMore, setSectionLoadingMore] = useState(false);
   const sectionLoadingLockRef = useRef(false);
 
-  const sectionKey = useMemo(
-    () => resolveSectionKey(categoryId, location.pathname),
-    [categoryId, location.pathname]
-  );
+  const sectionKey = useMemo(() => {
+    // Search janri: recommended bo'lim emas, to'liq katalogdan filterGenre bo'yicha
+    if (genreFromUrl) return null;
+    return resolveSectionKey(categoryId, location.pathname);
+  }, [categoryId, location.pathname, genreFromUrl]);
 
   useEffect(() => {
     let isMounted = true;

@@ -51,6 +51,54 @@ function Block({ step, title, help, children }) {
   );
 }
 
+function isDirectVideoUrl(url) {
+  const videoRaw = String(url || "").trim();
+  if (!videoRaw) return false;
+  return (
+    /\.(mp4|webm|ogg|mov)(\?|$)/i.test(videoRaw) ||
+    videoRaw.includes("/movies/") ||
+    videoRaw.startsWith("http://") ||
+    videoRaw.startsWith("https://") ||
+    videoRaw.startsWith("data:video") ||
+    videoRaw.startsWith("blob:")
+  );
+}
+
+function VideoPreview({ url, title = "Video preview" }) {
+  const videoRaw = String(url || "").trim();
+  const embedUrl = getVideoEmbed(videoRaw)?.embedUrl || "";
+  const showDirect = !embedUrl && isDirectVideoUrl(videoRaw);
+
+  return (
+    <div className="movie-form__preview-box">
+      {embedUrl ? (
+        <iframe
+          key={embedUrl}
+          className="movie-form__video-preview movie-form__video-preview--embed"
+          src={embedUrl}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      ) : showDirect ? (
+        <video
+          key={videoRaw}
+          className="movie-form__video-preview"
+          src={videoRaw}
+          controls
+          playsInline
+          preload="metadata"
+        />
+      ) : (
+        <span className="movie-form__preview-empty">
+          Video havola yoki fayl tanlang — preview shu yerda chiqadi
+        </span>
+      )}
+    </div>
+  );
+}
+
 const emptySeason = (seasonNumber = 1) => ({
   seasonNumber,
   title: { uz: `Mavsum ${seasonNumber}`, ru: `Сезон ${seasonNumber}` },
@@ -617,18 +665,6 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
           {["uz", "ru"].map((lang) => {
             const keyName = `watchVideo.${lang}`;
             const langLabel = lang === "uz" ? "o‘zbekcha" : "ruscha";
-            const videoRaw = String(form.watchVideo?.[lang] || "").trim();
-            const embed = getVideoEmbed(videoRaw);
-            const embedUrl = embed?.embedUrl || "";
-            const isDirectVideo =
-              !embedUrl &&
-              Boolean(videoRaw) &&
-              (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(videoRaw) ||
-                videoRaw.includes("/movies/") ||
-                videoRaw.startsWith("http://") ||
-                videoRaw.startsWith("https://") ||
-                videoRaw.startsWith("data:video") ||
-                videoRaw.startsWith("blob:"));
 
             return (
               <div className="movie-form__video-dual" key={keyName}>
@@ -654,32 +690,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
                   />
                 </Field>
 
-                <div className="movie-form__preview-box">
-                  {embedUrl ? (
-                    <iframe
-                      key={embedUrl}
-                      className="movie-form__video-preview movie-form__video-preview--embed"
-                      src={embedUrl}
-                      title={`Video preview ${lang}`}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      referrerPolicy="strict-origin-when-cross-origin"
-                    />
-                  ) : isDirectVideo ? (
-                    <video
-                      key={videoRaw}
-                      className="movie-form__video-preview"
-                      src={videoRaw}
-                      controls
-                      playsInline
-                      preload="metadata"
-                    />
-                  ) : (
-                    <span className="movie-form__preview-empty">
-                      Video havola yoki fayl tanlang — preview shu yerda chiqadi
-                    </span>
-                  )}
-                </div>
+                <VideoPreview url={form.watchVideo?.[lang]} title={`Video preview ${lang}`} />
 
                 <p className="movie-form__video-or">yoki kompyuterdan video yuklang</p>
 
@@ -829,7 +840,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       <Block
         step="5"
         title="Serial mavsumlari (ixtiyoriy)"
-        help="Oddiy film uchun bo‘sh qoldirish mumkin. Serial bo‘lsa mavsum va qism videolarini qo‘shing."
+        help="Oddiy film uchun bo‘sh qoldirish mumkin. Serial bo‘lsa qismlarga Mover/YouTube havolasi yoki R2 video fayl qo‘ying — asosiy tomosha videosi kabi."
       >
         {form.seasons.map((season, seasonIndex) => (
           <div className="movie-form__box" key={`season-${seasonIndex}`}>
@@ -903,28 +914,75 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
                     O‘chirish
                   </button>
                 </div>
-                {["uz", "ru"].map((lang) => {
-                  const key = `season-${seasonIndex}-ep-${epIndex}-${lang}`;
-                  return renderUploadField({
-                    keyName: key,
-                    label: `Qism videosi — ${lang === "uz" ? "o‘zbekcha" : "ruscha"}`,
-                    help: "Shu qismning video faylini yuklang.",
-                    accept: "video/*",
-                    previewUrl: ep[lang],
-                    onFile: (file) =>
-                      onPickFile(
-                        key,
-                        (prev, data) => {
-                          const seasons = [...prev.seasons];
-                          const episodes = [...seasons[seasonIndex].episodes];
-                          episodes[epIndex] = { ...episodes[epIndex], [lang]: data };
-                          seasons[seasonIndex] = { ...seasons[seasonIndex], episodes };
-                          return { ...prev, seasons };
-                        },
-                        file
-                      ),
-                  });
-                })}
+                <div className="movie-form__upload-grid">
+                  {["uz", "ru"].map((lang) => {
+                    const keyName = `season-${seasonIndex}-ep-${epIndex}-${lang}`;
+                    const langLabel = lang === "uz" ? "o‘zbekcha" : "ruscha";
+                    return (
+                      <div className="movie-form__video-dual" key={keyName}>
+                        <Field
+                          label={`Qism videosi — ${langLabel}`}
+                          help="Mover.uz yoki YouTube havolasini qo‘ying. Preview pastda chiqadi."
+                        >
+                          <input
+                            className="movie-form__input"
+                            type="url"
+                            placeholder="https://mover.uz/watch/... yoki https://youtu.be/..."
+                            value={ep[lang] || ""}
+                            onChange={(e) => {
+                              const nextUrl = e.target.value;
+                              setUpload(keyName, {
+                                uploading: false,
+                                progress: 0,
+                                fileName: "",
+                              });
+                              updateSeason(seasonIndex, (prev) => {
+                                const episodes = [...prev.episodes];
+                                episodes[epIndex] = {
+                                  ...episodes[epIndex],
+                                  [lang]: nextUrl,
+                                };
+                                return { ...prev, episodes };
+                              });
+                            }}
+                          />
+                        </Field>
+
+                        <VideoPreview
+                          url={ep[lang]}
+                          title={`Qism ${epIndex + 1} preview ${lang}`}
+                        />
+
+                        <p className="movie-form__video-or">yoki kompyuterdan video yuklang</p>
+
+                        {renderUploadField({
+                          keyName,
+                          label: `Video fayl — ${langLabel}`,
+                          help: "Qurilmadan MP4 yuklansa, yuqoridagi URL o‘rniga R2 havolasi saqlanadi.",
+                          accept: "video/*",
+                          onFile: (file) =>
+                            onPickFile(
+                              keyName,
+                              (prev, data) => {
+                                const seasons = [...prev.seasons];
+                                const episodes = [...seasons[seasonIndex].episodes];
+                                episodes[epIndex] = {
+                                  ...episodes[epIndex],
+                                  [lang]: data,
+                                };
+                                seasons[seasonIndex] = {
+                                  ...seasons[seasonIndex],
+                                  episodes,
+                                };
+                                return { ...prev, seasons };
+                              },
+                              file
+                            ),
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ))}
             <button

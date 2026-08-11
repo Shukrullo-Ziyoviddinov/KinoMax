@@ -361,6 +361,29 @@
   text-align: center;
 }
 
+.movie-form__box--inner .movie-form__upload-grid {
+  gap: 16px;
+}
+
+.movie-form__box--inner .movie-form__video-dual {
+  border-bottom: 1px solid #e8ebf3;
+  padding-bottom: 12px;
+}
+
+.movie-form__box--inner .movie-form__video-dual:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.movie-form__box--inner .movie-form__preview-box {
+  min-height: 160px;
+}
+
+.movie-form__box--inner .movie-form__video-preview--embed {
+  min-height: 180px;
+}
+
+
 /* —— Seasons / episode qutilari —— */
 .movie-form__box {
   border: 1px solid #e0e4ef;

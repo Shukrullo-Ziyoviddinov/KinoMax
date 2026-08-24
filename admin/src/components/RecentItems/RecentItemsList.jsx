@@ -1,7 +1,15 @@
+import { useState } from 'react';
 import ScrollTouch from '../ScrollTouch/ScrollTouch';
 
 const PLACEHOLDER =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56"><rect width="100%" height="100%" fill="%23edf0f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23656d82" font-size="10">No img</text></svg>';
+
+/** Sayt domeni — movie detail link uchun */
+const SITE_BASE = (
+  process.env.REACT_APP_SITE_URL ||
+  process.env.REACT_APP_CLIENT_URL ||
+  'https://www.chosontv.uz'
+).replace(/\/$/, '');
 
 function EditIcon() {
   return (
@@ -19,7 +27,64 @@ function DeleteIcon() {
   );
 }
 
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+    </svg>
+  );
+}
+
+function buildMovieShareUrl(item) {
+  const id = Number(item?.id ?? item?.raw?.movieId ?? item?.raw?.id);
+  if (!Number.isFinite(id) || id <= 0) return '';
+  return `${SITE_BASE}/movie/${id}`;
+}
+
+async function copyText(text) {
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.style.position = 'fixed';
+  area.style.left = '-9999px';
+  document.body.appendChild(area);
+  area.select();
+  document.execCommand('copy');
+  document.body.removeChild(area);
+}
+
 export default function RecentItemsList({ items = [], loading = false, onEdit, onDelete }) {
+  const [copiedId, setCopiedId] = useState(null);
+
+  const onCopyMovieLink = async (item) => {
+    const url = buildMovieShareUrl(item);
+    if (!url) return;
+    try {
+      await copyText(url);
+      setCopiedId(item.id);
+      window.setTimeout(() => {
+        setCopiedId((prev) => (prev === item.id ? null : prev));
+      }, 1600);
+    } catch {
+      /* ignore */
+    }
+  };
+
   if (loading) {
     return <div className="recent-items__empty">Yuklanmoqda...</div>;
   }
@@ -42,44 +107,61 @@ export default function RecentItemsList({ items = [], loading = false, onEdit, o
         </thead>
         <tbody>
           {/** Eng yangisi tepada: 100 ta bo'lsa 100, 99, 98... */ }
-          {items.map((item, index) => (
-            <tr key={`${item.id}-${index}`}>
-              <td>{items.length - index}</td>
-              <td>
-                <img
-                  className="recent-items__poster"
-                  src={item.image || PLACEHOLDER}
-                  alt=""
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = PLACEHOLDER;
-                  }}
-                />
-              </td>
-              <td>{item.title || '-'}</td>
-              <td>{item.subtitle || '-'}</td>
-              <td>
-                <div className="recent-items__actions">
-                  <button
-                    type="button"
-                    className="recent-items__icon-btn"
-                    aria-label="Tahrirlash"
-                    onClick={() => onEdit?.(item)}
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    type="button"
-                    className="recent-items__icon-btn recent-items__icon-btn--danger"
-                    aria-label="O'chirish"
-                    onClick={() => onDelete?.(item)}
-                  >
-                    <DeleteIcon />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
+          {items.map((item, index) => {
+            const isMovie = item.section === 'movies';
+            const canCopy = isMovie && Boolean(buildMovieShareUrl(item));
+            const justCopied = copiedId === item.id;
+
+            return (
+              <tr key={`${item.id}-${index}`}>
+                <td>{items.length - index}</td>
+                <td>
+                  <img
+                    className="recent-items__poster"
+                    src={item.image || PLACEHOLDER}
+                    alt=""
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = PLACEHOLDER;
+                    }}
+                  />
+                </td>
+                <td>{item.title || '-'}</td>
+                <td>{item.subtitle || '-'}</td>
+                <td>
+                  <div className="recent-items__actions">
+                    {canCopy ? (
+                      <button
+                        type="button"
+                        className={`recent-items__icon-btn recent-items__icon-btn--copy${justCopied ? ' is-copied' : ''}`}
+                        aria-label={justCopied ? 'Nusxa olindi' : 'Kino linkini nusxalash'}
+                        title={justCopied ? 'Nusxa olindi' : 'Kino linkini nusxalash'}
+                        onClick={() => onCopyMovieLink(item)}
+                      >
+                        {justCopied ? <CheckIcon /> : <CopyIcon />}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="recent-items__icon-btn"
+                      aria-label="Tahrirlash"
+                      onClick={() => onEdit?.(item)}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="recent-items__icon-btn recent-items__icon-btn--danger"
+                      aria-label="O'chirish"
+                      onClick={() => onDelete?.(item)}
+                    >
+                      <DeleteIcon />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </ScrollTouch>

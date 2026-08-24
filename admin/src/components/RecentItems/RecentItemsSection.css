@@ -83,7 +83,7 @@
 
 .recent-items__table th:nth-child(5),
 .recent-items__table td:nth-child(5) {
-  width: 78px;
+  width: 118px;
 }
 
 .recent-items__poster {
@@ -115,6 +115,12 @@
 .recent-items__icon-btn svg {
   width: 16px;
   height: 16px;
+}
+
+.recent-items__icon-btn--copy.is-copied {
+  color: #15803d;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
 }
 
 .recent-items__icon-btn--danger {

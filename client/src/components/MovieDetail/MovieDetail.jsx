@@ -871,24 +871,22 @@ const MovieDetail = () => {
                 return (
                 <div className="movie-detail-seasons">
                   <div className="movie-detail-seasons-header">
-                    <div className="movie-detail-seasons-tabs">
-                      {hasUzEpisodes && (
+                    {hasUzEpisodes && hasRuEpisodes ? (
+                      <div className="movie-detail-seasons-tabs">
                         <button
                           className={`movie-detail-seasons-tab ${seasonsLang === 'uz' ? 'active' : ''}`}
                           onClick={() => setSeasonsLang('uz')}
                         >
                           UZ
                         </button>
-                      )}
-                      {hasRuEpisodes && (
                         <button
                           className={`movie-detail-seasons-tab ${seasonsLang === 'ru' ? 'active' : ''}`}
                           onClick={() => setSeasonsLang('ru')}
                         >
                           RU
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    ) : null}
                     <div className="movie-detail-season-buttons">
                       <ScrollTouch key={i18n.language} className="movie-detail-season-buttons-scroll">
                         {seasonsWithEpisodes.map((season) => (

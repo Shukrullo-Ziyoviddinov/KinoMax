@@ -502,6 +502,53 @@
   box-shadow: 0 14px 28px rgba(26, 34, 67, 0.14);
 }
 
+.movie-form__dropdown-menu--actors {
+  max-height: 280px;
+  overflow: hidden;
+  padding: 8px;
+  gap: 8px;
+}
+
+.movie-form__dropdown-search {
+  flex-shrink: 0;
+}
+
+.movie-form__dropdown-search-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.movie-form__dropdown-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.movie-form__dropdown-empty {
+  margin: 0;
+  padding: 10px 8px;
+  font-size: 13px;
+  color: #6f7487;
+}
+
+.movie-form__check-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.movie-form__check-sub {
+  font-size: 11px;
+  color: #7a7f92;
+  font-weight: 500;
+}
+
 .movie-form__section-card .movie-form__dropdown-menu {
   left: 0;
   right: 0;

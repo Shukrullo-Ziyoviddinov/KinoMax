@@ -212,6 +212,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
   const [actors, setActors] = useState([]);
   const [filterGenreOptions, setFilterGenreOptions] = useState([]);
   const [actorsOpen, setActorsOpen] = useState(false);
+  const [actorsSearch, setActorsSearch] = useState("");
   const [filterGenreOpen, setFilterGenreOpen] = useState(false);
   const [typeCategoryOpen, setTypeCategoryOpen] = useState(false);
   const [categoryNameOpen, setCategoryNameOpen] = useState(false);
@@ -370,6 +371,25 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       actors: form.actors.includes(numeric)
         ? form.actors.filter((item) => item !== numeric)
         : [...form.actors, numeric],
+    });
+  };
+
+  const filteredActors = useMemo(() => {
+    const q = actorsSearch.trim().toLowerCase();
+    if (!q) return actors;
+    return actors.filter((actor) => {
+      const uz = String(actor?.name?.uz || "").toLowerCase();
+      const ru = String(actor?.name?.ru || "").toLowerCase();
+      const id = String(actor?.actorId ?? actor?.id ?? "");
+      return uz.includes(q) || ru.includes(q) || id.includes(q);
+    });
+  }, [actors, actorsSearch]);
+
+  const toggleActorsOpen = () => {
+    setActorsOpen((prev) => {
+      const next = !prev;
+      if (!next) setActorsSearch("");
+      return next;
     });
   };
 
@@ -1115,32 +1135,61 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
 
           <Field
             label="Aktyorlar"
-            help="Ro‘yxatdan tegishli aktyorlarni belgilang."
+            help="Ro‘yxatdan tegishli aktyorlarni belgilang. Qidiruv orqali tez toping."
           >
             <div className="movie-form__dropdown">
               <button
                 type="button"
                 className="movie-form__dropdown-trigger"
-                onClick={() => setActorsOpen((v) => !v)}
+                onClick={toggleActorsOpen}
               >
                 Tanlangan: {form.actors.length}
               </button>
               {actorsOpen && (
-                <div className="movie-form__dropdown-menu">
-                  {actors.map((actor) => {
-                    const actorId = Number(actor.actorId || actor.id);
-                    const name = actor?.name?.uz || actor?.name?.ru || `Actor ${actorId}`;
-                    return (
-                      <label key={actorId} className="movie-form__check">
-                        <input
-                          type="checkbox"
-                          checked={form.actors.includes(actorId)}
-                          onChange={() => toggleActor(actorId)}
-                        />
-                        <span>{name}</span>
-                      </label>
-                    );
-                  })}
+                <div className="movie-form__dropdown-menu movie-form__dropdown-menu--actors">
+                  <div className="movie-form__dropdown-search">
+                    <input
+                      className="movie-form__input movie-form__dropdown-search-input"
+                      type="search"
+                      placeholder="Aktyor ismini yozing..."
+                      value={actorsSearch}
+                      onChange={(e) => setActorsSearch(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="movie-form__dropdown-list">
+                    {filteredActors.length ? (
+                      filteredActors.map((actor) => {
+                        const actorId = Number(actor.actorId || actor.id);
+                        const nameUz = actor?.name?.uz || "";
+                        const nameRu = actor?.name?.ru || "";
+                        const name = nameUz || nameRu || `Actor ${actorId}`;
+                        const secondary =
+                          nameUz && nameRu && nameUz !== nameRu ? nameRu : "";
+                        return (
+                          <label key={actorId} className="movie-form__check">
+                            <input
+                              type="checkbox"
+                              checked={form.actors.includes(actorId)}
+                              onChange={() => toggleActor(actorId)}
+                            />
+                            <span className="movie-form__check-text">
+                              <span>{name}</span>
+                              {secondary ? (
+                                <span className="movie-form__check-sub">{secondary}</span>
+                              ) : null}
+                            </span>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <p className="movie-form__dropdown-empty">
+                        {actorsSearch.trim()
+                          ? "Mos aktyor topilmadi."
+                          : "Aktyorlar ro‘yxati bo‘sh."}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

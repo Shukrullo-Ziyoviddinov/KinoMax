@@ -1215,6 +1215,25 @@
     max-width: 250px;
   }
 
+  .movie-detail-season-btn,
+  .movie-detail-seasons-tab {
+    background: #0000;
+    border: 2px solid #ffffff4d;
+    border-radius: 8px;
+    color: #fffc;
+    cursor: pointer;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: .3rem .5rem;
+    transition: all .3s ease;
+  }
+
+  .movie-detail-season-btn.active,
+  .movie-detail-seasons-tab.active {
+    font-size: .7rem;
+    padding: .3rem .5rem;
+  }
+
   .movie-detail-buttons {
     flex-wrap: nowrap;
     margin-top: 0rem;

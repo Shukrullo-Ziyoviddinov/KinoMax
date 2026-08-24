@@ -15,12 +15,15 @@ const hasCommonValue = (left = [], right = []) => {
 };
 
 const { normalizeMovieMediaFields } = require("../utils/mediaUrl");
+const { resolveMovieNumericId } = require("./movieService");
 
 const toPublicMovie = (row = {}) => {
   const { _id, movieId, createdAt, updatedAt, ...movie } = row;
+  const id = resolveMovieNumericId({ movieId, id: movie.id });
   return normalizeMovieMediaFields({
     ...movie,
-    id: movie.id ?? movieId,
+    movieId: id,
+    id,
   });
 };
 

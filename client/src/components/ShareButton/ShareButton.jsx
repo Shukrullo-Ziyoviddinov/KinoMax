@@ -35,7 +35,11 @@ const ShareButton = ({ movie }) => {
     return movie?.title || '';
   };
 
-  const shareUrl = getShareUrl(location.pathname);
+  const sharePath =
+    movie?.id != null && Number.isFinite(Number(movie.id)) && Number(movie.id) > 0
+      ? `/movie/${Number(movie.id)}`
+      : location.pathname;
+  const shareUrl = getShareUrl(sharePath);
   const shareText = getMovieTitle();
 
   const shareLinks = [

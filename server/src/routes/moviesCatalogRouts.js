@@ -15,16 +15,20 @@ const { parsePagination, buildPaginationMeta } = require("../utils/pagination");
 const { applyPagination } = require("../utils/queryOptimizer");
 const { verifyToken } = require("../utils/token");
 const { normalizeMovieMediaFields } = require("../utils/mediaUrl");
+const { resolveMovieNumericId } = require("../services/movieService");
 
 const router = express.Router();
 
-const normalizeMovie = ({ _id, movieId, createdAt, updatedAt, ...movie }) =>
-  normalizeMovieMediaFields({
+const normalizeMovie = ({ _id, movieId, createdAt, updatedAt, ...movie }) => {
+  const id = resolveMovieNumericId({ movieId, id: movie.id });
+  return normalizeMovieMediaFields({
     ...movie,
-    id: movie.id || movieId,
+    movieId: id,
+    id,
     // Cold-start tavsiyalar uchun (eng oxirgi joylangan)
     createdAt,
   });
+};
 
 const resolveOptionalUser = async (req) => {
   const authHeader = req.headers.authorization || "";

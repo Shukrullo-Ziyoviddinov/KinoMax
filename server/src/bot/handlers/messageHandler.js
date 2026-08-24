@@ -148,7 +148,7 @@ function buildShareText(movie, language, movieTargetUrl) {
 
 function buildMovieInlineKeyboard(movie, language) {
   const movieCode = movie?.movieCode;
-  const movieId = movie?.id;
+  const movieId = movie?.movieId ?? movie?.id;
   const websiteBase = WEB_APP_URL.endsWith("/")
     ? WEB_APP_URL.slice(0, -1)
     : WEB_APP_URL;

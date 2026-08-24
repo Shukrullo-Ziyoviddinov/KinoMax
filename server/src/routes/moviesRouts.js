@@ -16,14 +16,18 @@ const {
   normalizeLocalizedUrls,
   normalizeMovieMedia,
 } = require("../utils/mediaUrl");
+const { getNextMovieId, resolveMovieNumericId } = require("../services/movieService");
 
 const router = express.Router();
 
-const toApiMovie = ({ _id, movieId, createdAt, updatedAt, ...movie }) =>
-  normalizeMovieMediaFields({
+const toApiMovie = ({ _id, movieId, createdAt, updatedAt, ...movie }) => {
+  const id = resolveMovieNumericId({ movieId, id: movie.id });
+  return normalizeMovieMediaFields({
     ...movie,
-    id: movie.id ?? movieId,
+    movieId: id,
+    id,
   });
+};
 
 const getOptionalUserId = async (req) => {
   try {
@@ -129,7 +133,12 @@ router.get("/weekly-top", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const payload = req.body || {};
+    // Client yuborgan id/movieId e'tiborsiz — server o'zi beradi
+    const payload = { ...(req.body || {}) };
+    delete payload._id;
+    delete payload.id;
+    delete payload.movieId;
+
     const hasTitle = payload?.title && (payload.title.uz || payload.title.ru);
     const hasHomeImg = payload?.homeImg && (payload.homeImg.uz || payload.homeImg.ru);
     if (!hasTitle) {
@@ -145,8 +154,10 @@ router.post("/", async (req, res, next) => {
       ru: payload?.watchVideo?.ru || "",
     });
 
-    const last = await Movie.findOne().sort({ movieId: -1 }).select("movieId").lean();
-    const nextMovieId = Number(last?.movieId || 0) + 1;
+    const nextMovieId = await getNextMovieId();
+    const rawCode = Number(payload.movieCode);
+    const movieCode =
+      Number.isFinite(rawCode) && rawCode > 0 ? rawCode : nextMovieId;
 
     const created = await Movie.create({
       ...payload,
@@ -154,6 +165,7 @@ router.post("/", async (req, res, next) => {
       homeImg: normalizeLocalizedUrls(payload.homeImg),
       movieMedia: normalizeMovieMedia(payload.movieMedia),
       watchVideo,
+      movieCode,
       movieId: nextMovieId,
       id: nextMovieId,
       filterGenre: Array.isArray(payload.filterGenre) ? payload.filterGenre : [],

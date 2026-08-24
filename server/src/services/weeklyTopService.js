@@ -11,6 +11,7 @@ const {
   getCurrentWeekRange,
   getWeeklyUniqueViewRows,
 } = require("../utils/movieViews");
+const { resolveMovieNumericId } = require("./movieService");
 
 const MIN_UNIQUE_USERS = 2; // TODO: test uchun 2 — keyin 5 ga qaytarish
 const MAX_WEEKLY_TOP = 10;
@@ -18,9 +19,11 @@ const MAX_WEEKLY_TOP = 10;
 const toPublicMovie = (row) => {
   if (!row) return null;
   const { _id, movieId, createdAt, updatedAt, __v, ...movie } = row;
+  const id = resolveMovieNumericId({ movieId, id: movie.id });
   return {
     ...movie,
-    id: movie.id ?? movieId,
+    movieId: id,
+    id,
   };
 };
 

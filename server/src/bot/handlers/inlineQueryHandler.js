@@ -177,7 +177,7 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
   const thumbnail = movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
   const thumbnailUrl = toAbsoluteAssetUrl(thumbnail);
-  const movieId = movie?.id;
+  const movieId = movie?.movieId ?? movie?.id;
   const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
   const messageText = [title, buildMovieSummary(movie, language)].filter(Boolean).join("\n");
@@ -195,7 +195,7 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
 
   return {
     type: "article",
-    id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movie.id || "no-id"}`.slice(0, 64),
+    id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movieId || "no-id"}`.slice(0, 64),
     title,
     description: buildMovieSummary(movie, language),
     ...(thumbnailUrl
@@ -238,7 +238,7 @@ async function inlineQueryHandler(bot, query) {
     try {
       const fallbackResults = page.map((movie, index) => {
         const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
-        const movieId = movie?.id;
+        const movieId = movie?.movieId ?? movie?.id;
         const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
         const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
         return {

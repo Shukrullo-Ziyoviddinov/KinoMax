@@ -16,6 +16,7 @@ import { formatActionCount } from '../../utils/utils';
 import { getAuthToken } from '../../utils/authStorage';
 import { useAuthModal } from '../../context/AuthModalContext';
 import { fetchMovieReaction, removeMovieReaction, setMovieReaction } from '../../api/userApi';
+import { getVideoEmbed, getYouTubeVideoId } from '../../utils/videoEmbed';
 import './MovieDetail.css';
 
 const MovieSpecIcon = ({ type }) => {
@@ -912,7 +913,14 @@ const MovieDetail = () => {
                             const episodeKey = `${season.seasonNumber}-${epIndex}-${seasonsLang}-${videoSrc}`;
                             const meta = episodeMeta[episodeKey];
                             const durationMin = meta?.minutes;
-                            const isEpisodeReady = Boolean(meta?.videoReady && durationMin != null);
+                            const videoEmbed = getVideoEmbed(videoSrc);
+                            const youtubeId = getYouTubeVideoId(videoSrc);
+                            const youtubeThumb = youtubeId
+                              ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`
+                              : '';
+                            const isEmbedEpisode = Boolean(videoEmbed?.embedUrl);
+                            const isEpisodeReady = isEmbedEpisode
+                              || Boolean(meta?.videoReady && durationMin != null);
                             const episodeLabel = i18n.language === 'ru'
                               ? `${epIndex + 1} серия`
                               : `${epIndex + 1} qisim`;
@@ -948,7 +956,7 @@ const MovieDetail = () => {
                                   setShowWatchModal(true);
                                 }}
                                 onMouseEnter={(e) => {
-                                  if (!isEpisodeReady) return;
+                                  if (!isEpisodeReady || isEmbedEpisode) return;
                                   const v = e.currentTarget.querySelector('video');
                                   if (v) v.play().catch(() => {});
                                 }}
@@ -966,20 +974,40 @@ const MovieDetail = () => {
                                       height="100%"
                                     />
                                   )}
-                                  <video
-                                    src={videoSrc}
-                                    preload="auto"
-                                    muted
-                                    loop
-                                    playsInline
-                                    className={`movie-detail-episode-video${isEpisodeReady ? ' is-ready' : ''}`}
-                                    onLoadedMetadata={(e) => markDuration(e.currentTarget)}
-                                    onLoadedData={(e) => markVideoReady(e.currentTarget)}
-                                    onCanPlay={(e) => markVideoReady(e.currentTarget)}
-                                    onError={() => {
-                                      updateEpisodeMeta(episodeKey, { minutes: 0, videoReady: true });
-                                    }}
-                                  />
+                                  {youtubeThumb ? (
+                                    <img
+                                      src={youtubeThumb}
+                                      alt={episodeLabel}
+                                      className={`movie-detail-episode-video is-ready`}
+                                      loading="lazy"
+                                      draggable={false}
+                                    />
+                                  ) : isEmbedEpisode ? (
+                                    <iframe
+                                      src={videoEmbed.embedUrl}
+                                      title={episodeLabel}
+                                      className={`movie-detail-episode-video movie-detail-episode-video--embed is-ready`}
+                                      loading="lazy"
+                                      tabIndex={-1}
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      referrerPolicy="strict-origin-when-cross-origin"
+                                    />
+                                  ) : (
+                                    <video
+                                      src={videoSrc}
+                                      preload="auto"
+                                      muted
+                                      loop
+                                      playsInline
+                                      className={`movie-detail-episode-video${isEpisodeReady ? ' is-ready' : ''}`}
+                                      onLoadedMetadata={(e) => markDuration(e.currentTarget)}
+                                      onLoadedData={(e) => markVideoReady(e.currentTarget)}
+                                      onCanPlay={(e) => markVideoReady(e.currentTarget)}
+                                      onError={() => {
+                                        updateEpisodeMeta(episodeKey, { minutes: 0, videoReady: true });
+                                      }}
+                                    />
+                                  )}
                                 </div>
                                 <div className="movie-detail-episode-meta">
                                   {isEpisodeReady ? (

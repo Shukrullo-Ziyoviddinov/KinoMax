@@ -1,10 +1,34 @@
 /**
- * YouTube / Mover.uz havolalaridan embed URL yasaydi.
+ * YouTube / Mover.uz havolalaridan (yoki iframe HTML dan) embed URL yasaydi.
  */
 
+/**
+ * Input URL yoki <iframe src="..."> bo‘lishi mumkin — toza URL qaytaradi.
+ */
+export function extractVideoInputUrl(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+
+  // To‘liq yoki qisman iframe HTML
+  if (/<iframe[\s>]/i.test(raw) || /src\s*=/i.test(raw)) {
+    const match =
+      raw.match(/<iframe[^>]*?\bsrc\s*=\s*["']([^"']+)["']/i) ||
+      raw.match(/\bsrc\s*=\s*["'](https?:\/\/[^"']+)["']/i) ||
+      raw.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    if (match?.[1]) {
+      return match[1]
+        .trim()
+        .replace(/&amp;/gi, '&')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/g, "'");
+    }
+  }
+
+  return raw;
+}
+
 export function getYouTubeVideoId(url) {
-  if (!url) return '';
-  const raw = String(url).trim();
+  const raw = extractVideoInputUrl(url);
   if (!raw) return '';
 
   try {
@@ -36,8 +60,7 @@ export function getYouTubeVideoId(url) {
  * Mover: /watch/ID, /video/embed/ID
  */
 export function getMoverVideoId(url) {
-  if (!url) return '';
-  const raw = String(url).trim();
+  const raw = extractVideoInputUrl(url);
   if (!raw) return '';
 
   try {
@@ -93,7 +116,7 @@ export function getMoverEmbedUrl(url, { autoplay = false } = {}) {
  * @returns {{ provider: 'youtube'|'mover', embedUrl: string } | null}
  */
 export function getVideoEmbed(url, options = {}) {
-  const raw = String(url || '').trim();
+  const raw = extractVideoInputUrl(url);
   if (!raw) return null;
 
   if (isYouTubeUrl(raw)) {
@@ -115,4 +138,14 @@ export function getVideoEmbed(url, options = {}) {
 
 export function isEmbeddableVideoUrl(url) {
   return Boolean(getVideoEmbed(url));
+}
+
+/**
+ * Iframe/URL ni toza saqlash uchun: embed URL bo‘lsa uni, aks holda asl matn.
+ */
+export function normalizeVideoSource(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  const embed = getVideoEmbed(raw)?.embedUrl;
+  return embed || extractVideoInputUrl(raw) || raw;
 }

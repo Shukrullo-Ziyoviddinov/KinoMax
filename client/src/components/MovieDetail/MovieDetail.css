@@ -630,6 +630,12 @@
   opacity: 1;
 }
 
+.movie-detail-episode-video--embed {
+  border: 0;
+  pointer-events: none;
+  background: #000;
+}
+
 .movie-detail-episode-meta {
   display: flex;
   flex-direction: column;

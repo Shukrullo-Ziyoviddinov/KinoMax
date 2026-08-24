@@ -8,7 +8,7 @@ import {
   isAnonsCategory,
   TYPE_CATEGORY_OPTIONS,
 } from "../../constants/movieFormOptions";
-import { getVideoEmbed } from "../../utils/videoEmbed";
+import { getVideoEmbed, normalizeVideoSource } from "../../utils/videoEmbed";
 import { normalizeMediaUrl } from "../../utils/mediaUrl";
 import UploadProgress from "../UploadProgress/UploadProgress";
 import "./MovieForm.css";
@@ -445,8 +445,8 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
       // Anons uchun watchVideo bo'sh bo'lishi mumkin; boshqa bo'limga o'tkazganda
       // video qo'shilgan bo'lsa saqlanadi, eski ma'lumotlar o'chirilmaydi.
       const watchVideo = {
-        uz: form.watchVideo?.uz || "",
-        ru: form.watchVideo?.ru || "",
+        uz: normalizeVideoSource(form.watchVideo?.uz),
+        ru: normalizeVideoSource(form.watchVideo?.ru),
       };
 
       const payload = {
@@ -483,7 +483,13 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
         genre: form.genre,
         description: form.description,
         watchVideo,
-        seasons: form.seasons,
+        seasons: (form.seasons || []).map((season) => ({
+          ...season,
+          episodes: (season?.episodes || []).map((ep) => ({
+            uz: normalizeVideoSource(ep?.uz),
+            ru: normalizeVideoSource(ep?.ru),
+          })),
+        })),
         actors: form.actors,
         typeCategory: buildTypeCategoryForSection(section, form.typeCategory),
         filterCountry: form.filterCountry,
@@ -697,13 +703,13 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
               <div className="movie-form__video-dual" key={keyName}>
                 <Field
                   label={`Tomosha videosi — ${langLabel}${isAnons ? " (ixtiyoriy)" : ""}`}
-                  help="Mover.uz yoki YouTube havolasini qo‘ying. Preview pastda chiqadi."
+                  help="Mover.uz / YouTube URL yoki iframe kodini qo‘ying. Preview pastda chiqadi."
                 >
                   <input
                     id={`watch-video-url-${lang}`}
                     className="movie-form__input"
-                    type="url"
-                    placeholder="https://mover.uz/watch/... yoki https://youtu.be/..."
+                    type="text"
+                    placeholder="https://mover.uz/watch/... | iframe | https://youtu.be/..."
                     value={form.watchVideo?.[lang] || ""}
                     onChange={(e) => {
                       setUpload(keyName, { uploading: false, progress: 0, fileName: "" });
@@ -711,6 +717,16 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
                         watchVideo: {
                           ...form.watchVideo,
                           [lang]: e.target.value,
+                        },
+                      });
+                    }}
+                    onBlur={(e) => {
+                      const normalized = normalizeVideoSource(e.target.value);
+                      if (normalized === (form.watchVideo?.[lang] || "")) return;
+                      patch({
+                        watchVideo: {
+                          ...form.watchVideo,
+                          [lang]: normalized,
                         },
                       });
                     }}
@@ -949,12 +965,12 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
                       <div className="movie-form__video-dual" key={keyName}>
                         <Field
                           label={`Qism videosi — ${langLabel}`}
-                          help="Mover.uz yoki YouTube havolasini qo‘ying. Preview pastda chiqadi."
+                          help="Mover.uz / YouTube URL yoki iframe kodini qo‘ying. Preview pastda chiqadi."
                         >
                           <input
                             className="movie-form__input"
-                            type="url"
-                            placeholder="https://mover.uz/watch/... yoki https://youtu.be/..."
+                            type="text"
+                            placeholder="https://mover.uz/watch/... | iframe | https://youtu.be/..."
                             value={ep[lang] || ""}
                             onChange={(e) => {
                               const nextUrl = e.target.value;
@@ -968,6 +984,18 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
                                 episodes[epIndex] = {
                                   ...episodes[epIndex],
                                   [lang]: nextUrl,
+                                };
+                                return { ...prev, episodes };
+                              });
+                            }}
+                            onBlur={(e) => {
+                              const normalized = normalizeVideoSource(e.target.value);
+                              if (normalized === (ep[lang] || "")) return;
+                              updateSeason(seasonIndex, (prev) => {
+                                const episodes = [...prev.episodes];
+                                episodes[epIndex] = {
+                                  ...episodes[epIndex],
+                                  [lang]: normalized,
                                 };
                                 return { ...prev, episodes };
                               });

@@ -5,7 +5,7 @@
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  z-index: 1400;
+  z-index: 10050;
 }
 
 .sigin-modal {
@@ -18,7 +18,7 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
   padding: 1rem;
-  z-index: 1401;
+  z-index: 10051;
 }
 
 .sigin-modal-header {

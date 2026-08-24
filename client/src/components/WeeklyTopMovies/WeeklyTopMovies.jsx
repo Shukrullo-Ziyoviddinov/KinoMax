@@ -54,7 +54,7 @@ const WeeklyTopMovies = () => {
     return Number.isFinite(num) ? num : null;
   };
 
-  // Bo'sh bo'lim (hech kim 5+ unique view yig'magan) — ko'rsatilmaydi
+  // Bo'sh bo'lim (hech kim login qilib ko'rmagan) — ko'rsatilmaydi
   if (!isLoading && movies.length === 0) {
     return null;
   }

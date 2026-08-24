@@ -35,22 +35,24 @@ export const ViewedMoviesProvider = ({ children }) => {
   }, [data]);
 
   const addMovie = useCallback((movie) => {
-    if (!movie?.id) return;
+    const movieId = Number(movie?.id ?? movie?.movieId);
+    if (!Number.isFinite(movieId) || movieId <= 0) return;
+
     const item = {
-      id: movie.id,
+      id: movieId,
       typeCategory: movie.typeCategory || [],
       filterGenre: movie.filterGenre || [],
       filterCountry: movie.filterCountry || null
     };
     setData((prev) => {
-      const filtered = prev.items.filter((i) => i.id !== movie.id);
+      const filtered = prev.items.filter((i) => Number(i.id) !== movieId);
       const next = [item, ...filtered].slice(0, MAX_ITEMS);
       return { items: next };
     });
 
-    // Authorized users additionally persist viewed history in DB for recommendations.
+    // Weekly top / tavsiyalar uchun — faqat login user DB ga yoziladi
     if (getAuthToken()) {
-      addViewedMovieApi(movie.id).catch(() => {});
+      addViewedMovieApi(movieId).catch(() => {});
     }
   }, []);
 

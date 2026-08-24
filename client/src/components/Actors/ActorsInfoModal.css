@@ -1,17 +1,28 @@
-.actors-info-modal-overlay {
+.actors-info-modal-root {
   position: fixed;
   inset: 0;
   z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actors-info-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
+  animation: actors-info-overlay-in 0.22s ease;
+}
+
+.actors-info-modal-root.is-closing .actors-info-modal-overlay {
+  animation: actors-info-overlay-out 0.22s ease forwards;
 }
 
 .actors-info-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1401;
+  position: relative;
+  z-index: 1;
   width: min(92vw, 520px);
   max-height: min(80vh, 640px);
   display: flex;
@@ -79,11 +90,48 @@
   word-break: break-word;
 }
 
-@media (max-width: 480px) {
+@keyframes actors-info-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes actors-info-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes actors-info-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes actors-info-sheet-out {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+/* Mobile: ilova kabi pastki sheet */
+@media (max-width: 768px) {
+  .actors-info-modal-root {
+    align-items: flex-end;
+    justify-content: center;
+  }
+
   .actors-info-modal {
-    width: min(94vw, 520px);
-    max-height: 75vh;
-    border-radius: 14px;
+    width: 100%;
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    transform: translateY(0);
+    animation: actors-info-sheet-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  .actors-info-modal-root.is-closing .actors-info-modal {
+    animation: actors-info-sheet-out 0.22s ease forwards;
   }
 
   .actors-info-modal-title {

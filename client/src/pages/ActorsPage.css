@@ -244,6 +244,14 @@
     font-size: 0.85rem;
     line-height: 1.45;
   }
+
+  .actors-page-movies-title {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    padding: 0 1rem;
+  }
 }
 
 @media (max-width: 480px) {

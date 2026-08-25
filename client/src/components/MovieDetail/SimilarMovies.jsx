@@ -7,6 +7,7 @@ import { fetchSimilarMovies } from '../../api/moviesApi';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import ShowMoreButton, { getDisplayItems, DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
+import { getMovieAgeRestriction } from '../../utils/utils';
 import './SimilarMovies.css';
 
 const SimilarMovies = ({ currentMovie }) => {
@@ -152,9 +153,9 @@ const SimilarMovies = ({ currentMovie }) => {
                     FHD
                   </div>
                 )}
-                {Number(movie.ageRestriction) > 0 && (
+                {getMovieAgeRestriction(movie) != null && (
                   <div className="similar-movies-item-badge similar-movies-item-badge-age">
-                    {movie.ageRestriction}+
+                    {getMovieAgeRestriction(movie)}+
                   </div>
                 )}
               </div>

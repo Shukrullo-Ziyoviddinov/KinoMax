@@ -6,6 +6,7 @@ import { useWishlist } from '../../context/WishlistContext';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useLoading } from '../../context/LoadingContext';
 import { normalizeMediaUrl } from '../../utils/mediaUrl';
+import { getMovieAgeRestriction } from '../../utils/utils';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import ShowMoreButton, { getDisplayItems, shouldShowMore, DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
@@ -55,6 +56,7 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
 
   const renderMovieItem = (movie, index) => {
     const imdbRating = getImdbRating(movie);
+    const ageRestriction = getMovieAgeRestriction(movie);
 
     // Dataset can contain duplicate numeric ids, so include index to keep keys unique.
     return (
@@ -94,8 +96,8 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
             ) : (
               <div className="movies-item-badge movies-item-badge-fhd">FHD</div>
             )}
-            {Number(movie.ageRestriction) > 0 && (
-              <div className="movies-item-badge movies-item-badge-age">{movie.ageRestriction}+</div>
+            {ageRestriction != null && (
+              <div className="movies-item-badge movies-item-badge-age">{ageRestriction}+</div>
             )}
             {imdbRating != null && (
               <div className="movies-item-rating">

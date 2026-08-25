@@ -12,17 +12,47 @@ function getTelegramWebApp() {
   return isTelegramClient ? tg : null;
 }
 
-/** WatchModal ochiq bo‘lsa, Telegram ← shu handler orqali modalni yopadi */
-let watchModalCloseHandler = null;
+/** Oxirgi ochiq modal (watch, search, …) Telegram ← bilan yopiladi */
+const overlayCloseStack = [];
 
+function syncTelegramBackVisibility() {
+  const tg = getTelegramWebApp();
+  if (!tg?.BackButton) return;
+
+  const path = window.location.pathname;
+  if (overlayCloseStack.length > 0 || path !== '/') {
+    tg.BackButton.show();
+  } else {
+    tg.BackButton.hide();
+  }
+}
+
+export function pushTelegramOverlayClose(handler) {
+  if (typeof handler !== 'function') return;
+  overlayCloseStack.push(handler);
+  syncTelegramBackVisibility();
+}
+
+export function popTelegramOverlayClose(handler) {
+  const i = overlayCloseStack.lastIndexOf(handler);
+  if (i >= 0) overlayCloseStack.splice(i, 1);
+  syncTelegramBackVisibility();
+}
+
+/** @deprecated WatchModal — pushTelegramOverlayClose ishlating */
 export function setTelegramWatchModalClose(handler) {
-  watchModalCloseHandler = typeof handler === 'function' ? handler : null;
+  if (typeof handler === 'function') {
+    pushTelegramOverlayClose(handler);
+  } else if (overlayCloseStack.length) {
+    overlayCloseStack.pop();
+    syncTelegramBackVisibility();
+  }
 }
 
 /**
  * Telegram Mini App yuqori ← BackButton:
  * "/" da yashirin (faqat X), boshqa route'larda ko'rinadi.
- * Watch modal ochiq bo‘lsa — faqat modal yopiladi.
+ * Modal (watch / search) ochiq bo‘lsa — faqat modal yopiladi.
  */
 function TelegramBackButton() {
   const location = useLocation();
@@ -35,8 +65,8 @@ function TelegramBackButton() {
     const backButton = tg.BackButton;
 
     const handleBack = () => {
-      if (watchModalCloseHandler) {
-        watchModalCloseHandler();
+      if (overlayCloseStack.length > 0) {
+        overlayCloseStack[overlayCloseStack.length - 1]();
         return;
       }
       if (window.history.length > 1) {
@@ -46,11 +76,7 @@ function TelegramBackButton() {
       }
     };
 
-    if (location.pathname === '/') {
-      backButton.hide();
-    } else {
-      backButton.show();
-    }
+    syncTelegramBackVisibility();
 
     if (typeof backButton.onClick === 'function') {
       backButton.onClick(handleBack);

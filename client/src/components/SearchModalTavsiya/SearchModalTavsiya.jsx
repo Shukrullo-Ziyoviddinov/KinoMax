@@ -5,6 +5,7 @@ import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useViewedMovies } from '../../context/ViewedMoviesContext';
 import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { fetchRecommendations } from '../../api/recommendationsApi';
+import { getMovieAgeRestriction } from '../../utils/utils';
 import './SearchModalTavsiya.css';
 
 const SearchModalTavsiya = ({ onMovieClick }) => {
@@ -68,9 +69,9 @@ const SearchModalTavsiya = ({ onMovieClick }) => {
               ) : (
                 <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-fhd">FHD</span>
               )}
-              {Number(movie.ageRestriction) > 0 && (
+              {getMovieAgeRestriction(movie) != null && (
                 <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-age">
-                  {movie.ageRestriction}+
+                  {getMovieAgeRestriction(movie)}+
                 </span>
               )}
             </div>

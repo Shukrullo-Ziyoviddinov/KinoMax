@@ -6,6 +6,7 @@ import ShowMoreButton from '../ShowMoreButton/ShowMoreButton';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import { useMoviesCatalog, HOME_SECTION_LIMIT } from '../../context/MoviesCatalogContext';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
+import { getMovieAgeRestriction } from '../../utils/utils';
 import './SearchModalAnons.css';
 
 const PLACEHOLDER_COUNT = 6;
@@ -114,9 +115,9 @@ const SearchModalAnons = ({ onAnonsClick }) => {
                   <span className="search-modal-anons-badge search-modal-anons-badge-soon">
                     {t('searchModal.tezOrada', 'Tez orada')}
                   </span>
-                  {Number(item.ageRestriction) > 0 && (
+                  {getMovieAgeRestriction(item) != null && (
                     <span className="search-modal-anons-badge search-modal-anons-badge-age">
-                      {item.ageRestriction}+
+                      {getMovieAgeRestriction(item)}+
                     </span>
                   )}
                 </div>

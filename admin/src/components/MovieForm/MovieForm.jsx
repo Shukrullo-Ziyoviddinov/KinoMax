@@ -194,10 +194,10 @@ function normalizeInitialMovie(data = {}) {
     filterCountry: data?.filterCountry || "",
     like: String(data?.like ?? ""),
     dislike: String(data?.dislike ?? ""),
-    ageRestriction:
-      data?.ageRestriction != null && data?.ageRestriction !== ""
-        ? String(data.ageRestriction)
-        : "",
+    ageRestriction: (() => {
+      const n = Number(data?.ageRestriction);
+      return Number.isFinite(n) && n > 0 ? String(n) : "";
+    })(),
     ratingImdb:
       data?.ratingImdb != null && data?.ratingImdb !== ""
         ? String(data.ratingImdb)

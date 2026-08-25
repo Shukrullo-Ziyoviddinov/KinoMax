@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchWeeklyTopMovies, WEEKLY_TOP_LIMIT } from '../../api/moviesApi';
 import { useWishlist } from '../../context/WishlistContext';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
+import { getMovieAgeRestriction } from '../../utils/utils';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import './WeeklyTopMovies.css';
@@ -90,6 +91,7 @@ const WeeklyTopMovies = () => {
                   const rank = movie.weeklyRank || index + 1;
                   const isWideRank = rank >= 10;
                   const imdbRating = getImdbRating(movie);
+                  const ageRestriction = getMovieAgeRestriction(movie);
                   return (
                     <div
                       key={`${movie.id}-${rank}`}
@@ -134,9 +136,9 @@ const WeeklyTopMovies = () => {
                             </svg>
                           </button>
                           <div className="movies-item-badge movies-item-badge-fhd">FHD</div>
-                          {Number(movie.ageRestriction) > 0 && (
+                          {ageRestriction != null && (
                             <div className="movies-item-badge movies-item-badge-age">
-                              {movie.ageRestriction}+
+                              {ageRestriction}+
                             </div>
                           )}
                           {imdbRating != null && (

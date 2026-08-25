@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { searchMoviesByQuery } from '../../utils/searchMovies';
+import { getMovieAgeRestriction } from '../../utils/utils';
 import './SearchModalResults.css';
 
 const SearchModalResults = ({ query, onMovieClick }) => {
@@ -59,9 +60,9 @@ const SearchModalResults = ({ query, onMovieClick }) => {
                   {t('searchModal.tezOrada', 'Tez orada')}
                 </span>
               )}
-              {Number(movie.ageRestriction) > 0 && (
+              {getMovieAgeRestriction(movie) != null && (
                 <span className="search-modal-results-badge search-modal-results-badge-age">
-                  {movie.ageRestriction}+
+                  {getMovieAgeRestriction(movie)}+
                 </span>
               )}
             </div>

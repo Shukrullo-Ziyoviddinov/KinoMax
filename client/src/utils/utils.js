@@ -37,3 +37,18 @@ export const formatActionCount = (n) => {
   if (num % 1000 === 0) return (num / 1000) + 'k';
   return (num / 1000).toFixed(1) + 'k';
 };
+
+/**
+ * Yosh badge uchun raqam.
+ * ageRestriction yoki specs.ageRating ("16+") dan o‘qiydi.
+ */
+export const getMovieAgeRestriction = (movie) => {
+  if (!movie || typeof movie !== 'object') return null;
+  const candidates = [movie.ageRestriction, movie.specs?.ageRating];
+  for (const value of candidates) {
+    if (value == null || value === '') continue;
+    const parsed = Number.parseInt(String(value).replace(/[^\d]/g, ''), 10);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return null;
+};

@@ -7,7 +7,7 @@ import { getAuthToken } from '../../utils/authStorage';
 import { fetchActiveAd } from '../../api/adsApi';
 import { getVideoEmbed } from '../../utils/videoEmbed';
 import VideoLoader from '../VideoLoader/VideoLoader';
-import { setTelegramWatchModalClose, getTelegramWebApp } from '../TelegramBackButton/TelegramBackButton';
+import { pushTelegramOverlayClose, popTelegramOverlayClose, getTelegramWebApp } from '../TelegramBackButton/TelegramBackButton';
 import './WatchModal.css';
 
 const AD_INTERVAL_SECONDS = 900; // 15 daqiqa
@@ -596,10 +596,8 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
       onCloseRef.current();
     };
 
-    setTelegramWatchModalClose(() => {
-      // Telegram ← : history state ni ham tozalash (cleanup history.back qiladi)
-      closeModal();
-    });
+    const tgHandler = () => closeModal();
+    pushTelegramOverlayClose(tgHandler);
 
     const tg = getTelegramWebApp();
     if (tg?.BackButton) {
@@ -613,7 +611,7 @@ const WatchModal = ({ movie, videoUrl, onClose }) => {
 
     window.addEventListener('popstate', onPopState);
     return () => {
-      setTelegramWatchModalClose(null);
+      popTelegramOverlayClose(tgHandler);
       window.removeEventListener('popstate', onPopState);
       if (!closedByPopstateRef.current) {
         window.history.back();

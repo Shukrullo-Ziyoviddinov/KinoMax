@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SearchModalGenre from '../SearchModalGenre/SearchModalGenre';
@@ -8,6 +7,7 @@ import SearchModalTavsiya from '../SearchModalTavsiya/SearchModalTavsiya';
 import SearchModalResults from '../SearchModalResults/SearchModalResults';
 import { isAuthenticated } from '../../utils/authStorage';
 import { useAuthModal } from '../../context/AuthModalContext';
+import { pushTelegramOverlayClose, popTelegramOverlayClose } from '../TelegramBackButton/TelegramBackButton';
 import './NavbarMobile.css';
 
 const NavbarMobile = () => {
@@ -18,12 +18,39 @@ const NavbarMobile = () => {
   const pathname = location.pathname;
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const closedByPopstateRef = useRef(false);
 
   useEffect(() => {
     const openMobileSearch = () => setShowSearch(true);
     window.addEventListener('open-mobile-search', openMobileSearch);
     return () => window.removeEventListener('open-mobile-search', openMobileSearch);
   }, []);
+
+  // Telegram ← / qurilma orqaga: faqat search modal yopiladi
+  useEffect(() => {
+    if (!showSearch) return undefined;
+
+    closedByPopstateRef.current = false;
+    window.history.pushState({ mobileSearch: true }, '');
+
+    const closeSearch = () => setShowSearch(false);
+    const tgHandler = () => closeSearch();
+    pushTelegramOverlayClose(tgHandler);
+
+    const onPopState = () => {
+      closedByPopstateRef.current = true;
+      closeSearch();
+    };
+    window.addEventListener('popstate', onPopState);
+
+    return () => {
+      popTelegramOverlayClose(tgHandler);
+      window.removeEventListener('popstate', onPopState);
+      if (!closedByPopstateRef.current) {
+        window.history.back();
+      }
+    };
+  }, [showSearch]);
 
   const isHomeActive = pathname === '/';
   const isSearchActive = pathname.startsWith('/search');

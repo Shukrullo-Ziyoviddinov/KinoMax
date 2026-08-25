@@ -51,7 +51,11 @@ const SiginModal = ({ onClose, onSuccess }) => {
     const nextErrors = registerValidation;
     const hasError = Object.values(nextErrors).some(Boolean);
     setErrors(nextErrors);
-    if (hasError) return;
+    if (hasError) {
+      const firstError = Object.values(nextErrors).find(Boolean);
+      if (firstError) showToast(firstError, 'error');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -66,12 +70,15 @@ const SiginModal = ({ onClose, onSuccess }) => {
       showToast(t('auth.registerSuccess'), 'success');
       onSuccess?.();
     } catch (error) {
-      const message =
-        error?.status === 409
-          ? t('toast.phoneAlreadyRegistered')
-          : error?.status === 413
+      const serverMsg = String(error?.message || '');
+      const isPhoneTaken =
+        error?.status === 409 ||
+        /allaqachon|already registered|уже зарегистрирован/i.test(serverMsg);
+      const message = isPhoneTaken
+        ? t('toast.phoneAlreadyRegistered')
+        : error?.status === 413
           ? t('toast.requestTooLarge')
-          : (error?.message || t('auth.errorFallback'));
+          : (serverMsg || t('auth.errorFallback'));
       showToast(message, 'error');
     } finally {
       setLoading(false);
@@ -83,7 +90,11 @@ const SiginModal = ({ onClose, onSuccess }) => {
     const nextErrors = loginValidation;
     const hasError = Object.values(nextErrors).some(Boolean);
     setErrors(nextErrors);
-    if (hasError) return;
+    if (hasError) {
+      const firstError = Object.values(nextErrors).find(Boolean);
+      if (firstError) showToast(firstError, 'error');
+      return;
+    }
 
     setLoading(true);
     try {

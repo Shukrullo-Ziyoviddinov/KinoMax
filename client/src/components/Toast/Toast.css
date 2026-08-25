@@ -3,7 +3,8 @@
   top: 60px;
   left: 0;
   right: 0;
-  z-index: 2200;
+  /* Above SiginModal (10050+) so auth errors stay visible while modal is open */
+  z-index: 11000;
   pointer-events: none;
 }
 

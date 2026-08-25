@@ -68,7 +68,7 @@ const SearchModalTavsiya = ({ onMovieClick }) => {
               ) : (
                 <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-fhd">FHD</span>
               )}
-              {movie.ageRestriction != null && (
+              {Number(movie.ageRestriction) > 0 && (
                 <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-age">
                   {movie.ageRestriction}+
                 </span>

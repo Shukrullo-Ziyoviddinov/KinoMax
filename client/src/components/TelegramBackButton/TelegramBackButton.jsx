@@ -12,9 +12,17 @@ function getTelegramWebApp() {
   return isTelegramClient ? tg : null;
 }
 
+/** WatchModal ochiq bo‘lsa, Telegram ← shu handler orqali modalni yopadi */
+let watchModalCloseHandler = null;
+
+export function setTelegramWatchModalClose(handler) {
+  watchModalCloseHandler = typeof handler === 'function' ? handler : null;
+}
+
 /**
  * Telegram Mini App yuqori ← BackButton:
  * "/" da yashirin (faqat X), boshqa route'larda ko'rinadi.
+ * Watch modal ochiq bo‘lsa — faqat modal yopiladi.
  */
 function TelegramBackButton() {
   const location = useLocation();
@@ -27,6 +35,10 @@ function TelegramBackButton() {
     const backButton = tg.BackButton;
 
     const handleBack = () => {
+      if (watchModalCloseHandler) {
+        watchModalCloseHandler();
+        return;
+      }
       if (window.history.length > 1) {
         navigate(-1);
       } else {
@@ -56,3 +68,4 @@ function TelegramBackButton() {
 }
 
 export default TelegramBackButton;
+export { getTelegramWebApp };

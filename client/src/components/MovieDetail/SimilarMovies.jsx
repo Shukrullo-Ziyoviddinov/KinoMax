@@ -152,7 +152,7 @@ const SimilarMovies = ({ currentMovie }) => {
                     FHD
                   </div>
                 )}
-                {movie.ageRestriction != null && (
+                {Number(movie.ageRestriction) > 0 && (
                   <div className="similar-movies-item-badge similar-movies-item-badge-age">
                     {movie.ageRestriction}+
                   </div>

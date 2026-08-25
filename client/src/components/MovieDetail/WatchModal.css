@@ -35,7 +35,7 @@
   max-width: 1400px;
   max-height: 85vh;
   margin-top: 0;
-  background: var(--bg-card);
+  background: #000;
   border-radius: 20px;
   position: relative;
   display: flex;
@@ -847,30 +847,7 @@
   }
   
   .watch-modal-close {
-    position: static;
-    width: 96px;
-    height: 38px;
-    padding: 0 0.7rem;
-    border-radius: 10px;
-    font-size: 15px;
-    background: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(10px);
-    transform: none;
-    justify-content: flex-start;
-    align-self: flex-start;
-    margin-top: 0.6rem;
-  }
-
-  .watch-modal-close:hover,
-  .watch-modal-close:active {
-    transform: none;
-  }
-
-  .watch-modal-close span {
-    display: inline;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
+    display: none;
   }
   
   .watch-modal-content {
@@ -1056,14 +1033,7 @@
   }
   
   .watch-modal-close {
-    width: 100%;
-    align-self: stretch;
-    text-align: center;
-    height: 36px;
-    padding: 0 0.7rem;
-    border-radius: 9px;
-    font-size: 14px;
-    justify-content: center;
+    display: none;
   }
   
   .watch-modal-content {
@@ -1224,17 +1194,7 @@
   }
   
   .watch-modal-close {
-    width: 100%;
-    align-self: stretch;
-    height: 34px;
-    padding: 0 0.7rem;
-    border-radius: 8px;
-    font-size: 13px;
-    justify-content: center;
-  }
-
-  .watch-modal-close span {
-    font-size: 12px;
+    display: none;
   }
   
   .watch-modal-content {

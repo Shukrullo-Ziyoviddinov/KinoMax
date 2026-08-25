@@ -194,6 +194,22 @@ function normalizeInitialMovie(data = {}) {
     filterCountry: data?.filterCountry || "",
     like: String(data?.like ?? ""),
     dislike: String(data?.dislike ?? ""),
+    ageRestriction:
+      data?.ageRestriction != null && data?.ageRestriction !== ""
+        ? String(data.ageRestriction)
+        : "",
+    ratingImdb:
+      data?.ratingImdb != null && data?.ratingImdb !== ""
+        ? String(data.ratingImdb)
+        : "",
+    ratingKinopoisk:
+      data?.ratingKinopoisk != null && data?.ratingKinopoisk !== ""
+        ? String(data.ratingKinopoisk)
+        : "",
+    ratingNetflix:
+      data?.ratingNetflix != null && data?.ratingNetflix !== ""
+        ? String(data.ratingNetflix)
+        : "",
     specs: {
       duration: data?.specs?.duration ?? "",
       ageRating: data?.specs?.ageRating || "",
@@ -404,6 +420,18 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
     return Number.isFinite(n) ? n : fallback;
   };
 
+  /** Yosh cheklovi: 0 yoki bo'sh → 0; "16+" matndan ham olish mumkin */
+  const resolveAgeRestriction = () => {
+    const direct = Number(form.ageRestriction);
+    if (Number.isFinite(direct) && direct > 0) return direct;
+    const match = String(form.specs?.ageRating || "").match(/(\d{1,2})/);
+    if (match) {
+      const fromText = Number(match[1]);
+      if (Number.isFinite(fromText) && fromText > 0) return fromText;
+    }
+    return 0;
+  };
+
   const normalizeCommaText = (text) =>
     String(text || "")
       .split(",")
@@ -462,6 +490,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
     try {
       const categoryName = form.categoryName || form.category || "";
       const section = CATEGORY_NAME_TO_SECTION[categoryName] || "";
+      const ageRestriction = resolveAgeRestriction();
       // Anons uchun watchVideo bo'sh bo'lishi mumkin; boshqa bo'limga o'tkazganda
       // video qo'shilgan bo'lsa saqlanadi, eski ma'lumotlar o'chirilmaydi.
       const watchVideo = {
@@ -497,7 +526,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
         ratingImdb: form.ratingImdb === "" ? 0 : Number(form.ratingImdb),
         ratingKinopoisk: form.ratingKinopoisk === "" ? 0 : Number(form.ratingKinopoisk),
         ratingNetflix: form.ratingNetflix === "" ? 0 : Number(form.ratingNetflix),
-        ageRestriction: toNumberOrDefault(form.ageRestriction, 0),
+        ageRestriction,
         categoryName,
         category: categoryName,
         genre: form.genre,
@@ -518,7 +547,9 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
         dislike: String(form.dislike || ""),
         specs: {
           duration: toNumberOrDefault(form.specs.duration, 0),
-          ageRating: String(form.specs.ageRating || ""),
+          ageRating: String(
+            form.specs.ageRating || (ageRestriction > 0 ? `${ageRestriction}+` : "")
+          ),
           year: toNumberOrDefault(form.specs.year, 0),
           countries: form.specs.countries,
           languages: form.specs.languages,
@@ -1294,10 +1325,13 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
               onChange={(e) => patch({ ratingNetflix: e.target.value })}
             />
           </Field>
-          <Field label="Yosh cheklovi" help="Masalan: 16 yoki 18.">
+          <Field label="Yosh cheklovi" help="Badge uchun raqam. Masalan: 16 yoki 18 (0 ko‘rsatilmaydi).">
             <input
               className="movie-form__input"
               type="number"
+              min="0"
+              max="21"
+              placeholder="Masalan: 16"
               value={form.ageRestriction}
               onChange={(e) => patch({ ageRestriction: e.target.value })}
             />

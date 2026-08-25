@@ -114,7 +114,7 @@ const SearchModalAnons = ({ onAnonsClick }) => {
                   <span className="search-modal-anons-badge search-modal-anons-badge-soon">
                     {t('searchModal.tezOrada', 'Tez orada')}
                   </span>
-                  {item.ageRestriction != null && (
+                  {Number(item.ageRestriction) > 0 && (
                     <span className="search-modal-anons-badge search-modal-anons-badge-age">
                       {item.ageRestriction}+
                     </span>

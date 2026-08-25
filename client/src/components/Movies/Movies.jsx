@@ -94,7 +94,7 @@ const Movies = ({ sectionType = 'recommended', limit = DEFAULT_LIMIT, filteredMo
             ) : (
               <div className="movies-item-badge movies-item-badge-fhd">FHD</div>
             )}
-            {movie.ageRestriction != null && (
+            {Number(movie.ageRestriction) > 0 && (
               <div className="movies-item-badge movies-item-badge-age">{movie.ageRestriction}+</div>
             )}
             {imdbRating != null && (

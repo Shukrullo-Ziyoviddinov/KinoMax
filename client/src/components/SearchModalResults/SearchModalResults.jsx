@@ -59,7 +59,7 @@ const SearchModalResults = ({ query, onMovieClick }) => {
                   {t('searchModal.tezOrada', 'Tez orada')}
                 </span>
               )}
-              {movie.ageRestriction != null && (
+              {Number(movie.ageRestriction) > 0 && (
                 <span className="search-modal-results-badge search-modal-results-badge-age">
                   {movie.ageRestriction}+
                 </span>

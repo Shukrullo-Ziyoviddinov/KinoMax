@@ -158,6 +158,8 @@ router.post("/", async (req, res, next) => {
     const rawCode = Number(payload.movieCode);
     const movieCode =
       Number.isFinite(rawCode) && rawCode > 0 ? rawCode : nextMovieId;
+    const ageRaw = Number(payload.ageRestriction);
+    const ageRestriction = Number.isFinite(ageRaw) && ageRaw > 0 ? ageRaw : 0;
 
     const created = await Movie.create({
       ...payload,
@@ -166,6 +168,7 @@ router.post("/", async (req, res, next) => {
       movieMedia: normalizeMovieMedia(payload.movieMedia),
       watchVideo,
       movieCode,
+      ageRestriction,
       movieId: nextMovieId,
       id: nextMovieId,
       filterGenre: Array.isArray(payload.filterGenre) ? payload.filterGenre : [],
@@ -206,6 +209,10 @@ router.put("/:id", async (req, res, next) => {
     }
     if (body.movieMedia != null) {
       body.movieMedia = normalizeMovieMedia(body.movieMedia);
+    }
+    if (body.ageRestriction != null) {
+      const age = Number(body.ageRestriction);
+      body.ageRestriction = Number.isFinite(age) && age > 0 ? age : 0;
     }
     const updated = await Movie.findOneAndUpdate(
       { movieId },

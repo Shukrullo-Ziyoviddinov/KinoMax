@@ -5,7 +5,7 @@ const {
   callbackHandler,
   sendLanguageSelector,
 } = require("./handlers/callbackHandlers");
-const { inlineQueryHandler, handleChosenInlineResult } = require("./handlers/inlineQueryHandler");
+const { inlineQueryHandler } = require("./handlers/inlineQueryHandler");
 const { touchBotUser } = require("./handlers/botUserTracker");
 
 dotenv.config();
@@ -81,14 +81,6 @@ if (!token) {
       } catch (_e) {
         // ignore
       }
-    }
-  });
-
-  bot.on("chosen_inline_result", async (chosen) => {
-    try {
-      await handleChosenInlineResult(bot, chosen);
-    } catch (error) {
-      console.error("chosen_inline_result xatoligi:", error?.message || error);
     }
   });
 

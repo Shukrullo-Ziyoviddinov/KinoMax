@@ -532,9 +532,26 @@ async function messageHandler(bot, msg) {
     return;
   }
 
-  // Inline qidiruvdan tanlangan natija chatga yuborilganda bu xabarni qayta ishlamaymiz.
-  // Aks holda "kod raqam yuboring" degan noto'g'ri prompt chiqib qoladi.
+  // Inline qidiruvdan tanlangan natija: to'liq poster kartasini yuboramiz
   if (msg?.via_bot) {
+    try {
+      const movieIdMatch = String(text || "").match(/\/movie\/(\d+)/);
+      const movieId = movieIdMatch ? Number(movieIdMatch[1]) : null;
+      if (movieId && Number.isFinite(movieId) && movieId > 0) {
+        const Movie = require("../../models/movies");
+        const movie = await Movie.findOne({
+          $or: [{ movieId }, { id: movieId }],
+        })
+          .select("-__v")
+          .lean();
+        if (movie) {
+          await bot.sendChatAction(chatId, "upload_photo").catch(() => {});
+          await sendMovieVideo(bot, chatId, movie, language);
+        }
+      }
+    } catch (error) {
+      console.error("via_bot movie card xatoligi:", error?.message || error);
+    }
     return;
   }
 

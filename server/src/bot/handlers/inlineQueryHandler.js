@@ -208,26 +208,10 @@ function getMoviePosterUrl(movie, language) {
   return null;
 }
 
-function buildInlineCaption(movie, language) {
-  const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
-  const summary = buildMovieSummary(movie, language);
-  const movieId = movie?.movieId ?? movie?.id;
-  const movieCode = movie?.movieCode;
-  const base = getWebAppUrl();
-  const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movieCode}`;
-  const codeLine =
-    movieCode != null
-      ? language === "ru"
-        ? `Код: ${movieCode}`
-        : `Kod: ${movieCode}`
-      : "";
-  return [title, summary, codeLine, movieUrl].filter(Boolean).join("\n").slice(0, 1024);
-}
-
 /**
- * Qidiruv ro'yxati: kichik thumb + nom + tavsif (article).
- * Chatga yuborish: chosen_inline_result orqali rasm+matn (deliverMovieCard).
- * id: pick|{movieId}|{lang}
+ * Ro'yxat: kichik thumb + nom + tavsif.
+ * Chat: poster URL (preview) + matnlar + Tomosha tugmasi.
+ * (chosen_inline_result BotFather Feedback talab qiladi — ishonchli emas)
  */
 function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
@@ -244,17 +228,15 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
         : `Kod: ${movieCode}`
       : "";
 
-  const resultId = `pick|${movieId || movieCode || 0}|${language}|${uniqueSuffix}`.slice(
-    0,
-    64
-  );
+  const resultId = `m${movieId || movieCode || 0}-${uniqueSuffix}`.slice(0, 64);
 
   const watchButton = {
     text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
     url: movieUrl,
   };
 
-  // Ro'yxatda faqat kichik poster + matn (katta photo tipi EMAS)
+  const textBody = [title, codeLine, movieUrl].filter(Boolean).join("\n");
+
   return {
     type: "article",
     id: resultId,
@@ -273,53 +255,15 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
           thumb_height: 64,
         }
       : {}),
-    // Qisqa matn — to'liq rasm+caption chosen_inline_result da yuboriladi
+    // Qisqa matn (movie URL bilan) — to'liq rasm via_bot handler yuboradi
     input_message_content: {
-      message_text: `🎬 ${title}${codeLine ? `\n${codeLine}` : ""}`.slice(0, 4096),
+      message_text: `🎬 ${textBody}`.slice(0, 4096),
       disable_web_page_preview: true,
     },
     reply_markup: {
       inline_keyboard: [[watchButton]],
     },
   };
-}
-
-function parsePickResultId(resultId) {
-  const raw = String(resultId || "");
-  const parts = raw.split("|");
-  if (parts[0] !== "pick") return null;
-  const movieId = Number(parts[1]);
-  const language = parts[2] === "ru" ? "ru" : "uz";
-  if (!Number.isFinite(movieId) || movieId <= 0) return null;
-  return { movieId, language };
-}
-
-async function handleChosenInlineResult(bot, chosen) {
-  const parsed = parsePickResultId(chosen?.result_id);
-  const userId = chosen?.from?.id;
-  if (!parsed || !userId) return;
-
-  const Movie = require("../../models/movies");
-  const movie = await Movie.findOne({
-    $or: [{ movieId: parsed.movieId }, { id: parsed.movieId }],
-  })
-    .select("-__v")
-    .lean();
-
-  if (!movie) return;
-
-  try {
-    const { deliverMovieCard } = require("./messageHandler");
-    if (typeof deliverMovieCard === "function") {
-      await bot.sendChatAction(userId, "upload_photo").catch(() => {});
-      await deliverMovieCard(bot, userId, movie, parsed.language);
-    }
-  } catch (error) {
-    console.error(
-      "chosen_inline_result deliver xatoligi:",
-      error?.message || error
-    );
-  }
 }
 
 async function inlineQueryHandler(bot, query) {
@@ -413,5 +357,4 @@ async function inlineQueryHandler(bot, query) {
 
 module.exports = {
   inlineQueryHandler,
-  handleChosenInlineResult,
 };

@@ -1,7 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { getMovieByCode } = require("../../services/movieService");
-const { getUserLanguage } = require("../../utils/userState");
+const { getMovieByCode, getAllMovies } = require("../../services/movieService");
+const {
+  getUserLanguage,
+  isAwaitingSearch,
+  clearAwaitingSearch,
+} = require("../../utils/userState");
 const { normalizeLanguage, t } = require("../../utils/i18n");
 const { sendLanguageSelector } = require("./callbackHandlers");
 const { isLanguageButton } = require("../keyboards/mainKeyboard");
@@ -11,6 +15,13 @@ const {
   sendSubscriptionPrompt,
 } = require("./subscriptionHandler");
 const { getWebAppUrl } = require("../webAppUrl");
+const {
+  filterMoviesByQuery,
+  getMovieDisplayTitle,
+} = require("../utils/movieSearch");
+const {
+  BOT_SEARCH_PICK_PREFIX,
+} = require("../keyboards/searchActionsKeyboard");
 
 const clientPublicPath = path.resolve(__dirname, "../../../../client/public");
 const telegramVideoCache = new Map();
@@ -458,10 +469,64 @@ async function sendMovieVideo(bot, chatId, movie, language) {
   await sendPhotoFromResolvedSource(bot, chatId, source, caption, { reply_markup });
 }
 
+async function handleTextMovieSearch(bot, chatId, userId, text, language) {
+  const query = String(text || "").trim();
+  if (!query) {
+    await bot.sendMessage(chatId, t(language, "botSearchTypePrompt"));
+    return;
+  }
+
+  if (/^(bekor|cancel|отмена)$/i.test(query)) {
+    clearAwaitingSearch(userId);
+    await bot.sendMessage(chatId, t(language, "botSearchCancelled"));
+    return;
+  }
+
+  // Agar faqat raqam — kod bo'yicha ochish (qidiruv rejimidan chiqamiz)
+  if (/^\d+$/.test(query)) {
+    clearAwaitingSearch(userId);
+    return { asCode: Number(query) };
+  }
+
+  const movies = await getAllMovies();
+  const matches = filterMoviesByQuery(movies, query, language).slice(0, 10);
+
+  if (!matches.length) {
+    await bot.sendMessage(chatId, t(language, "botSearchNoResults", query));
+    return;
+  }
+
+  clearAwaitingSearch(userId);
+
+  if (matches.length === 1) {
+    await bot.sendChatAction(chatId, "upload_photo").catch(() => {});
+    await sendMovieVideo(bot, chatId, matches[0], language);
+    return;
+  }
+
+  const rows = matches.map((movie) => {
+    const id = movie.movieId ?? movie.id;
+    const title = getMovieDisplayTitle(movie, language);
+    const code = movie.movieCode != null ? ` (#${movie.movieCode})` : "";
+    const label = `${title}${code}`.slice(0, 64);
+    return [
+      {
+        text: label,
+        callback_data: `${BOT_SEARCH_PICK_PREFIX}${id}`,
+      },
+    ];
+  });
+
+  await bot.sendMessage(chatId, t(language, "botSearchResultsHeader", matches.length), {
+    reply_markup: { inline_keyboard: rows },
+  });
+}
+
 async function messageHandler(bot, msg) {
   const chatId = msg?.chat?.id;
   const text = (msg?.text || "").trim();
   const language = getCurrentLanguage(msg);
+  const userId = msg?.from?.id;
 
   if (!chatId) {
     return;
@@ -474,27 +539,41 @@ async function messageHandler(bot, msg) {
   }
 
   if (isLanguageButton(text)) {
+    clearAwaitingSearch(userId);
     await sendLanguageSelector(bot, chatId);
     return;
   }
 
-  const isSubscribed = await hasUserPassedSubscription(bot, msg?.from?.id);
+  const isSubscribed = await hasUserPassedSubscription(bot, userId);
   if (!isSubscribed) {
+    clearAwaitingSearch(userId);
     await sendSubscriptionPrompt(bot, chatId, language);
     return;
   }
 
   if (isSearchMenuButton(text)) {
+    clearAwaitingSearch(userId);
     await handleSearchMenu(bot, msg);
     return;
   }
 
-  if (!/^\d+$/.test(text)) {
+  // Bot orqali qidirish: oddiy chat inputida kino nomi
+  if (isAwaitingSearch(userId)) {
+    const result = await handleTextMovieSearch(bot, chatId, userId, text, language);
+    if (!result?.asCode) {
+      return;
+    }
+    // asCode → pastga kod oqimiga tushadi
+    msg = { ...msg, text: String(result.asCode) };
+  }
+
+  const codeText = (msg?.text || text || "").trim();
+  if (!/^\d+$/.test(codeText)) {
     await bot.sendMessage(chatId, t(language, "askCodeNumber"));
     return;
   }
 
-  const code = Number(text);
+  const code = Number(codeText);
   let statusMessageId = null;
   try {
     const statusMsg = await bot.sendMessage(
@@ -562,4 +641,5 @@ module.exports = {
   sendVideoWithCache,
   sendVideoFromResolvedSource,
   getWebAppUrl,
+  deliverMovieCard: sendMovieVideo,
 };

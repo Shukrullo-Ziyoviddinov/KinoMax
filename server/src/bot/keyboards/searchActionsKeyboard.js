@@ -1,5 +1,8 @@
 const { getWebAppUrl } = require("../webAppUrl");
 
+const BOT_SEARCH_CALLBACK = "bot_search:start";
+const BOT_SEARCH_PICK_PREFIX = "bot_search:pick:";
+
 function buildSearchActionsKeyboard(language) {
   const isRu = language === "ru";
   const baseUrl = getWebAppUrl();
@@ -10,8 +13,7 @@ function buildSearchActionsKeyboard(language) {
       [
         {
           text: isRu ? "🤖 Поиск через бота" : "🤖 Bot orqali qidirish",
-          // Bo'sh query: @botusername + inline rejim. Space ba'zi klientlarda ishlamaydi.
-          switch_inline_query_current_chat: "",
+          callback_data: BOT_SEARCH_CALLBACK,
         },
       ],
       [
@@ -26,4 +28,6 @@ function buildSearchActionsKeyboard(language) {
 
 module.exports = {
   buildSearchActionsKeyboard,
+  BOT_SEARCH_CALLBACK,
+  BOT_SEARCH_PICK_PREFIX,
 };

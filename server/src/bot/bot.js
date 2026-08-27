@@ -111,22 +111,17 @@ if (!token) {
       console.warn("deleteWebHook:", error?.message || error);
     })
     .finally(() => {
+      // allowed_updates BERILMASIN: ba'zi klientlar arrayni noto'g'ri
+      // serialize qilib faqat message qoldiradi — inline_query umuman kelmaydi.
       bot
         .startPolling({
-          interval: 500,
+          interval: 300,
           params: {
-            timeout: 10,
-            // Token yangilangandan keyin inline search uchun shart
-            allowed_updates: [
-              "message",
-              "callback_query",
-              "inline_query",
-              "chosen_inline_result",
-            ],
+            timeout: 30,
           },
         })
         .then(() => {
-          console.log("Telegram bot ishga tushdi (polling + inline_query).");
+          console.log("Telegram bot ishga tushdi (barcha update lar, inline_query bilan).");
         })
         .catch((error) => {
           console.error("startPolling xatoligi:", error?.message || error);

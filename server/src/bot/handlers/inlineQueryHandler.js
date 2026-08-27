@@ -3,6 +3,19 @@ const { getUserLanguage } = require("../../utils/userState");
 const { normalizeLanguage } = require("../../utils/i18n");
 const { getWebAppUrl } = require("../webAppUrl");
 
+let moviesCache = { at: 0, items: [] };
+const MOVIES_CACHE_MS = 60 * 1000;
+
+async function getMoviesCached() {
+  const now = Date.now();
+  if (moviesCache.items.length && now - moviesCache.at < MOVIES_CACHE_MS) {
+    return moviesCache.items;
+  }
+  const items = await getAllMovies();
+  moviesCache = { at: now, items: Array.isArray(items) ? items : [] };
+  return moviesCache.items;
+}
+
 function resolveLanguage(query) {
   const savedLanguage = getUserLanguage(query?.from?.id);
   if (savedLanguage) {
@@ -134,28 +147,6 @@ function buildMovieSummary(movie, language) {
   return `${year} • ${country} • ${duration} ${durationUnit}\n${genreText}`;
 }
 
-function toAbsoluteAssetUrl(assetPath) {
-  if (!assetPath || typeof assetPath !== "string") {
-    return null;
-  }
-
-  if (/^https?:\/\//i.test(assetPath)) {
-    return assetPath;
-  }
-
-  const base = getWebAppUrl();
-  const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
-  return `${base}${normalizedPath}`;
-}
-
-/** Telegram inline thumb faqat ishonchli https bo'lsa yuboriladi (aks holda butun javob rad etiladi). */
-function toSafeThumbnailUrl(assetPath) {
-  const url = toAbsoluteAssetUrl(assetPath);
-  if (!url || !/^https:\/\//i.test(url)) return null;
-  if (url.length > 1800) return null;
-  return url;
-}
-
 function filterMovies(movies, queryText, language) {
   const needle = normalize(queryText);
   const onlySymbols = !/[a-zA-Z0-9\u0400-\u04FF\u0600-\u06FF]/.test(needle);
@@ -195,12 +186,11 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
       : "";
   const messageText = [title, summary, codeLine, movieUrl].filter(Boolean).join("\n");
 
-  // Inline natijada web_app/thumb bo'lmasin — Telegram rad etishi mumkin.
   return {
     type: "article",
     id: `m${movieId || movieCode || 0}-${uniqueSuffix}`.slice(0, 64),
     title: String(title).slice(0, 64),
-    description: String(summary).slice(0, 120),
+    description: String(summary).replace(/\n/g, " • ").slice(0, 120),
     input_message_content: {
       message_text: messageText.slice(0, 4096),
       disable_web_page_preview: true,
@@ -209,14 +199,17 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
 }
 
 async function inlineQueryHandler(bot, query) {
+  const queryId = query?.id;
+  if (!queryId) return;
+
   const language = resolveLanguage(query);
   const queryText = (query?.query || "").trim();
   const offset = Number.parseInt(query?.offset || "0", 10) || 0;
-  const pageSize = 30;
+  const pageSize = 20;
 
   let movies = [];
   try {
-    movies = await getAllMovies();
+    movies = await getMoviesCached();
   } catch (error) {
     console.error("inline getAllMovies xatoligi:", error?.message || error);
   }
@@ -227,15 +220,14 @@ async function inlineQueryHandler(bot, query) {
     mapInlineResult(movie, language, offset + index)
   );
 
+  // Har doim kamida 1 ta natija — panel "jim" qolmasin
   if (!results.length && offset === 0) {
     results = [
       {
         type: "article",
         id: "empty-0",
         title:
-          language === "ru"
-            ? "Ничего не найдено"
-            : "Hech narsa topilmadi",
+          language === "ru" ? "Ничего не найдено" : "Hech narsa topilmadi",
         description: queryText
           ? language === "ru"
             ? `Запрос: ${queryText}`
@@ -258,21 +250,33 @@ async function inlineQueryHandler(bot, query) {
     offset + pageSize < filtered.length ? String(offset + pageSize) : "";
 
   try {
-    await bot.answerInlineQuery(query.id, results, {
-      cache_time: 0,
+    await bot.answerInlineQuery(queryId, results, {
+      cache_time: 1,
       is_personal: true,
       next_offset: nextOffset,
     });
+    console.log(
+      `inline_query answered: q="${queryText}" results=${results.length} movies=${movies.length}`
+    );
   } catch (error) {
     console.error(
       "Inline query javobida xatolik:",
       error?.response?.body || error?.message || error
     );
     try {
-      await bot.answerInlineQuery(query.id, [], {
+      await bot.answerInlineQuery(queryId, [
+        {
+          type: "article",
+          id: "err-0",
+          title: "Xatolik / Ошибка",
+          description: "Qayta urinib ko‘ring",
+          input_message_content: {
+            message_text: "Inline qidiruvda xatolik. /search dan foydalaning.",
+          },
+        },
+      ], {
         cache_time: 0,
         is_personal: true,
-        next_offset: "",
       });
     } catch (emptyError) {
       console.error(

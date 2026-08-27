@@ -14,7 +14,8 @@ function buildSearchActionsKeyboard(language) {
         {
           // Klassik @bot qidiruv (inputda @ChosonTV_bot ...)
           text: isRu ? "🤖 Поиск в чате (@bot)" : "🤖 Bot ichida qidirish (@bot)",
-          switch_inline_query_current_chat: "",
+          // Bo'sh string o'rniga nuqta — ba'zi klientlarda inline ishonchliroq ochiladi
+          switch_inline_query_current_chat: ".",
         },
       ],
       [

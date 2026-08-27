@@ -18,7 +18,8 @@ const translations = {
     languageSaved: "O'zbek tili tanlandi.",
     menuPrompt:
       "Botdan foydalanish uchun qo'yidagilardan birini tanlang va o'zingizga kerakli kinoni qidiring.",
-    searchPrompt: "Filterlash uchun kerakli tugmani tanlang.",
+    searchPrompt:
+      "Filterlash uchun kerakli tugmani tanlang.\n\n🤖 Bot orqali: tugmani bosing → kinoning nomini yozing.",
     subscribeRequired:
       "⚠️ Botdan to'liq foydalanish uchun quyidagi kanallarga obuna bo'ling!",
     checkSubscriptionButton: "✅ Tekshirish",
@@ -47,7 +48,8 @@ const translations = {
     languageSaved: "Выбран русский язык.",
     menuPrompt:
       "Чтобы пользоваться ботом, выберите один из пунктов ниже и найдите нужный фильм.",
-    searchPrompt: "Выберите нужную кнопку для фильтрации.",
+    searchPrompt:
+      "Выберите нужную кнопку для фильтрации.\n\n🤖 Через бота: нажмите кнопку → введите название фильма.",
     subscribeRequired:
       "⚠️ Для полного использования бота подпишитесь на следующие каналы!",
     checkSubscriptionButton: "✅ Проверить",

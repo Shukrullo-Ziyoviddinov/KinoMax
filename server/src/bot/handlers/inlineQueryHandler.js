@@ -148,6 +148,14 @@ function toAbsoluteAssetUrl(assetPath) {
   return `${base}${normalizedPath}`;
 }
 
+/** Telegram inline thumb faqat ishonchli https bo'lsa yuboriladi (aks holda butun javob rad etiladi). */
+function toSafeThumbnailUrl(assetPath) {
+  const url = toAbsoluteAssetUrl(assetPath);
+  if (!url || !/^https:\/\//i.test(url)) return null;
+  if (url.length > 1800) return null;
+  return url;
+}
+
 function filterMovies(movies, queryText, language) {
   const needle = normalize(queryText);
   const onlySymbols = !/[a-zA-Z0-9\u0400-\u04FF\u0600-\u06FF]/.test(needle);
@@ -174,19 +182,31 @@ function filterMovies(movies, queryText, language) {
 
 function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
-  const thumbnail = movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
-  const thumbnailUrl = toAbsoluteAssetUrl(thumbnail);
+  const thumbnail =
+    movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
+  const thumbnailUrl = toSafeThumbnailUrl(thumbnail);
   const movieId = movie?.movieId ?? movie?.id;
+  const movieCode = movie?.movieCode;
   const base = getWebAppUrl();
-  const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
-  const messageText = [title, buildMovieSummary(movie, language)].filter(Boolean).join("\n");
+  const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movieCode}`;
+  const codeLine =
+    movieCode != null
+      ? language === "ru"
+        ? `Код: ${movieCode}`
+        : `Kod: ${movieCode}`
+      : "";
+  const messageText = [title, buildMovieSummary(movie, language), codeLine]
+    .filter(Boolean)
+    .join("\n");
 
+  // Muhim: inline natijalarda web_app tugmasi BUTTON_TYPE_INVALID beradi.
+  // Shuning uchun oddiy url tugma ishlatiladi.
   const replyMarkup = {
     inline_keyboard: [
       [
         {
           text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
-          web_app: { url: movieUrl },
+          url: movieUrl,
         },
       ],
     ],
@@ -194,7 +214,7 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
 
   return {
     type: "article",
-    id: `${language}-${uniqueSuffix}-${movie.movieCode || "no-code"}-${movieId || "no-id"}`.slice(0, 64),
+    id: `movie-${movieId || movieCode || uniqueSuffix}-${uniqueSuffix}`.slice(0, 64),
     title,
     description: buildMovieSummary(movie, language),
     ...(thumbnailUrl
@@ -205,9 +225,8 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
       : {}),
     reply_markup: replyMarkup,
     input_message_content: {
-      // Rasm havolasi birinchi qatorda bo'lsa chatda preview chiqadi.
-      message_text: thumbnailUrl ? `${thumbnailUrl}\n${messageText}` : messageText,
-      disable_web_page_preview: false,
+      message_text: messageText.slice(0, 4096),
+      disable_web_page_preview: true,
     },
   };
 }
@@ -216,7 +235,7 @@ async function inlineQueryHandler(bot, query) {
   const language = resolveLanguage(query);
   const queryText = (query?.query || "").trim();
   const offset = Number.parseInt(query?.offset || "0", 10) || 0;
-  const pageSize = 50;
+  const pageSize = 40;
   const movies = await getAllMovies();
   const filtered = filterMovies(movies, queryText, language);
   const page = filtered.slice(offset, offset + pageSize);
@@ -226,38 +245,47 @@ async function inlineQueryHandler(bot, query) {
   const nextOffset =
     offset + pageSize < filtered.length ? String(offset + pageSize) : "";
 
+  const answerOptions = {
+    cache_time: 0,
+    is_personal: true,
+    next_offset: nextOffset,
+  };
+
   try {
-    await bot.answerInlineQuery(query.id, results, {
-      cache_time: 0,
-      is_personal: true,
-      next_offset: nextOffset,
-    });
+    await bot.answerInlineQuery(query.id, results, answerOptions);
   } catch (error) {
-    console.error("Inline query javobida xatolik:", error?.response?.body || error?.message || error);
+    console.error(
+      "Inline query javobida xatolik:",
+      error?.response?.body || error?.message || error
+    );
     try {
+      // Thumb / markup muammosi bo'lsa — eng oddiy natija
       const fallbackResults = page.map((movie, index) => {
-        const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
+        const title =
+          movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
         const movieId = movie?.movieId ?? movie?.id;
         const base = getWebAppUrl();
-        const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
+        const movieUrl = movieId
+          ? `${base}/movie/${movieId}`
+          : `${base}/?code=${movie?.movieCode}`;
         return {
           type: "article",
-          id: `fallback-${language}-${offset + index}`.slice(0, 64),
+          id: `fb-${language}-${offset + index}-${movieId || index}`.slice(0, 64),
           title,
           description: buildMovieSummary(movie, language),
           input_message_content: {
-            message_text: `${title}\n${movieUrl}`,
+            message_text: `${title}\n${movieUrl}`.slice(0, 4096),
+            disable_web_page_preview: true,
           },
         };
       });
 
-      await bot.answerInlineQuery(query.id, fallbackResults, {
-        cache_time: 0,
-        is_personal: true,
-        next_offset,
-      });
+      await bot.answerInlineQuery(query.id, fallbackResults, answerOptions);
     } catch (fallbackError) {
-      console.error("Inline query fallback xatoligi:", fallbackError?.response?.body || fallbackError?.message || fallbackError);
+      console.error(
+        "Inline query fallback xatoligi:",
+        fallbackError?.response?.body || fallbackError?.message || fallbackError
+      );
       try {
         await bot.answerInlineQuery(query.id, [], {
           cache_time: 0,
@@ -265,7 +293,10 @@ async function inlineQueryHandler(bot, query) {
           next_offset: "",
         });
       } catch (emptyError) {
-        console.error("Inline query empty fallback xatoligi:", emptyError?.response?.body || emptyError?.message || emptyError);
+        console.error(
+          "Inline query empty fallback xatoligi:",
+          emptyError?.response?.body || emptyError?.message || emptyError
+        );
       }
     }
   }

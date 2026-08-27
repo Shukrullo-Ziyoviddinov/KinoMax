@@ -182,48 +182,25 @@ function filterMovies(movies, queryText, language) {
 
 function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
-  const thumbnail =
-    movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
-  const thumbnailUrl = toSafeThumbnailUrl(thumbnail);
   const movieId = movie?.movieId ?? movie?.id;
   const movieCode = movie?.movieCode;
   const base = getWebAppUrl();
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movieCode}`;
+  const summary = buildMovieSummary(movie, language);
   const codeLine =
     movieCode != null
       ? language === "ru"
         ? `Код: ${movieCode}`
         : `Kod: ${movieCode}`
       : "";
-  const messageText = [title, buildMovieSummary(movie, language), codeLine]
-    .filter(Boolean)
-    .join("\n");
+  const messageText = [title, summary, codeLine, movieUrl].filter(Boolean).join("\n");
 
-  // Muhim: inline natijalarda web_app tugmasi BUTTON_TYPE_INVALID beradi.
-  // Shuning uchun oddiy url tugma ishlatiladi.
-  const replyMarkup = {
-    inline_keyboard: [
-      [
-        {
-          text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
-          url: movieUrl,
-        },
-      ],
-    ],
-  };
-
+  // Inline natijada web_app/thumb bo'lmasin — Telegram rad etishi mumkin.
   return {
     type: "article",
-    id: `movie-${movieId || movieCode || uniqueSuffix}-${uniqueSuffix}`.slice(0, 64),
-    title,
-    description: buildMovieSummary(movie, language),
-    ...(thumbnailUrl
-      ? {
-          thumbnail_url: thumbnailUrl,
-          thumb_url: thumbnailUrl,
-        }
-      : {}),
-    reply_markup: replyMarkup,
+    id: `m${movieId || movieCode || 0}-${uniqueSuffix}`.slice(0, 64),
+    title: String(title).slice(0, 64),
+    description: String(summary).slice(0, 120),
     input_message_content: {
       message_text: messageText.slice(0, 4096),
       disable_web_page_preview: true,
@@ -235,69 +212,73 @@ async function inlineQueryHandler(bot, query) {
   const language = resolveLanguage(query);
   const queryText = (query?.query || "").trim();
   const offset = Number.parseInt(query?.offset || "0", 10) || 0;
-  const pageSize = 40;
-  const movies = await getAllMovies();
+  const pageSize = 30;
+
+  let movies = [];
+  try {
+    movies = await getAllMovies();
+  } catch (error) {
+    console.error("inline getAllMovies xatoligi:", error?.message || error);
+  }
+
   const filtered = filterMovies(movies, queryText, language);
   const page = filtered.slice(offset, offset + pageSize);
-  const results = page.map((movie, index) =>
+  let results = page.map((movie, index) =>
     mapInlineResult(movie, language, offset + index)
   );
+
+  if (!results.length && offset === 0) {
+    results = [
+      {
+        type: "article",
+        id: "empty-0",
+        title:
+          language === "ru"
+            ? "Ничего не найдено"
+            : "Hech narsa topilmadi",
+        description: queryText
+          ? language === "ru"
+            ? `Запрос: ${queryText}`
+            : `So‘rov: ${queryText}`
+          : language === "ru"
+            ? "Введите название фильма"
+            : "Kino nomini yozing",
+        input_message_content: {
+          message_text:
+            language === "ru"
+              ? `По запросу «${queryText || "…"}» фильм не найден.`
+              : `«${queryText || "…"}» bo‘yicha kino topilmadi.`,
+          disable_web_page_preview: true,
+        },
+      },
+    ];
+  }
+
   const nextOffset =
     offset + pageSize < filtered.length ? String(offset + pageSize) : "";
 
-  const answerOptions = {
-    cache_time: 0,
-    is_personal: true,
-    next_offset: nextOffset,
-  };
-
   try {
-    await bot.answerInlineQuery(query.id, results, answerOptions);
+    await bot.answerInlineQuery(query.id, results, {
+      cache_time: 0,
+      is_personal: true,
+      next_offset: nextOffset,
+    });
   } catch (error) {
     console.error(
       "Inline query javobida xatolik:",
       error?.response?.body || error?.message || error
     );
     try {
-      // Thumb / markup muammosi bo'lsa — eng oddiy natija
-      const fallbackResults = page.map((movie, index) => {
-        const title =
-          movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
-        const movieId = movie?.movieId ?? movie?.id;
-        const base = getWebAppUrl();
-        const movieUrl = movieId
-          ? `${base}/movie/${movieId}`
-          : `${base}/?code=${movie?.movieCode}`;
-        return {
-          type: "article",
-          id: `fb-${language}-${offset + index}-${movieId || index}`.slice(0, 64),
-          title,
-          description: buildMovieSummary(movie, language),
-          input_message_content: {
-            message_text: `${title}\n${movieUrl}`.slice(0, 4096),
-            disable_web_page_preview: true,
-          },
-        };
+      await bot.answerInlineQuery(query.id, [], {
+        cache_time: 0,
+        is_personal: true,
+        next_offset: "",
       });
-
-      await bot.answerInlineQuery(query.id, fallbackResults, answerOptions);
-    } catch (fallbackError) {
+    } catch (emptyError) {
       console.error(
-        "Inline query fallback xatoligi:",
-        fallbackError?.response?.body || fallbackError?.message || fallbackError
+        "Inline query empty fallback xatoligi:",
+        emptyError?.response?.body || emptyError?.message || emptyError
       );
-      try {
-        await bot.answerInlineQuery(query.id, [], {
-          cache_time: 0,
-          is_personal: true,
-          next_offset: "",
-        });
-      } catch (emptyError) {
-        console.error(
-          "Inline query empty fallback xatoligi:",
-          emptyError?.response?.body || emptyError?.message || emptyError
-        );
-      }
     }
   }
 }

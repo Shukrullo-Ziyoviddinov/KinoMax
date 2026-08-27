@@ -19,7 +19,7 @@ const translations = {
     menuPrompt:
       "Botdan foydalanish uchun qo'yidagilardan birini tanlang va o'zingizga kerakli kinoni qidiring.",
     searchPrompt:
-      "✅ Yangi qidiruv\nKerakli usulni tanlang:\n🤖 Botda nom bilan — chatga kino nomini yozasiz\n📱 Ilova orqali — mini app",
+      "✅ Qidiruv (yangi)\n1) Bot ichida (@bot) — inputda yozasiz\n2) Chatga nom — oddiy xabar\n3) Ilova",
     botSearchTypePrompt:
       "✅ Qidiruv yoqildi.\n\nPastdagi inputga kino NOMINI yozing.\nMasalan: Avatar\n\nBekor: Bekor",
     botSearchCancelled: "Qidiruv bekor qilindi. Kino kodi yoki Qidiruv tugmasidan foydalaning.",
@@ -55,7 +55,7 @@ const translations = {
     menuPrompt:
       "Чтобы пользоваться ботом, выберите один из пунктов ниже и найдите нужный фильм.",
     searchPrompt:
-      "✅ Новый поиск\nВыберите способ:\n🤖 Названием в боте — пишите название в чат\n📱 Через приложение — mini app",
+      "✅ Поиск (новый)\n1) В боте (@bot) — пишите в поле ввода\n2) Название в чат — обычное сообщение\n3) Приложение",
     botSearchTypePrompt:
       "✅ Поиск включён.\n\nВведите НАЗВАНИЕ фильма в поле внизу.\nНапример: Avatar\n\nОтмена: Отмена",
     botSearchCancelled: "Поиск отменён. Используйте код фильма или кнопку Поиск.",

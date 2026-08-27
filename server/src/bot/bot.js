@@ -17,7 +17,9 @@ let bot = null;
 if (!token) {
   console.warn("BOT_TOKEN topilmadi. Telegram bot ishga tushmadi.");
 } else {
-  bot = new TelegramBot(token, { polling: true });
+  // Avval polling yoqilmasin — webhook o'chirilgach startPolling
+  bot = new TelegramBot(token, { polling: false });
+
   bot.on("polling_error", (error) => {
     console.error("Polling xatoligi:", error?.message || error);
   });
@@ -30,7 +32,7 @@ if (!token) {
       try {
         await touchBotUser(msg, "uz");
       } catch (_error) {
-        // tracking xatoliklari asosiy oqimni to'xtatmasin
+        // ignore
       }
       await sendLanguageSelector(bot, msg.chat.id);
     } catch (error) {
@@ -40,8 +42,7 @@ if (!token) {
 
   bot.onText(/^\/search(?:@\w+)?$/i, async (msg) => {
     try {
-      const { setAwaitingSearch } = require("../utils/userState");
-      const { getUserLanguage } = require("../utils/userState");
+      const { setAwaitingSearch, getUserLanguage } = require("../utils/userState");
       const { normalizeLanguage, t } = require("../utils/i18n");
       const language = normalizeLanguage(
         getUserLanguage(msg?.from?.id) ||
@@ -53,6 +54,7 @@ if (!token) {
       console.error("/search handler xatoligi:", error?.message || error);
     }
   });
+
   bot.on("callback_query", async (query) => {
     try {
       await callbackHandler(bot, query);
@@ -60,13 +62,28 @@ if (!token) {
       console.error("callback_query handler xatoligi:", error?.message || error);
     }
   });
+
   bot.on("inline_query", async (query) => {
+    console.log(
+      "inline_query:",
+      query?.from?.id,
+      JSON.stringify(query?.query || "")
+    );
     try {
       await inlineQueryHandler(bot, query);
     } catch (error) {
       console.error("inline_query handler xatoligi:", error?.message || error);
+      try {
+        await bot.answerInlineQuery(query.id, [], {
+          cache_time: 0,
+          is_personal: true,
+        });
+      } catch (_e) {
+        // ignore
+      }
     }
   });
+
   bot.on("message", async (msg) => {
     const text = (msg?.text || "").trim();
     if (text === "/start" || /^\/search(?:@\w+)?$/i.test(text)) {
@@ -80,14 +97,41 @@ if (!token) {
           msg?.from?.language_code?.toLowerCase()?.startsWith("ru") ? "ru" : "uz"
         );
       } catch (_error) {
-        // tracking xatoliklari asosiy oqimni to'xtatmasin
+        // ignore
       }
       await messageHandler(bot, msg);
     } catch (error) {
       console.error("message handler xatoligi:", error?.message || error);
     }
   });
-  console.log("Telegram bot ishga tushdi.");
+
+  bot
+    .deleteWebHook({ drop_pending_updates: false })
+    .catch((error) => {
+      console.warn("deleteWebHook:", error?.message || error);
+    })
+    .finally(() => {
+      bot
+        .startPolling({
+          interval: 500,
+          params: {
+            timeout: 10,
+            // Token yangilangandan keyin inline search uchun shart
+            allowed_updates: [
+              "message",
+              "callback_query",
+              "inline_query",
+              "chosen_inline_result",
+            ],
+          },
+        })
+        .then(() => {
+          console.log("Telegram bot ishga tushdi (polling + inline_query).");
+        })
+        .catch((error) => {
+          console.error("startPolling xatoligi:", error?.message || error);
+        });
+    });
 }
 
 module.exports = bot;

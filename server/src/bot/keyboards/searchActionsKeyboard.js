@@ -12,7 +12,14 @@ function buildSearchActionsKeyboard(language) {
     inline_keyboard: [
       [
         {
-          text: isRu ? "🤖 Искать названием в боте" : "🤖 Botda nom bilan qidirish",
+          // Klassik @bot qidiruv (inputda @ChosonTV_bot ...)
+          text: isRu ? "🤖 Поиск в чате (@bot)" : "🤖 Bot ichida qidirish (@bot)",
+          switch_inline_query_current_chat: "",
+        },
+      ],
+      [
+        {
+          text: isRu ? "✍️ Писать название в чат" : "✍️ Chatga nom yozib qidirish",
           callback_data: BOT_SEARCH_CALLBACK,
         },
       ],

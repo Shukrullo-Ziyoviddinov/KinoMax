@@ -147,6 +147,27 @@ function buildMovieSummary(movie, language) {
   return `${year} • ${country} • ${duration} ${durationUnit}\n${genreText}`;
 }
 
+function toAbsoluteAssetUrl(assetPath) {
+  if (!assetPath || typeof assetPath !== "string") {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(assetPath)) {
+    return assetPath;
+  }
+
+  const base = getWebAppUrl();
+  const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
+  return `${base}${normalizedPath}`;
+}
+
+function toSafeThumbnailUrl(assetPath) {
+  const url = toAbsoluteAssetUrl(assetPath);
+  if (!url || !/^https:\/\//i.test(url)) return null;
+  if (url.length > 1800) return null;
+  return url;
+}
+
 function filterMovies(movies, queryText, language) {
   const needle = normalize(queryText);
   const onlySymbols = !/[a-zA-Z0-9\u0400-\u04FF\u0600-\u06FF]/.test(needle);
@@ -171,6 +192,39 @@ function filterMovies(movies, queryText, language) {
   return scored.map((item) => item.movie);
 }
 
+function getMoviePosterUrl(movie, language) {
+  const candidates = [
+    movie?.homeImg?.[language],
+    movie?.homeImg?.uz,
+    movie?.homeImg?.ru,
+    movie?.movieMedia?.[language]?.img?.src,
+    movie?.movieMedia?.uz?.img?.src,
+    movie?.movieMedia?.ru?.img?.src,
+  ];
+  for (const raw of candidates) {
+    const url = toSafeThumbnailUrl(raw);
+    if (url) return url;
+  }
+  return null;
+}
+
+function buildInlineCaption(movie, language) {
+  const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
+  const summary = buildMovieSummary(movie, language);
+  const movieId = movie?.movieId ?? movie?.id;
+  const movieCode = movie?.movieCode;
+  const base = getWebAppUrl();
+  const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movieCode}`;
+  const codeLine =
+    movieCode != null
+      ? language === "ru"
+        ? `Kod: ${movieCode}`
+        : `Kod: ${movieCode}`
+      : "";
+  // Photo caption max 1024
+  return [title, summary, codeLine, movieUrl].filter(Boolean).join("\n").slice(0, 1024);
+}
+
 function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
   const movieId = movie?.movieId ?? movie?.id;
@@ -178,22 +232,52 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const base = getWebAppUrl();
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movieCode}`;
   const summary = buildMovieSummary(movie, language);
+  const posterUrl = getMoviePosterUrl(movie, language);
+  const caption = buildInlineCaption(movie, language);
+  const resultId = `m${movieId || movieCode || 0}-${uniqueSuffix}`.slice(0, 64);
+
+  const watchButton = {
+    text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
+    url: movieUrl,
+  };
+
+  // Poster bor: ro'yxatda ham, bosganda ham rasm + matn
+  if (posterUrl) {
+    return {
+      type: "photo",
+      id: resultId,
+      photo_url: posterUrl,
+      thumbnail_url: posterUrl,
+      thumb_url: posterUrl,
+      title: String(title).slice(0, 64),
+      description: String(summary).replace(/\n/g, " • ").slice(0, 120),
+      caption,
+      reply_markup: {
+        inline_keyboard: [[watchButton]],
+      },
+    };
+  }
+
+  // Poster yo'q: matn + (mumkin bo'lsa) preview
   const codeLine =
     movieCode != null
       ? language === "ru"
-        ? `Код: ${movieCode}`
+        ? `Kod: ${movieCode}`
         : `Kod: ${movieCode}`
       : "";
   const messageText = [title, summary, codeLine, movieUrl].filter(Boolean).join("\n");
 
   return {
     type: "article",
-    id: `m${movieId || movieCode || 0}-${uniqueSuffix}`.slice(0, 64),
+    id: resultId,
     title: String(title).slice(0, 64),
     description: String(summary).replace(/\n/g, " • ").slice(0, 120),
     input_message_content: {
       message_text: messageText.slice(0, 4096),
-      disable_web_page_preview: true,
+      disable_web_page_preview: false,
+    },
+    reply_markup: {
+      inline_keyboard: [[watchButton]],
     },
   };
 }
@@ -220,7 +304,6 @@ async function inlineQueryHandler(bot, query) {
     mapInlineResult(movie, language, offset + index)
   );
 
-  // Har doim kamida 1 ta natija — panel "jim" qolmasin
   if (!results.length && offset === 0) {
     results = [
       {
@@ -249,40 +332,86 @@ async function inlineQueryHandler(bot, query) {
   const nextOffset =
     offset + pageSize < filtered.length ? String(offset + pageSize) : "";
 
-  try {
-    await bot.answerInlineQuery(queryId, results, {
+  const answer = async (items) => {
+    await bot.answerInlineQuery(queryId, items, {
       cache_time: 1,
       is_personal: true,
       next_offset: nextOffset,
     });
+  };
+
+  try {
+    await answer(results);
     console.log(
       `inline_query answered: q="${queryText}" results=${results.length} movies=${movies.length}`
     );
   } catch (error) {
     console.error(
-      "Inline query javobida xatolik:",
+      "Inline query (photo) xatoligi, article fallback:",
       error?.response?.body || error?.message || error
     );
+    // Photo URL mos kelmasa — article + thumbnail
     try {
-      await bot.answerInlineQuery(queryId, [
-        {
+      const fallback = page.map((movie, index) => {
+        const title =
+          movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
+        const movieId = movie?.movieId ?? movie?.id;
+        const movieCode = movie?.movieCode;
+        const base = getWebAppUrl();
+        const movieUrl = movieId
+          ? `${base}/movie/${movieId}`
+          : `${base}/?code=${movieCode}`;
+        const summary = buildMovieSummary(movie, language);
+        const posterUrl = getMoviePosterUrl(movie, language);
+        const messageText = [title, summary, movieUrl].filter(Boolean).join("\n");
+        return {
           type: "article",
-          id: "err-0",
-          title: "Xatolik / Ошибка",
-          description: "Qayta urinib ko‘ring",
+          id: `a${movieId || index}-${offset + index}`.slice(0, 64),
+          title: String(title).slice(0, 64),
+          description: String(summary).replace(/\n/g, " • ").slice(0, 120),
+          ...(posterUrl
+            ? { thumbnail_url: posterUrl, thumb_url: posterUrl }
+            : {}),
           input_message_content: {
-            message_text: "Inline qidiruvda xatolik. /search dan foydalaning.",
+            message_text: messageText.slice(0, 4096),
+            disable_web_page_preview: false,
           },
-        },
-      ], {
-        cache_time: 0,
-        is_personal: true,
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
+                  url: movieUrl,
+                },
+              ],
+            ],
+          },
+        };
       });
-    } catch (emptyError) {
+      await answer(fallback.length ? fallback : results);
+    } catch (fallbackError) {
       console.error(
-        "Inline query empty fallback xatoligi:",
-        emptyError?.response?.body || emptyError?.message || emptyError
+        "Inline query fallback xatoligi:",
+        fallbackError?.response?.body || fallbackError?.message || fallbackError
       );
+      try {
+        await bot.answerInlineQuery(queryId, [
+          {
+            type: "article",
+            id: "err-0",
+            title: "Xatolik / Ошибка",
+            description: "Qayta urinib ko‘ring",
+            input_message_content: {
+              message_text: "Inline qidiruvda xatolik. /search dan foydalaning.",
+            },
+          },
+        ], {
+          cache_time: 0,
+          is_personal: true,
+        });
+      } catch (_e) {
+        // ignore
+      }
     }
   }
 }

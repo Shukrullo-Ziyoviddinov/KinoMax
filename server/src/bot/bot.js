@@ -37,6 +37,22 @@ if (!token) {
       console.error("/start handler xatoligi:", error?.message || error);
     }
   });
+
+  bot.onText(/^\/search(?:@\w+)?$/i, async (msg) => {
+    try {
+      const { setAwaitingSearch } = require("../utils/userState");
+      const { getUserLanguage } = require("../utils/userState");
+      const { normalizeLanguage, t } = require("../utils/i18n");
+      const language = normalizeLanguage(
+        getUserLanguage(msg?.from?.id) ||
+          (msg?.from?.language_code?.toLowerCase()?.startsWith("ru") ? "ru" : "uz")
+      );
+      setAwaitingSearch(msg.from.id, true);
+      await bot.sendMessage(msg.chat.id, t(language, "botSearchTypePrompt"));
+    } catch (error) {
+      console.error("/search handler xatoligi:", error?.message || error);
+    }
+  });
   bot.on("callback_query", async (query) => {
     try {
       await callbackHandler(bot, query);
@@ -52,7 +68,8 @@ if (!token) {
     }
   });
   bot.on("message", async (msg) => {
-    if ((msg?.text || "").trim() === "/start") {
+    const text = (msg?.text || "").trim();
+    if (text === "/start" || /^\/search(?:@\w+)?$/i.test(text)) {
       return;
     }
 

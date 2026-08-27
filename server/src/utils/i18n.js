@@ -19,9 +19,9 @@ const translations = {
     menuPrompt:
       "Botdan foydalanish uchun qo'yidagilardan birini tanlang va o'zingizga kerakli kinoni qidiring.",
     searchPrompt:
-      "Kerakli usulni tanlang:\n🤖 Bot orqali — chatda kino nomini yozib qidirasiz\n📱 Ilova orqali — mini app ochiladi",
+      "✅ Yangi qidiruv\nKerakli usulni tanlang:\n🤖 Botda nom bilan — chatga kino nomini yozasiz\n📱 Ilova orqali — mini app",
     botSearchTypePrompt:
-      "🔎 Kino nomini shu yerga yozing (pastdagi input).\nMasalan: Avatar\n\nBekor qilish: Bekor",
+      "✅ Qidiruv yoqildi.\n\nPastdagi inputga kino NOMINI yozing.\nMasalan: Avatar\n\nBekor: Bekor",
     botSearchCancelled: "Qidiruv bekor qilindi. Kino kodi yoki Qidiruv tugmasidan foydalaning.",
     botSearchNotFound: "Kino topilmadi.",
     botSearchNoResults: (q) => `"${q}" bo'yicha kino topilmadi. Boshqa nom yozing yoki Qidiruvni qayta bosing.`,
@@ -55,9 +55,9 @@ const translations = {
     menuPrompt:
       "Чтобы пользоваться ботом, выберите один из пунктов ниже и найдите нужный фильм.",
     searchPrompt:
-      "Выберите способ:\n🤖 Через бота — ищите названием в чате\n📱 Через приложение — откроется mini app",
+      "✅ Новый поиск\nВыберите способ:\n🤖 Названием в боте — пишите название в чат\n📱 Через приложение — mini app",
     botSearchTypePrompt:
-      "🔎 Напишите название фильма в поле ввода внизу.\nНапример: Avatar\n\nОтмена: Отмена",
+      "✅ Поиск включён.\n\nВведите НАЗВАНИЕ фильма в поле внизу.\nНапример: Avatar\n\nОтмена: Отмена",
     botSearchCancelled: "Поиск отменён. Используйте код фильма или кнопку Поиск.",
     botSearchNotFound: "Фильм не найден.",
     botSearchNoResults: (q) => `По запросу «${q}» ничего не найдено. Введите другое название или снова нажмите Поиск.`,

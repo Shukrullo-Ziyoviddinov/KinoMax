@@ -12,7 +12,7 @@ function buildSearchActionsKeyboard(language) {
     inline_keyboard: [
       [
         {
-          text: isRu ? "🤖 Поиск через бота" : "🤖 Bot orqali qidirish",
+          text: isRu ? "🤖 Искать названием в боте" : "🤖 Botda nom bilan qidirish",
           callback_data: BOT_SEARCH_CALLBACK,
         },
       ],

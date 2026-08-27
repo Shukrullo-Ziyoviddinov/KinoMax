@@ -28,10 +28,17 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
   const sheetRef = useRef(null);
   const handleRef = useRef(null);
   const videoRef = useRef(null);
+  const descRef = useRef(null);
+  const descSheetRef = useRef(null);
+  const descHandleRef = useRef(null);
   const startYRef = useRef(0);
   const dragYRef = useRef(0);
   const draggingRef = useRef(false);
   const closingRef = useRef(false);
+  const descStartYRef = useRef(0);
+  const descDragYRef = useRef(0);
+  const descDraggingRef = useRef(false);
+  const descClosingRef = useRef(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(true);
@@ -39,6 +46,12 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [closing, setClosing] = useState(false);
   const [dragClose, setDragClose] = useState(false);
+  const [descOpen, setDescOpen] = useState(false);
+  const [descClosing, setDescClosing] = useState(false);
+  const [descDragY, setDescDragY] = useState(0);
+  const [descIsDragging, setDescIsDragging] = useState(false);
+  const [descDragClose, setDescDragClose] = useState(false);
+  const [isDescTruncated, setIsDescTruncated] = useState(false);
 
   const activeKey = getItemKey(item);
   const name = getLocalized(item?.name, contentLang);
@@ -50,6 +63,7 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
   const linkedMovieId = getLinkedMovieId(item);
   const watchLabel = contentLang === 'ru' ? 'Смотреть' : 'Tomosha qilish';
   const saveLabel = contentLang === 'ru' ? 'Сохранить' : 'Saqlash';
+  const readMoreLabel = contentLang === 'ru' ? 'Читать далее' : "Ko'proq o'qish";
   const isSaved = linkedMovieId ? isInWishlist(linkedMovieId) : false;
 
   useEffect(() => {
@@ -59,6 +73,43 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
       document.body.style.overflow = prev;
     };
   }, []);
+
+  useEffect(() => {
+    descClosingRef.current = false;
+    setDescOpen(false);
+    setDescClosing(false);
+    setDescDragY(0);
+    setDescIsDragging(false);
+    setDescDragClose(false);
+    descDragYRef.current = 0;
+    descDraggingRef.current = false;
+  }, [activeKey]);
+
+  useEffect(() => {
+    if (!description) {
+      setIsDescTruncated(false);
+      return undefined;
+    }
+
+    let raf = 0;
+    const measure = () => {
+      const el = descRef.current;
+      if (!el) {
+        setIsDescTruncated(false);
+        return;
+      }
+      setIsDescTruncated(el.scrollHeight > el.clientHeight + 1);
+    };
+
+    raf = window.requestAnimationFrame(() => {
+      raf = window.requestAnimationFrame(measure);
+    });
+    window.addEventListener('resize', measure);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', measure);
+    };
+  }, [description, activeKey]);
 
   useEffect(() => {
     if (isEmbed) {
@@ -108,6 +159,40 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
     window.setTimeout(() => onClose?.(), 240);
   }, [onClose]);
 
+  const requestCloseDesc = useCallback((options = {}) => {
+    if (descClosingRef.current) return;
+    descClosingRef.current = true;
+    const fromDrag = Boolean(options.fromDrag);
+    setDescClosing(true);
+
+    if (fromDrag) {
+      setDescDragClose(true);
+      const h = descSheetRef.current?.offsetHeight || window.innerHeight;
+      setDescDragY(Math.max(descDragYRef.current, h));
+    }
+
+    window.setTimeout(() => {
+      setDescOpen(false);
+      setDescClosing(false);
+      setDescDragY(0);
+      setDescIsDragging(false);
+      setDescDragClose(false);
+      descDragYRef.current = 0;
+      descDraggingRef.current = false;
+      descClosingRef.current = false;
+    }, 240);
+  }, []);
+
+  const openDescModal = () => {
+    if (!description || !isDescTruncated) return;
+    descClosingRef.current = false;
+    setDescClosing(false);
+    setDescDragY(0);
+    setDescIsDragging(false);
+    setDescDragClose(false);
+    setDescOpen(true);
+  };
+
   const handleWatchMovie = () => {
     if (!linkedMovieId) return;
     videoRef.current?.pause?.();
@@ -136,7 +221,7 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
     if (!el) return undefined;
 
     const onStart = (e) => {
-      if (closingRef.current) return;
+      if (closingRef.current || descOpen) return;
       if (window.innerWidth > 768) return;
       const y = e.touches[0].clientY;
       startYRef.current = y;
@@ -183,11 +268,70 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
       el.removeEventListener('touchend', onEnd);
       el.removeEventListener('touchcancel', onEnd);
     };
-  }, [requestClose]);
+  }, [requestClose, descOpen]);
+
+  useEffect(() => {
+    const el = descHandleRef.current;
+    if (!el || !descOpen) return undefined;
+
+    const onStart = (e) => {
+      if (descClosingRef.current) return;
+      if (window.innerWidth > 768) return;
+      const y = e.touches[0].clientY;
+      descStartYRef.current = y;
+      descDragYRef.current = 0;
+      descDraggingRef.current = true;
+      setDescIsDragging(true);
+      setDescDragY(0);
+    };
+
+    const onMove = (e) => {
+      if (!descDraggingRef.current || descClosingRef.current) return;
+      e.preventDefault();
+      const y = e.touches[0].clientY;
+      const delta = Math.max(0, y - descStartYRef.current);
+      descDragYRef.current = delta;
+      setDescDragY(delta);
+    };
+
+    const onEnd = () => {
+      if (!descDraggingRef.current) return;
+      descDraggingRef.current = false;
+      setDescIsDragging(false);
+
+      const sheetHeight = descSheetRef.current?.offsetHeight || window.innerHeight;
+      const threshold = sheetHeight * 0.2;
+      const delta = descDragYRef.current;
+
+      if (delta >= threshold) {
+        requestCloseDesc({ fromDrag: true });
+      } else {
+        descDragYRef.current = 0;
+        setDescDragY(0);
+      }
+    };
+
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+    };
+  }, [requestCloseDesc, descOpen]);
 
   const sheetTransform =
     dragY > 0 || dragClose
       ? `translateY(${dragY}px)`
+      : undefined;
+
+  const descSheetTransform =
+    descDragY > 0 || descDragClose
+      ? `translateY(${descDragY}px)`
       : undefined;
 
   return (
@@ -203,7 +347,10 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
         type="button"
         className="triller-modal-overlay"
         aria-label="Yopish"
-        onClick={() => requestClose()}
+        onClick={() => {
+          if (descOpen) return;
+          requestClose();
+        }}
       />
       <div
         ref={sheetRef}
@@ -265,7 +412,20 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
 
             <div className="triller-modal-meta">
               {name ? <h3 className="triller-modal-name">{name}</h3> : null}
-              {description ? <p className="triller-modal-description">{description}</p> : null}
+              {description ? (
+                <div className="triller-modal-description-wrap">
+                  <p ref={descRef} className="triller-modal-description">{description}</p>
+                  {isDescTruncated ? (
+                    <button
+                      type="button"
+                      className="triller-modal-read-more"
+                      onClick={openDescModal}
+                    >
+                      {readMoreLabel}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               {linkedMovieId ? (
                 <div className="triller-modal-actions">
                   <button
@@ -345,6 +505,53 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
           ) : null}
         </div>
       </div>
+
+      {descOpen ? (
+        <div
+          className={[
+            'triller-desc-modal',
+            descClosing ? 'is-closing' : '',
+            descIsDragging ? 'is-dragging' : '',
+            descDragClose ? 'is-drag-close' : '',
+          ].filter(Boolean).join(' ')}
+        >
+          <button
+            type="button"
+            className="triller-desc-modal-overlay"
+            aria-label="Yopish"
+            onClick={() => requestCloseDesc()}
+          />
+          <div
+            ref={descSheetRef}
+            className="triller-desc-modal-sheet"
+            style={{
+              transform: descSheetTransform,
+              transition: descIsDragging ? 'none' : undefined,
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={name || readMoreLabel}
+          >
+            <div ref={descHandleRef} className="triller-desc-modal-handle-zone">
+              <div className="triller-desc-modal-handle" aria-hidden />
+            </div>
+            <button
+              type="button"
+              className="triller-desc-modal-close"
+              onClick={() => requestCloseDesc()}
+              aria-label="Yopish"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="triller-desc-modal-content">
+              {name ? <h3 className="triller-desc-modal-title">{name}</h3> : null}
+              <p className="triller-desc-modal-text">{description}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

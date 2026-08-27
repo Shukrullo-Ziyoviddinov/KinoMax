@@ -77,7 +77,7 @@ function VideoPreview({ url, title = "Video preview" }) {
           className="movie-form__video-preview movie-form__video-preview--embed"
           src={embedUrl}
           title={title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; screen-wake-lock"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
         />
@@ -754,13 +754,13 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
               <div className="movie-form__video-dual" key={keyName}>
                 <Field
                   label={`Tomosha videosi — ${langLabel}${isAnons ? " (ixtiyoriy)" : ""}`}
-                  help="Mover.uz / YouTube URL yoki iframe kodini qo‘ying. Preview pastda chiqadi."
+                  help="Mover.uz / YouTube / VK Video URL yoki iframe kodini qo‘ying. Preview pastda chiqadi."
                 >
                   <input
                     id={`watch-video-url-${lang}`}
                     className="movie-form__input"
                     type="text"
-                    placeholder="https://mover.uz/watch/... | iframe | https://youtu.be/..."
+                    placeholder="mover / youtube / vkvideo.ru iframe | https://youtu.be/..."
                     value={form.watchVideo?.[lang] || ""}
                     onChange={(e) => {
                       setUpload(keyName, { uploading: false, progress: 0, fileName: "" });
@@ -1016,12 +1016,12 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
                       <div className="movie-form__video-dual" key={keyName}>
                         <Field
                           label={`Qism videosi — ${langLabel}`}
-                          help="Mover.uz / YouTube URL yoki iframe kodini qo‘ying. Preview pastda chiqadi."
+                          help="Mover.uz / YouTube / VK Video URL yoki iframe kodini qo‘ying. Preview pastda chiqadi."
                         >
                           <input
                             className="movie-form__input"
                             type="text"
-                            placeholder="https://mover.uz/watch/... | iframe | https://youtu.be/..."
+                            placeholder="mover / youtube / vkvideo.ru iframe | https://youtu.be/..."
                             value={ep[lang] || ""}
                             onChange={(e) => {
                               const nextUrl = e.target.value;

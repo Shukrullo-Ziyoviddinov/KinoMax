@@ -1,6 +1,15 @@
 /**
- * YouTube / Mover.uz havolalaridan (yoki iframe HTML dan) embed URL yasaydi.
+ * YouTube / Mover.uz / VK Video havolalaridan (yoki iframe HTML dan) embed URL yasaydi.
  */
+
+const VK_HOSTS = new Set([
+  'vk.com',
+  'm.vk.com',
+  'vk.ru',
+  'm.vk.ru',
+  'vkvideo.ru',
+  'm.vkvideo.ru',
+]);
 
 /**
  * Input URL yoki <iframe src="..."> bo‘lishi mumkin — toza URL qaytaradi.
@@ -84,12 +93,82 @@ export function getMoverVideoId(url) {
   return '';
 }
 
+/**
+ * video-123_456 → oid=-123, id=456
+ * video123_456  → oid=123, id=456
+ */
+function parseVkVideoToken(token) {
+  const raw = String(token || '').trim();
+  if (!raw) return null;
+
+  const match = raw.match(/^(?:video|clip)?(-?\d+)_(\d+)$/i);
+  if (!match) return null;
+
+  return {
+    oid: String(match[1]),
+    id: String(match[2]),
+  };
+}
+
+/**
+ * @returns {{ oid: string, id: string, hash?: string, hd?: string } | null}
+ */
+export function getVkVideoParams(url) {
+  const raw = extractVideoInputUrl(url);
+  if (!raw) return null;
+
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    if (!VK_HOSTS.has(host)) return null;
+
+    // https://vkvideo.ru/video_ext.php?oid=-123&id=456&hash=abc&hd=2
+    if (parsed.pathname.toLowerCase().includes('video_ext.php')) {
+      const oid = parsed.searchParams.get('oid');
+      const id = parsed.searchParams.get('id');
+      if (!oid || !id) return null;
+      const hash = parsed.searchParams.get('hash') || undefined;
+      const hd = parsed.searchParams.get('hd') || undefined;
+      return { oid: String(oid), id: String(id), hash, hd };
+    }
+
+    // ?z=video-123_456 / clip-123_456
+    const z = parsed.searchParams.get('z') || '';
+    const zMatch = z.match(/^(?:video|clip)(-?\d+_\d+)/i);
+    if (zMatch) {
+      const parsedToken = parseVkVideoToken(zMatch[1]);
+      if (parsedToken) return parsedToken;
+    }
+
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    for (const part of parts) {
+      // video-123_456 | clip-123_456 | video123_456
+      const named = part.match(/^(?:video|clip)(-?\d+_\d+)$/i);
+      if (named) {
+        const parsedToken = parseVkVideoToken(named[1]);
+        if (parsedToken) return parsedToken;
+      }
+
+      const bare = parseVkVideoToken(part);
+      if (bare) return bare;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return null;
+}
+
 export function isYouTubeUrl(url) {
   return Boolean(getYouTubeVideoId(url));
 }
 
 export function isMoverUrl(url) {
   return Boolean(getMoverVideoId(url));
+}
+
+export function isVkUrl(url) {
+  return Boolean(getVkVideoParams(url));
 }
 
 export function getYouTubeEmbedUrl(url, { autoplay = false } = {}) {
@@ -112,8 +191,23 @@ export function getMoverEmbedUrl(url, { autoplay = false } = {}) {
   return autoplay ? `${base}?autoplay=1` : base;
 }
 
+export function getVkEmbedUrl(url, { autoplay = false } = {}) {
+  const params = getVkVideoParams(url);
+  if (!params) return '';
+
+  const query = new URLSearchParams({
+    oid: params.oid,
+    id: params.id,
+  });
+  if (params.hash) query.set('hash', params.hash);
+  if (params.hd) query.set('hd', params.hd);
+  if (autoplay) query.set('autoplay', '1');
+
+  return `https://vkvideo.ru/video_ext.php?${query.toString()}`;
+}
+
 /**
- * @returns {{ provider: 'youtube'|'mover', embedUrl: string } | null}
+ * @returns {{ provider: 'youtube'|'mover'|'vk', embedUrl: string } | null}
  */
 export function getVideoEmbed(url, options = {}) {
   const raw = extractVideoInputUrl(url);
@@ -130,6 +224,13 @@ export function getVideoEmbed(url, options = {}) {
     return {
       provider: 'mover',
       embedUrl: getMoverEmbedUrl(raw, options),
+    };
+  }
+
+  if (isVkUrl(raw)) {
+    return {
+      provider: 'vk',
+      embedUrl: getVkEmbedUrl(raw, options),
     };
   }
 

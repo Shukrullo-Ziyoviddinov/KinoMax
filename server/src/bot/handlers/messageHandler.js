@@ -10,6 +10,7 @@ const {
   hasUserPassedSubscription,
   sendSubscriptionPrompt,
 } = require("./subscriptionHandler");
+const { getWebAppUrl } = require("../webAppUrl");
 
 const clientPublicPath = path.resolve(__dirname, "../../../../client/public");
 const telegramVideoCache = new Map();
@@ -17,7 +18,6 @@ const DESCRIPTION_MAX_LINES = 5;
 const DESCRIPTION_APPROX_LINE_WIDTH = 36;
 const DESCRIPTION_PREVIEW_MAX_CHARS =
   DESCRIPTION_MAX_LINES * DESCRIPTION_APPROX_LINE_WIDTH;
-const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
 const SHARE_BASE_URL = "https://t.me/share/url";
 
 function truncateTextToPreview(text, maxChars) {
@@ -149,9 +149,7 @@ function buildShareText(movie, language, movieTargetUrl) {
 function buildMovieInlineKeyboard(movie, language) {
   const movieCode = movie?.movieCode;
   const movieId = movie?.movieId ?? movie?.id;
-  const websiteBase = WEB_APP_URL.endsWith("/")
-    ? WEB_APP_URL.slice(0, -1)
-    : WEB_APP_URL;
+  const websiteBase = getWebAppUrl();
   const movieTargetUrl = movieId
     ? `${websiteBase}/movie/${movieId}`
     : `${websiteBase}?code=${movieCode}`;
@@ -202,9 +200,7 @@ function resolveVideoSource(videoSrc) {
   }
 
   const normalized = videoSrc.startsWith("/") ? videoSrc : `/${videoSrc}`;
-  const websiteBase = WEB_APP_URL.endsWith("/")
-    ? WEB_APP_URL.slice(0, -1)
-    : WEB_APP_URL;
+  const websiteBase = getWebAppUrl();
 
   return {
     cacheKey: normalized,
@@ -565,5 +561,5 @@ module.exports = {
   resolveVideoSource,
   sendVideoWithCache,
   sendVideoFromResolvedSource,
-  WEB_APP_URL,
+  getWebAppUrl,
 };

@@ -1,8 +1,7 @@
 const { getAllMovies } = require("../../services/movieService");
 const { getUserLanguage } = require("../../utils/userState");
 const { normalizeLanguage } = require("../../utils/i18n");
-
-const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
+const { getWebAppUrl } = require("../webAppUrl");
 
 function resolveLanguage(query) {
   const savedLanguage = getUserLanguage(query?.from?.id);
@@ -144,7 +143,7 @@ function toAbsoluteAssetUrl(assetPath) {
     return assetPath;
   }
 
-  const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+  const base = getWebAppUrl();
   const normalizedPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
   return `${base}${normalizedPath}`;
 }
@@ -178,7 +177,7 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const thumbnail = movie?.homeImg?.[language] || movie?.homeImg?.uz || movie?.homeImg?.ru || null;
   const thumbnailUrl = toAbsoluteAssetUrl(thumbnail);
   const movieId = movie?.movieId ?? movie?.id;
-  const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+  const base = getWebAppUrl();
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
   const messageText = [title, buildMovieSummary(movie, language)].filter(Boolean).join("\n");
 
@@ -239,7 +238,7 @@ async function inlineQueryHandler(bot, query) {
       const fallbackResults = page.map((movie, index) => {
         const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
         const movieId = movie?.movieId ?? movie?.id;
-        const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+        const base = getWebAppUrl();
         const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movie?.movieCode}`;
         return {
           type: "article",

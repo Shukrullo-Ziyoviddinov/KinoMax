@@ -1,10 +1,8 @@
-const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
+const { getWebAppUrl } = require("../webAppUrl");
 
 function buildSearchActionsKeyboard(language) {
   const isRu = language === "ru";
-  const baseUrl = WEB_APP_URL.endsWith("/")
-    ? WEB_APP_URL.slice(0, -1)
-    : WEB_APP_URL;
+  const baseUrl = getWebAppUrl();
   const searchUrl = `${baseUrl}/?openSearch=1&source=telegram`;
 
   return {

@@ -1,12 +1,11 @@
 const BotUser = require("../../models/BotUser");
+const { getWebAppUrl } = require("../webAppUrl");
 
-const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
 const CAPTION_MAX = 1024;
 const TEXT_MAX = 4096;
 
 function buildMovieUrl(movieId) {
-  const base = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
-  return `${base}/movie/${movieId}`;
+  return `${getWebAppUrl()}/movie/${movieId}`;
 }
 
 function normalizeButtons(rawButtons = []) {

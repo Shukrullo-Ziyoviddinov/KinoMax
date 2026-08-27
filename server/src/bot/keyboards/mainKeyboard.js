@@ -6,11 +6,11 @@ const PROFILE_BUTTON_UZ = "👤 Profil";
 const PROFILE_BUTTON_RU = "👤 Профиль";
 const WISHLIST_BUTTON_UZ = "💾 Saqlanganlar";
 const WISHLIST_BUTTON_RU = "💾 Сохраненные";
-const WEB_APP_URL = "https://kino-max-seven.vercel.app/";
+const { getWebAppUrl } = require("../webAppUrl");
 
 function buildMainReplyKeyboard(language) {
   const isRu = language === "ru";
-  const baseUrl = WEB_APP_URL.endsWith("/") ? WEB_APP_URL.slice(0, -1) : WEB_APP_URL;
+  const baseUrl = getWebAppUrl();
   return {
     keyboard: [
       [

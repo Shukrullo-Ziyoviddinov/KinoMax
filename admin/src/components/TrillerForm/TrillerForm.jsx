@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createTriller, fetchTrillers } from "../../services/trillerApi";
 import { fetchMovies } from "../../services/movieApi";
 import { uploadToR2, UPLOAD_FOLDERS } from "../../services/uploadApi";
-import { getVideoEmbed } from "../../utils/videoEmbed";
+import { getVideoEmbed, normalizeVideoSource } from "../../utils/videoEmbed";
 import "./TrillerForm.css";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:5000";
@@ -212,7 +212,7 @@ export default function TrillerForm({
           ru: form.descriptionRu.trim(),
         },
         img: form.img,
-        trillerVideo: form.trillerVideo.trim(),
+        trillerVideo: normalizeVideoSource(form.trillerVideo),
         movieId: form.movieId,
         isActive: form.isActive,
         sortOrder: Number(form.sortOrder) || 1,
@@ -362,15 +362,21 @@ export default function TrillerForm({
       />
 
       <label className="triller-form__label" htmlFor="triller-video">
-        Video URL (mp4, YouTube yoki Mover.uz)
+        Video URL (mp4, YouTube, Mover.uz yoki VK Video)
       </label>
       <input
         id="triller-video"
         className="triller-form__input"
         type="text"
-        placeholder="https://youtu.be/... | https://mover.uz/watch/... | /video/trailer.mp4"
+        placeholder="youtu.be / mover.uz / vkvideo.ru iframe | /video/trailer.mp4"
         value={form.trillerVideo}
         onChange={(e) => patch({ trillerVideo: e.target.value })}
+        onBlur={(e) => {
+          const normalized = normalizeVideoSource(e.target.value);
+          if (normalized !== form.trillerVideo) {
+            patch({ trillerVideo: normalized });
+          }
+        }}
       />
       <div className="triller-form__preview-box">
         {embedUrl ? (
@@ -379,7 +385,7 @@ export default function TrillerForm({
             className="triller-form__video-preview triller-form__video-preview--embed"
             src={embedUrl}
             title="Video preview"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; screen-wake-lock"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
           />

@@ -218,13 +218,17 @@ function buildInlineCaption(movie, language) {
   const codeLine =
     movieCode != null
       ? language === "ru"
-        ? `Kod: ${movieCode}`
+        ? `Код: ${movieCode}`
         : `Kod: ${movieCode}`
       : "";
-  // Photo caption max 1024
   return [title, summary, codeLine, movieUrl].filter(Boolean).join("\n").slice(0, 1024);
 }
 
+/**
+ * Qidiruv ro'yxati: kichik thumb + nom + tavsif (article).
+ * Chatga yuborish: chosen_inline_result orqali rasm+matn (deliverMovieCard).
+ * id: pick|{movieId}|{lang}
+ */
 function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const title = movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
   const movieId = movie?.movieId ?? movie?.id;
@@ -233,53 +237,89 @@ function mapInlineResult(movie, language, uniqueSuffix = 0) {
   const movieUrl = movieId ? `${base}/movie/${movieId}` : `${base}/?code=${movieCode}`;
   const summary = buildMovieSummary(movie, language);
   const posterUrl = getMoviePosterUrl(movie, language);
-  const caption = buildInlineCaption(movie, language);
-  const resultId = `m${movieId || movieCode || 0}-${uniqueSuffix}`.slice(0, 64);
+  const codeLine =
+    movieCode != null
+      ? language === "ru"
+        ? `Код: ${movieCode}`
+        : `Kod: ${movieCode}`
+      : "";
+
+  const resultId = `pick|${movieId || movieCode || 0}|${language}|${uniqueSuffix}`.slice(
+    0,
+    64
+  );
 
   const watchButton = {
     text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
     url: movieUrl,
   };
 
-  // Poster bor: ro'yxatda ham, bosganda ham rasm + matn
-  if (posterUrl) {
-    return {
-      type: "photo",
-      id: resultId,
-      photo_url: posterUrl,
-      thumbnail_url: posterUrl,
-      thumb_url: posterUrl,
-      title: String(title).slice(0, 64),
-      description: String(summary).replace(/\n/g, " • ").slice(0, 120),
-      caption,
-      reply_markup: {
-        inline_keyboard: [[watchButton]],
-      },
-    };
-  }
-
-  // Poster yo'q: matn + (mumkin bo'lsa) preview
-  const codeLine =
-    movieCode != null
-      ? language === "ru"
-        ? `Kod: ${movieCode}`
-        : `Kod: ${movieCode}`
-      : "";
-  const messageText = [title, summary, codeLine, movieUrl].filter(Boolean).join("\n");
-
+  // Ro'yxatda faqat kichik poster + matn (katta photo tipi EMAS)
   return {
     type: "article",
     id: resultId,
     title: String(title).slice(0, 64),
-    description: String(summary).replace(/\n/g, " • ").slice(0, 120),
+    description: [codeLine, String(summary).replace(/\n/g, " • ")]
+      .filter(Boolean)
+      .join(" • ")
+      .slice(0, 120),
+    ...(posterUrl
+      ? {
+          thumbnail_url: posterUrl,
+          thumb_url: posterUrl,
+          thumbnail_width: 48,
+          thumbnail_height: 64,
+          thumb_width: 48,
+          thumb_height: 64,
+        }
+      : {}),
+    // Qisqa matn — to'liq rasm+caption chosen_inline_result da yuboriladi
     input_message_content: {
-      message_text: messageText.slice(0, 4096),
-      disable_web_page_preview: false,
+      message_text: `🎬 ${title}${codeLine ? `\n${codeLine}` : ""}`.slice(0, 4096),
+      disable_web_page_preview: true,
     },
     reply_markup: {
       inline_keyboard: [[watchButton]],
     },
   };
+}
+
+function parsePickResultId(resultId) {
+  const raw = String(resultId || "");
+  const parts = raw.split("|");
+  if (parts[0] !== "pick") return null;
+  const movieId = Number(parts[1]);
+  const language = parts[2] === "ru" ? "ru" : "uz";
+  if (!Number.isFinite(movieId) || movieId <= 0) return null;
+  return { movieId, language };
+}
+
+async function handleChosenInlineResult(bot, chosen) {
+  const parsed = parsePickResultId(chosen?.result_id);
+  const userId = chosen?.from?.id;
+  if (!parsed || !userId) return;
+
+  const Movie = require("../../models/movies");
+  const movie = await Movie.findOne({
+    $or: [{ movieId: parsed.movieId }, { id: parsed.movieId }],
+  })
+    .select("-__v")
+    .lean();
+
+  if (!movie) return;
+
+  try {
+    const { deliverMovieCard } = require("./messageHandler");
+    if (typeof deliverMovieCard === "function") {
+      await bot.sendChatAction(userId, "upload_photo").catch(() => {});
+      await deliverMovieCard(bot, userId, movie, parsed.language);
+    }
+  } catch (error) {
+    console.error(
+      "chosen_inline_result deliver xatoligi:",
+      error?.message || error
+    );
+  }
 }
 
 async function inlineQueryHandler(bot, query) {
@@ -332,70 +372,24 @@ async function inlineQueryHandler(bot, query) {
   const nextOffset =
     offset + pageSize < filtered.length ? String(offset + pageSize) : "";
 
-  const answer = async (items) => {
-    await bot.answerInlineQuery(queryId, items, {
+  try {
+    await bot.answerInlineQuery(queryId, results, {
       cache_time: 1,
       is_personal: true,
       next_offset: nextOffset,
     });
-  };
-
-  try {
-    await answer(results);
     console.log(
       `inline_query answered: q="${queryText}" results=${results.length} movies=${movies.length}`
     );
   } catch (error) {
     console.error(
-      "Inline query (photo) xatoligi, article fallback:",
+      "Inline query xatoligi:",
       error?.response?.body || error?.message || error
     );
-    // Photo URL mos kelmasa — article + thumbnail
     try {
-      const fallback = page.map((movie, index) => {
-        const title =
-          movie?.title?.[language] || movie?.title?.uz || movie?.title?.ru || "Untitled";
-        const movieId = movie?.movieId ?? movie?.id;
-        const movieCode = movie?.movieCode;
-        const base = getWebAppUrl();
-        const movieUrl = movieId
-          ? `${base}/movie/${movieId}`
-          : `${base}/?code=${movieCode}`;
-        const summary = buildMovieSummary(movie, language);
-        const posterUrl = getMoviePosterUrl(movie, language);
-        const messageText = [title, summary, movieUrl].filter(Boolean).join("\n");
-        return {
-          type: "article",
-          id: `a${movieId || index}-${offset + index}`.slice(0, 64),
-          title: String(title).slice(0, 64),
-          description: String(summary).replace(/\n/g, " • ").slice(0, 120),
-          ...(posterUrl
-            ? { thumbnail_url: posterUrl, thumb_url: posterUrl }
-            : {}),
-          input_message_content: {
-            message_text: messageText.slice(0, 4096),
-            disable_web_page_preview: false,
-          },
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: language === "ru" ? "🎬 Смотреть" : "🎬 Tomosha qilish",
-                  url: movieUrl,
-                },
-              ],
-            ],
-          },
-        };
-      });
-      await answer(fallback.length ? fallback : results);
-    } catch (fallbackError) {
-      console.error(
-        "Inline query fallback xatoligi:",
-        fallbackError?.response?.body || fallbackError?.message || fallbackError
-      );
-      try {
-        await bot.answerInlineQuery(queryId, [
+      await bot.answerInlineQuery(
+        queryId,
+        [
           {
             type: "article",
             id: "err-0",
@@ -405,17 +399,19 @@ async function inlineQueryHandler(bot, query) {
               message_text: "Inline qidiruvda xatolik. /search dan foydalaning.",
             },
           },
-        ], {
+        ],
+        {
           cache_time: 0,
           is_personal: true,
-        });
-      } catch (_e) {
-        // ignore
-      }
+        }
+      );
+    } catch (_e) {
+      // ignore
     }
   }
 }
 
 module.exports = {
   inlineQueryHandler,
+  handleChosenInlineResult,
 };

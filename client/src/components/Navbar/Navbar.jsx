@@ -102,11 +102,16 @@ const Navbar = () => {
       return;
     }
 
-    if (window.innerWidth <= 768) {
-      return;
+    const isTelegram = Boolean(window.Telegram?.WebApp);
+    const isNarrow = window.matchMedia('(max-width: 768px)').matches;
+
+    // Telegram yoki mobil: pastki qidiruv; desktop brauzer: yuqori modal
+    if (isTelegram || isNarrow) {
+      window.dispatchEvent(new CustomEvent('open-mobile-search'));
+    } else {
+      setShowSearchModal(true);
     }
 
-    setShowSearchModal(true);
     params.delete('openSearch');
     params.delete('source');
     const nextSearch = params.toString();

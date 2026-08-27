@@ -19,6 +19,7 @@ const NavbarMobile = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const closedByPopstateRef = useRef(false);
+  const ignoreNextHistoryCleanupRef = useRef(false);
 
   useEffect(() => {
     const openMobileSearch = () => setShowSearch(true);
@@ -46,6 +47,10 @@ const NavbarMobile = () => {
     return () => {
       popTelegramOverlayClose(tgHandler);
       window.removeEventListener('popstate', onPopState);
+      if (ignoreNextHistoryCleanupRef.current) {
+        ignoreNextHistoryCleanupRef.current = false;
+        return;
+      }
       if (!closedByPopstateRef.current) {
         window.history.back();
       }
@@ -70,11 +75,10 @@ const NavbarMobile = () => {
       return;
     }
 
-    if (window.innerWidth > 768) {
-      return;
-    }
-
+    // URL orqali ochilganda history.back() trap bilan urilmasin
+    ignoreNextHistoryCleanupRef.current = true;
     setShowSearch(true);
+
     params.delete('openSearch');
     params.delete('source');
     const nextSearch = params.toString();

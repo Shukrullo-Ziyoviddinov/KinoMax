@@ -8,13 +8,38 @@ async function toJson(response) {
   return payload;
 }
 
+async function fetchAllPages(endpoint, limit = 100) {
+  const rows = [];
+  let page = 1;
+  let hasNext = true;
+  let safety = 0;
+
+  while (hasNext && safety < 50) {
+    const response = await fetch(`${API_BASE}${endpoint}?page=${page}&limit=${limit}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const payload = await toJson(response);
+    rows.push(...(Array.isArray(payload?.data) ? payload.data : []));
+    hasNext = Boolean(payload?.meta?.hasNextPage);
+    page += 1;
+    safety += 1;
+  }
+
+  return rows;
+}
+
 export async function fetchActors() {
-  const response = await fetch(`${API_BASE}/api/actors?page=1&limit=200`, {
+  return fetchAllPages("/api/actors");
+}
+
+export async function fetchNextActorId() {
+  const response = await fetch(`${API_BASE}/api/actors/next-id`, {
     method: "GET",
     headers: { Accept: "application/json" },
   });
   const payload = await toJson(response);
-  return Array.isArray(payload?.data) ? payload.data : [];
+  return Number(payload?.data?.nextActorId);
 }
 
 export async function createActor(payload) {

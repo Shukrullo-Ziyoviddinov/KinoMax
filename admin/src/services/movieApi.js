@@ -9,16 +9,28 @@ async function toJson(response) {
 }
 
 export async function fetchMovies() {
-  const response = await fetch(`${API_BASE}/api/movies?page=1&limit=300`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-  const payload = await toJson(response);
-  return Array.isArray(payload?.data) ? payload.data : [];
+  const rows = [];
+  let page = 1;
+  let hasNext = true;
+  let safety = 0;
+
+  while (hasNext && safety < 50) {
+    const response = await fetch(`${API_BASE}/api/movies?page=${page}&limit=100`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const payload = await toJson(response);
+    rows.push(...(Array.isArray(payload?.data) ? payload.data : []));
+    hasNext = Boolean(payload?.meta?.hasNextPage);
+    page += 1;
+    safety += 1;
+  }
+
+  return rows;
 }
 
 export async function fetchActorsForMovie() {
-  const response = await fetch(`${API_BASE}/api/actors?page=1&limit=300`, {
+  const response = await fetch(`${API_BASE}/api/actors?page=1&limit=100`, {
     method: "GET",
     headers: { Accept: "application/json" },
   });

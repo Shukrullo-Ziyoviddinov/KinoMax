@@ -11,12 +11,33 @@ router.get("/", async (req, res, next) => {
   try {
     const pagination = parsePagination(req.query);
     const query = { isActive: true };
+    const q = String(req.query.q || req.query.search || "").trim();
+    if (q) {
+      const asNumber = Number(q);
+      const nameFilter = [
+        { "name.uz": { $regex: q, $options: "i" } },
+        { "name.ru": { $regex: q, $options: "i" } },
+      ];
+      query.$or = Number.isFinite(asNumber)
+        ? [{ actorId: asNumber }, ...nameFilter]
+        : nameFilter;
+    }
     const total = await Actor.countDocuments(query);
     const actors = await applyPagination(
       applyProjection(Actor.find(query).sort({ actorId: 1 }), "-__v"),
       pagination
     ).lean();
     return success(res, actors, "Actorlar ro'yxati", 200, buildPaginationMeta(total, pagination));
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/next-id", async (req, res, next) => {
+  try {
+    const last = await Actor.findOne().sort({ actorId: -1 }).select("actorId").lean();
+    const nextActorId = Number(last?.actorId || 0) + 1;
+    return success(res, { nextActorId }, "Keyingi actorId");
   } catch (error) {
     return next(error);
   }

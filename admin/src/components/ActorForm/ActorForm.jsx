@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createActor, fetchActors } from "../../services/actorApi";
+import { createActor, fetchNextActorId } from "../../services/actorApi";
 import { uploadToR2, UPLOAD_FOLDERS } from "../../services/uploadApi";
 import "./ActorForm.css";
 
@@ -48,9 +48,10 @@ export default function ActorForm({ onCancel, onSaved, mode = "create", initialD
 
     const loadNextId = async () => {
       try {
-        const actors = await fetchActors();
-        const maxId = actors.reduce((max, item) => Math.max(max, Number(item.actorId) || 0), 0);
-        setForm((prev) => ({ ...prev, actorId: String(maxId + 1) }));
+        const nextId = await fetchNextActorId();
+        if (Number.isFinite(nextId) && nextId > 0) {
+          setForm((prev) => ({ ...prev, actorId: String(nextId) }));
+        }
       } catch {
         /* ignore */
       }

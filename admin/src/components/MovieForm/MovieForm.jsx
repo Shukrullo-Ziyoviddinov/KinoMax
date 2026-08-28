@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createMovie, fetchActorsForMovie } from "../../services/movieApi";
+import { createMovie } from "../../services/movieApi";
+import { fetchActors } from "../../services/actorApi";
 import { fetchGenres } from "../../services/genreApi";
 import { uploadToR2, UPLOAD_FOLDERS } from "../../services/uploadApi";
 import {
@@ -272,7 +273,7 @@ export default function MovieForm({ onCancel, onSaved, mode = "create", initialD
     const run = async () => {
       try {
         const [actorRows, genreRows] = await Promise.all([
-          fetchActorsForMovie(),
+          fetchActors(),
           fetchGenres(),
         ]);
         if (mode === "edit" && initialData) {

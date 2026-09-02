@@ -9,8 +9,6 @@ import './SearchModalGenre.css';
 
 const GenreItem = ({ genre, title, onClick }) => {
   const imgRef = useRef(null);
-  const tapRef = useRef({ x: 0, y: 0, moved: false });
-  const handledByTouchRef = useRef(false);
   const [imageLoading, setImageLoading] = useState(Boolean(genre?.img));
 
   useEffect(() => {
@@ -23,56 +21,16 @@ const GenreItem = ({ genre, title, onClick }) => {
     }
   }, [genre?.img]);
 
-  const activate = () => {
-    onClick?.();
-  };
-
-  const handleClick = () => {
-    if (handledByTouchRef.current) return;
-    activate();
-  };
-
-  const handleTouchStart = (event) => {
-    tapRef.current = {
-      x: event.touches[0].clientX,
-      y: event.touches[0].clientY,
-      moved: false,
-    };
-  };
-
-  const handleTouchMove = (event) => {
-    const dx = Math.abs(event.touches[0].clientX - tapRef.current.x);
-    const dy = Math.abs(event.touches[0].clientY - tapRef.current.y);
-    if (dx > 8 || dy > 8) {
-      tapRef.current.moved = true;
-    }
-  };
-
-  const handleTouchEnd = (event) => {
-    if (tapRef.current.moved) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    handledByTouchRef.current = true;
-    activate();
-    window.setTimeout(() => {
-      handledByTouchRef.current = false;
-    }, 400);
-  };
-
   return (
     <div
       role="button"
       tabIndex={0}
       className={`search-modal-genre-item${imageLoading ? ' is-loading' : ''}`}
-      onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onClick={onClick}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          activate();
+          onClick?.();
         }
       }}
     >
@@ -144,13 +102,11 @@ const SearchModalGenre = ({ onGenreClick }) => {
   };
 
   const handleGenreClick = (genre) => {
-    if (onGenreClick) {
-      onGenreClick();
-    }
     const filterValue = Array.isArray(genre.filterGenre)
       ? genre.filterGenre[0]
       : genre.filterGenre;
     navigate(`/recommended?genre=${encodeURIComponent(filterValue)}`);
+    onGenreClick?.();
   };
 
   return (

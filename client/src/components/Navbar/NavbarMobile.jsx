@@ -65,6 +65,11 @@ const NavbarMobile = () => {
 
   const hasSearchQuery = searchQuery.trim().length > 0;
 
+  const closeSearchAfterNavigation = () => {
+    ignoreNextHistoryCleanupRef.current = true;
+    setShowSearch(false);
+  };
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
   };
@@ -171,7 +176,11 @@ const NavbarMobile = () => {
             if (!e.target.closest('.navbar-mobile-search-box')) setShowSearch(false);
           }}
         >
-          <div className="navbar-mobile-search-box" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="navbar-mobile-search-box"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             <div className="navbar-mobile-search-form-row">
               <button type="button" className="navbar-mobile-search-back" onClick={() => setShowSearch(false)} aria-label="Close">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -212,13 +221,13 @@ const NavbarMobile = () => {
             {hasSearchQuery ? (
               <SearchModalResults
                 query={searchQuery.trim()}
-                onMovieClick={() => setShowSearch(false)}
+                onMovieClick={closeSearchAfterNavigation}
               />
             ) : (
               <>
-                <SearchModalGenre onGenreClick={() => setShowSearch(false)} />
-                <SearchModalAnons onAnonsClick={() => setShowSearch(false)} />
-                <SearchModalTavsiya onMovieClick={() => setShowSearch(false)} />
+                <SearchModalGenre onGenreClick={closeSearchAfterNavigation} />
+                <SearchModalAnons onAnonsClick={closeSearchAfterNavigation} />
+                <SearchModalTavsiya onMovieClick={closeSearchAfterNavigation} />
               </>
             )}
           </div>

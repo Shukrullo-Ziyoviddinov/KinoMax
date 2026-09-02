@@ -5,8 +5,75 @@ import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useViewedMovies } from '../../context/ViewedMoviesContext';
 import { useMoviesCatalog } from '../../context/MoviesCatalogContext';
 import { fetchRecommendations } from '../../api/recommendationsApi';
+import { normalizeMediaUrl } from '../../utils/mediaUrl';
 import { getMovieAgeRestriction } from '../../utils/utils';
+import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import './SearchModalTavsiya.css';
+
+const getTitle = (movie, contentLang) => {
+  if (movie?.title && typeof movie.title === 'object') {
+    return movie.title[contentLang] || movie.title.uz || movie.title.ru;
+  }
+  return movie?.title || '';
+};
+
+const getImg = (movie, contentLang) => {
+  if (movie?.homeImg && typeof movie.homeImg === 'object') {
+    return movie.homeImg[contentLang] || movie.homeImg.uz || movie.homeImg.ru;
+  }
+  return movie?.homeImg || '';
+};
+
+const TavsiyaItem = ({ movie, contentLang, t, onClick }) => {
+  const imgSrc = normalizeMediaUrl(getImg(movie, contentLang));
+  const [isImageLoaded, setIsImageLoaded] = useState(!imgSrc);
+
+  useEffect(() => {
+    setIsImageLoaded(!imgSrc);
+  }, [imgSrc]);
+
+  const showLoading = imgSrc ? !isImageLoaded : false;
+  const ageRestriction = getMovieAgeRestriction(movie);
+
+  return (
+    <div
+      className={`search-modal-tavsiya-item${showLoading ? ' is-loading' : ''}`}
+      onClick={() => !showLoading && onClick?.(movie)}
+    >
+      <div className="search-modal-tavsiya-item-image-wrapper">
+        {showLoading ? (
+          <LoaderSkeleton variant="image" className="search-modal-tavsiya-item-image-skeleton" />
+        ) : null}
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={getTitle(movie, contentLang)}
+            className={`search-modal-tavsiya-item-image${showLoading ? ' is-loading' : ''}`}
+            loading="lazy"
+            onLoad={() => setIsImageLoaded(true)}
+            onError={() => setIsImageLoaded(true)}
+          />
+        ) : null}
+        {!showLoading ? (
+          <>
+            {movie.category === 'anonslar' ? (
+              <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-soon">
+                {t('searchModal.tezOrada', 'Tez orada')}
+              </span>
+            ) : (
+              <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-fhd">FHD</span>
+            )}
+            {ageRestriction != null && (
+              <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-age">
+                {ageRestriction}+
+              </span>
+            )}
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+};
 
 const SearchModalTavsiya = ({ onMovieClick }) => {
   const { t } = useTranslation();
@@ -25,20 +92,6 @@ const SearchModalTavsiya = ({ onMovieClick }) => {
     fetchRecommendations(viewedItems, 12, allMovies).then(setRecommendations);
   }, [allMovies, getViewedItems]);
 
-  const getTitle = (m) => {
-    if (m?.title && typeof m.title === 'object') {
-      return m.title[contentLang] || m.title.uz || m.title.ru;
-    }
-    return m?.title || '';
-  };
-
-  const getImg = (m) => {
-    if (m?.homeImg && typeof m.homeImg === 'object') {
-      return m.homeImg[contentLang] || m.homeImg.uz || m.homeImg.ru;
-    }
-    return m?.homeImg || '';
-  };
-
   const handleClick = (movie) => {
     if (onMovieClick) onMovieClick();
     navigate(`/movie/${movie.id}`);
@@ -51,31 +104,13 @@ const SearchModalTavsiya = ({ onMovieClick }) => {
       <h3 className="search-modal-tavsiya-title">{t('searchModal.tavsiyaEtamiz', 'Tavsiya etamiz')}</h3>
       <div className="search-modal-tavsiya-list">
         {recommendations.map((movie) => (
-          <div
+          <TavsiyaItem
             key={movie.id}
-            className="search-modal-tavsiya-item"
-            onClick={() => handleClick(movie)}
-          >
-            <div className="search-modal-tavsiya-item-image-wrapper">
-              <img
-                src={getImg(movie)}
-                alt={getTitle(movie)}
-                className="search-modal-tavsiya-item-image"
-              />
-              {movie.category === 'anonslar' ? (
-                <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-soon">
-                  {t('searchModal.tezOrada', 'Tez orada')}
-                </span>
-              ) : (
-                <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-fhd">FHD</span>
-              )}
-              {getMovieAgeRestriction(movie) != null && (
-                <span className="search-modal-tavsiya-badge search-modal-tavsiya-badge-age">
-                  {getMovieAgeRestriction(movie)}+
-                </span>
-              )}
-            </div>
-          </div>
+            movie={movie}
+            contentLang={contentLang}
+            t={t}
+            onClick={handleClick}
+          />
         ))}
       </div>
     </div>

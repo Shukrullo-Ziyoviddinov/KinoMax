@@ -21,6 +21,10 @@
   transform: scale(1.02);
 }
 
+.search-modal-genre-item.is-loading {
+  cursor: pointer;
+}
+
 .search-modal-genre-item-image-wrapper {
   position: relative;
   width: 100%;
@@ -69,6 +73,25 @@
   color: #fff;
   font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1.25;
+}
+
+.search-modal-genre-item-title-slot {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  min-height: calc(0.8rem * 1.25 + 1.5rem);
+  display: flex;
+  align-items: flex-end;
+}
+
+.search-modal-genre-item-title-skeleton .loader-skeleton {
+  height: 0.8rem;
+  border-radius: 4px;
 }
 
 @media (max-width: 768px) {

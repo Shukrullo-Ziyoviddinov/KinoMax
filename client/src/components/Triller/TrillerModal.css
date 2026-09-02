@@ -425,13 +425,32 @@
   box-shadow: inset 0 0 0 1px rgba(229, 57, 53, 0.45);
 }
 
+.triller-modal-list-item.is-loading,
+.triller-modal-list-item:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .triller-modal-list-thumb {
+  position: relative;
   background: #ffffff14;
   border-radius: 6px;
   flex-shrink: 0;
   height: 75px;
   overflow: hidden;
   width: 150px;
+}
+
+.triller-modal-list-thumb-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.triller-modal-list-thumb-skeleton .loader-skeleton {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 6px;
 }
 
 .triller-modal-list-thumb img,
@@ -442,15 +461,63 @@
   object-fit: cover;
 }
 
+.triller-modal-list-thumb img.is-loading {
+  opacity: 0;
+}
+
 .triller-modal-list-info {
   min-width: 0;
   flex: 1;
 }
 
-.triller-modal-list-name {
+.triller-modal-list-name,
+.triller-modal-list-name-slot {
   margin: 0;
   font-size: 0.9rem;
   font-weight: 700;
+  line-height: 1.3;
+}
+
+.triller-modal-list-name-slot {
+  position: relative;
+  height: calc(0.9rem * 1.3);
+}
+
+.triller-modal-list-name-skeleton {
+  position: absolute;
+  inset: 0;
+}
+
+.triller-modal-list-name-skeleton .loader-skeleton {
+  width: 72% !important;
+  height: 100% !important;
+  border-radius: 4px;
+}
+
+.triller-modal-list-description,
+.triller-modal-list-description-slot {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.triller-modal-list-description-slot {
+  position: relative;
+  height: calc(0.78rem * 1.35 * 2);
+}
+
+.triller-modal-list-description-skeleton {
+  position: absolute;
+  inset: 0;
+}
+
+.triller-modal-list-description-skeleton .loader-skeleton {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 4px;
+}
+
+.triller-modal-list-name {
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
@@ -458,9 +525,6 @@
 }
 
 .triller-modal-list-description {
-  margin: 0.2rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.35;
   color: rgba(255, 255, 255, 0.62);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -537,13 +601,26 @@
     width: 140px;
   }
 
-  .triller-modal-list-name {
+  .triller-modal-list-name,
+  .triller-modal-list-name-slot {
     font-size: 0.85rem;
   }
 
-  .triller-modal-list-description {
+  .triller-modal-list-name-slot {
+    height: calc(0.85rem * 1.3);
+  }
+
+  .triller-modal-list-description,
+  .triller-modal-list-description-slot {
     font-size: 0.72rem;
+  }
+
+  .triller-modal-list-description {
     -webkit-line-clamp: 3;
+  }
+
+  .triller-modal-list-description-slot {
+    height: calc(0.72rem * 1.35 * 3);
   }
 }
 

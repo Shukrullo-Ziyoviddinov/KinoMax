@@ -114,6 +114,10 @@
   transition: transform 0.3s;
 }
 
+.movies-item-image.is-loading {
+  opacity: 0;
+}
+
 .movies-item:hover .movies-item-image {
   transform: scale(1.05);
 }

@@ -4,6 +4,7 @@ import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { getVideoEmbed } from '../../utils/videoEmbed';
 import TrillerVideoControls from './TrillerVideoControls';
+import TrillerModalListItem from './TrillerModalListItem';
 import './TrillerModal.css';
 
 const getLocalized = (value, lang) => {
@@ -470,36 +471,15 @@ const TrillerModal = ({ item, items = [], onSelect, onClose }) => {
                 {contentLang === 'ru' ? 'Другие трейлеры' : 'Boshqa trillerlar'}
               </h4>
               <div className="triller-modal-list">
-                {listItems.map((row) => {
-                  const key = getItemKey(row);
-                  const isActive = key === activeKey;
-                  const rowName = getLocalized(row?.name, contentLang);
-                  const rowDesc = getLocalized(row?.description, contentLang);
-                  const imgSrc = row?.img ? encodeURI(row.img) : '';
-
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`triller-modal-list-item${isActive ? ' is-active' : ''}`}
-                      onClick={() => {
-                        if (!isActive) onSelect?.(row);
-                      }}
-                    >
-                      <div className="triller-modal-list-thumb">
-                        {imgSrc ? (
-                          <img src={imgSrc} alt={rowName || ''} loading="lazy" />
-                        ) : (
-                          <span className="triller-modal-list-thumb-empty" />
-                        )}
-                      </div>
-                      <div className="triller-modal-list-info">
-                        {rowName ? <p className="triller-modal-list-name">{rowName}</p> : null}
-                        {rowDesc ? <p className="triller-modal-list-description">{rowDesc}</p> : null}
-                      </div>
-                    </button>
-                  );
-                })}
+                {listItems.map((row) => (
+                  <TrillerModalListItem
+                    key={getItemKey(row)}
+                    row={row}
+                    isActive={getItemKey(row) === activeKey}
+                    contentLang={contentLang}
+                    onSelect={onSelect}
+                  />
+                ))}
               </div>
             </div>
           ) : null}

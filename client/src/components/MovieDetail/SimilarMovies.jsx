@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useContentLanguage } from '../../context/ContentLanguageContext';
-import { useWishlist } from '../../context/WishlistContext';
 import { fetchSimilarMovies } from '../../api/moviesApi';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
 import HorizontalScroll from '../HorizontalScroll/HorizontalScroll';
 import ShowMoreButton, { getDisplayItems, DEFAULT_LIMIT } from '../ShowMoreButton/ShowMoreButton';
-import { getMovieAgeRestriction } from '../../utils/utils';
+import SimilarMovieItem from './SimilarMovieItem';
 import './SimilarMovies.css';
 
 const SimilarMovies = ({ currentMovie }) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
-  const { contentLang } = useContentLanguage();
-  const { toggleWishlist, isInWishlist } = useWishlist();
   const [similarMovies, setSimilarMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const currentMovieId = currentMovie?.id;
@@ -76,13 +72,6 @@ const SimilarMovies = ({ currentMovie }) => {
     );
   }
 
-  const getMovieTitle = (movie) => {
-    if (movie.title && typeof movie.title === 'object') {
-      return movie.title[contentLang] || movie.title.uz || movie.title.ru;
-    }
-    return movie.title || '';
-  };
-
   const handleMovieClick = (movieId) => {
     navigate(`/movie/${movieId}`);
   };
@@ -104,66 +93,12 @@ const SimilarMovies = ({ currentMovie }) => {
       </div>
       <HorizontalScroll scrollAmount={300}>
         {displayMovies.map((movie) => (
-          <div
+          <SimilarMovieItem
             key={movie.id}
-            className="similar-movies-item"
-            onClick={() => handleMovieClick(movie.id)}
-          >
-              <div className="similar-movies-item-image-wrapper">
-                <img
-                  src={
-                    movie.homeImg
-                      ? movie.homeImg[contentLang] ||
-                        movie.homeImg.uz ||
-                        movie.homeImg.ru
-                      : ''
-                  }
-                  alt={getMovieTitle(movie)}
-                  className="similar-movies-item-image"
-                />
-                <button
-                  className={`similar-movies-item-wishlist-btn ${
-                    isInWishlist(movie.id) ? 'active' : ''
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleWishlist(movie.id);
-                  }}
-                  aria-label={t('wishlist.add') || "Sevimlilarga qo'shish"}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill={isInWishlist(movie.id) ? 'currentColor' : 'none'}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                </button>
-                {movie.category === 'anonslar' ? (
-                  <div className="similar-movies-item-badge similar-movies-item-badge-soon">
-                    {t('searchModal.tezOrada', 'Tez orada')}
-                  </div>
-                ) : (
-                  <div className="similar-movies-item-badge similar-movies-item-badge-fhd">
-                    FHD
-                  </div>
-                )}
-                {getMovieAgeRestriction(movie) != null && (
-                  <div className="similar-movies-item-badge similar-movies-item-badge-age">
-                    {getMovieAgeRestriction(movie)}+
-                  </div>
-                )}
-              </div>
-              {getMovieTitle(movie) && (
-                <p className="similar-movies-item-title">{getMovieTitle(movie)}</p>
-              )}
-            </div>
-          ))}
+            movie={movie}
+            onMovieClick={handleMovieClick}
+          />
+        ))}
       </HorizontalScroll>
     </div>
   );

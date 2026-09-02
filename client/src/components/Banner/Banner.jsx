@@ -7,12 +7,82 @@ import { fetchActiveBanners } from '../../api/bannerApi';
 import { normalizeImagePath } from '../../utils/utils';
 import './Banner.css';
 
+const BannerSlideImage = ({ src, alt, showSkeleton, onImageLoad }) => {
+    const normalizedSrc = normalizeImagePath(src);
+
+    return (
+        <>
+            {showSkeleton && (
+                <LoaderSkeleton variant="banner-image" className="manga-image-skeleton" />
+            )}
+            <img
+                src={normalizedSrc}
+                alt={alt}
+                draggable={false}
+                className={showSkeleton ? 'is-loading' : ''}
+                onLoad={() => onImageLoad(normalizedSrc)}
+                onError={(e) => {
+                    const fallbackSrc = normalizeImagePath('/img/no-image.png');
+                    if (e.currentTarget.src !== fallbackSrc) {
+                        e.currentTarget.src = fallbackSrc;
+                        return;
+                    }
+                    onImageLoad(normalizedSrc);
+                }}
+            />
+        </>
+    );
+};
+
+const BannerTitleImage = ({ src, showSkeleton, onImageLoad }) => {
+    const normalizedSrc = normalizeImagePath(src);
+
+    return (
+        <div className="manga-title-img-wrapper">
+            {showSkeleton && (
+                <LoaderSkeleton variant="text" className="manga-title-img-skeleton" width="100%" height={120} />
+            )}
+            <img
+                className={`manga-title-img ${showSkeleton ? 'is-loading' : ''}`}
+                src={normalizedSrc}
+                alt=""
+                draggable={false}
+                onLoad={() => onImageLoad(normalizedSrc)}
+                onError={(e) => {
+                    const fallbackSrc = normalizeImagePath('/img/no-image.png');
+                    if (e.currentTarget.src !== fallbackSrc) {
+                        e.currentTarget.src = fallbackSrc;
+                        return;
+                    }
+                    onImageLoad(normalizedSrc);
+                }}
+            />
+        </div>
+    );
+};
+
+const getSlideMediaState = (image, loadedImageUrls) => {
+    const normalizedSrc = normalizeImagePath(image.src);
+    const normalizedTitleSrc = image.titleImg ? normalizeImagePath(image.titleImg) : '';
+    const isMainLoaded = loadedImageUrls.has(normalizedSrc);
+    const isTitleLoaded = !normalizedTitleSrc || loadedImageUrls.has(normalizedTitleSrc);
+
+    return {
+        normalizedSrc,
+        normalizedTitleSrc,
+        isMainLoaded,
+        isTitleLoaded,
+        isSlideReady: isMainLoaded && isTitleLoaded,
+    };
+};
+
 const Banner = () => {
     const navigate = useNavigate();
     const { contentLang } = useContentLanguage();
     const { bannerLoading, setLoading } = useLoading();
 
     const [banners, setBanners] = useState([]);
+    const [loadedImageUrls, setLoadedImageUrls] = useState(() => new Set());
 
     useEffect(() => {
         let isMounted = true;
@@ -54,6 +124,24 @@ const Banner = () => {
             }))
             .filter((img) => img.src);
     }, [banners]);
+
+    const imageSrcKey = useMemo(
+        () => images.map((image) => `${image.src}|${image.titleImg || ''}`).join('||'),
+        [images]
+    );
+
+    useEffect(() => {
+        setLoadedImageUrls(new Set());
+    }, [imageSrcKey]);
+
+    const handleImageLoaded = useCallback((src) => {
+        setLoadedImageUrls((prev) => {
+            if (prev.has(src)) return prev;
+            const next = new Set(prev);
+            next.add(src);
+            return next;
+        });
+    }, []);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [dragOffset, setDragOffset] = useState(0);
@@ -351,35 +439,57 @@ const Banner = () => {
         return 'hidden';
     };
 
-    const renderSlideContent = (image, index, showSkeleton, isActive) => (
+    const renderSlideContent = (image, index, slideClass, isActive) => {
+        const {
+            normalizedTitleSrc,
+            isTitleLoaded,
+            isSlideReady,
+        } = getSlideMediaState(image, loadedImageUrls);
+        const isVisibleSlide = slideClass === 'center' || slideClass === 'left' || slideClass === 'right';
+        const showMainSkeleton = isVisibleSlide && (bannerLoading || !isSlideReady);
+        const showContentWrapper = isActive && !bannerLoading;
+        const showContentDetails = showContentWrapper && isSlideReady;
+
+        return (
         <>
-            {showSkeleton ? (
-                <LoaderSkeleton variant="banner-image" className="manga-image-skeleton" />
-            ) : (
+            <BannerSlideImage
+                src={image.src}
+                alt={`Banner ${index + 1}`}
+                showSkeleton={showMainSkeleton}
+                onImageLoad={handleImageLoaded}
+            />
+
+            {isVisibleSlide && normalizedTitleSrc && !isActive && !isTitleLoaded && (
                 <img
-                    src={normalizeImagePath(image.src)}
-                    alt={`Banner ${index + 1}`}
-                    draggable={false}
+                    src={normalizedTitleSrc}
+                    alt=""
+                    aria-hidden="true"
+                    className="manga-title-img-preload"
+                    onLoad={() => handleImageLoaded(normalizedTitleSrc)}
                     onError={(e) => {
-                        e.target.src = normalizeImagePath('/img/no-image.png');
+                        const fallbackSrc = normalizeImagePath('/img/no-image.png');
+                        if (e.currentTarget.src !== fallbackSrc) {
+                            e.currentTarget.src = fallbackSrc;
+                            return;
+                        }
+                        handleImageLoaded(normalizedTitleSrc);
                     }}
                 />
             )}
 
-            {!showSkeleton && isActive && (
+            {showContentWrapper && (
                 <div className="manga-content">
                     {image.titleImg && (
-                        <img
-                            className="manga-title-img"
-                            src={normalizeImagePath(image.titleImg)}
-                            alt=""
-                            draggable={false}
+                        <BannerTitleImage
+                            src={image.titleImg}
+                            showSkeleton={!isTitleLoaded}
+                            onImageLoad={handleImageLoaded}
                         />
                     )}
-                    {image.description && (
+                    {showContentDetails && image.description && (
                         <p className="manga-description">{image.description}</p>
                     )}
-                    {image.specs && (
+                    {showContentDetails && image.specs && (
                         <div className="manga-specs">
                             {image.specs.duration != null && image.specs.duration !== '' && (
                                 <span>
@@ -401,7 +511,7 @@ const Banner = () => {
                             )}
                         </div>
                     )}
-                    {image.link && (
+                    {showContentDetails && image.link && (
                         <div
                             className="manga-actions"
                             onMouseDown={stopControlDrag}
@@ -428,7 +538,8 @@ const Banner = () => {
                 </div>
             )}
         </>
-    );
+        );
+    };
 
     if (images.length === 0) {
         if (!bannerLoading) return null;
@@ -491,16 +602,16 @@ const Banner = () => {
                     {/* Oldingi rasmlar (clone) - infinite effect uchun */}
                     {images.map((image, index) => {
                         const slideClass = getSlideClass(index - images.length);
-                        const showSkeleton = bannerLoading && (slideClass === 'center' || slideClass === 'left' || slideClass === 'right');
+                        const { isSlideReady } = getSlideMediaState(image, loadedImageUrls);
                         return (
                         <li
                             key={`prev-${image.id || index}`}
                             className={`manga-image ${slideClass}`}
                             aria-hidden="true"
-                            onClick={() => !bannerLoading && handleSlideClick(image)}
+                            onClick={() => isSlideReady && handleSlideClick(image)}
                             role={image.link ? 'button' : undefined}
                         >
-                            {renderSlideContent(image, index, showSkeleton, slideClass === 'center')}
+                            {renderSlideContent(image, index, slideClass, slideClass === 'center')}
                         </li>
                         );
                     })}
@@ -508,16 +619,16 @@ const Banner = () => {
                     {/* Asosiy rasmlar */}
                     {images.map((image, index) => {
                         const slideClass = getSlideClass(index);
-                        const showSkeleton = bannerLoading && (slideClass === 'center' || slideClass === 'left' || slideClass === 'right');
+                        const { isSlideReady } = getSlideMediaState(image, loadedImageUrls);
                         return (
                         <li
                             key={image.id || index}
                             className={`manga-image ${slideClass}`}
                             aria-hidden={index !== currentIndex}
-                            onClick={() => !bannerLoading && handleSlideClick(image)}
+                            onClick={() => isSlideReady && handleSlideClick(image)}
                             role={image.link ? 'button' : undefined}
                         >
-                            {renderSlideContent(image, index, showSkeleton, slideClass === 'center')}
+                            {renderSlideContent(image, index, slideClass, slideClass === 'center')}
                         </li>
                         );
                     })}
@@ -525,16 +636,16 @@ const Banner = () => {
                     {/* Keyingi rasmlar (clone) - infinite effect uchun */}
                     {images.map((image, index) => {
                         const slideClass = getSlideClass(index + images.length);
-                        const showSkeleton = bannerLoading && (slideClass === 'center' || slideClass === 'left' || slideClass === 'right');
+                        const { isSlideReady } = getSlideMediaState(image, loadedImageUrls);
                         return (
                         <li
                             key={`next-${image.id || index}`}
                             className={`manga-image ${slideClass}`}
                             aria-hidden="true"
-                            onClick={() => !bannerLoading && handleSlideClick(image)}
+                            onClick={() => isSlideReady && handleSlideClick(image)}
                             role={image.link ? 'button' : undefined}
                         >
-                            {renderSlideContent(image, index, showSkeleton, slideClass === 'center')}
+                            {renderSlideContent(image, index, slideClass, slideClass === 'center')}
                         </li>
                         );
                     })}

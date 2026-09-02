@@ -7,6 +7,7 @@ import { useWishlist } from '../../context/WishlistContext';
 import { useContentLanguage } from '../../context/ContentLanguageContext';
 import { useLoading } from '../../context/LoadingContext';
 import LoaderSkeleton from '../LoaderSkeleton/LoaderSkeleton';
+import { MovieDetailMediaImage, MovieDetailTitleImage, MovieDetailActorItem } from './MovieDetailImageBlocks';
 import WatchModal from './WatchModal';
 import MovieComments from './MovieComments';
 import SimilarMovies from './SimilarMovies';
@@ -682,13 +683,7 @@ const MovieDetail = () => {
           <div className="movie-detail-image-block">
             <div className="movie-detail-image">
               {movieMediaImg ? (
-                <div className="movie-detail-video-wrapper">
-                  <img
-                    src={movieMediaImg}
-                    alt={getMovieTitle()}
-                    className="movie-detail-video"
-                  />
-                </div>
+                <MovieDetailMediaImage src={movieMediaImg} alt={getMovieTitle()} />
               ) : (
                 <div className="movie-detail-video-placeholder">
                   <span>Rasm topilmadi</span>
@@ -700,14 +695,11 @@ const MovieDetail = () => {
           <div className="movie-detail-info-block">
             <div className="movie-detail-info">
               {movie.titleImg ? (
-                <div className="movie-detail-title-img-wrapper">
-                  <img
-                    src={movie.titleImg[contentLang] || movie.titleImg.uz || movie.titleImg.ru}
-                    alt={getMovieTitle()}
-                    className="movie-detail-title-img"
-                  />
-                  <h1 className="movie-detail-title movie-detail-title-sr-only">{getMovieTitle()}</h1>
-                </div>
+                <MovieDetailTitleImage
+                  src={movie.titleImg[contentLang] || movie.titleImg.uz || movie.titleImg.ru}
+                  alt={getMovieTitle()}
+                  srTitle={getMovieTitle()}
+                />
               ) : (
                 <h1 className="movie-detail-title">{getMovieTitle()}</h1>
               )}
@@ -1070,26 +1062,12 @@ const MovieDetail = () => {
                     <div className="movie-detail-actors-scroll">
                       <ScrollTouch className="movie-detail-actors-scroll-inner">
                       {movieActors.map((actor) => (
-                        <div
+                        <MovieDetailActorItem
                           key={actor.actorId}
-                          className="movie-detail-actor-item"
-                          onClick={() => navigate(`/actor/${actor.actorId}`)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && navigate(`/actor/${actor.actorId}`)}
-                        >
-                          <div className="movie-detail-actor-image">
-                            <img src={actor.image} alt={actor.name[contentLang] || actor.name.uz} />
-                          </div>
-                          <div className="movie-detail-actor-info">
-                            <span className="movie-detail-actor-name">
-                              {actor.name[contentLang] || actor.name.uz || actor.name.ru}
-                            </span>
-                            <p className="movie-detail-actor-desc">
-                              {actor.info?.[contentLang] || actor.info?.uz || actor.info?.ru || ''}
-                            </p>
-                          </div>
-                        </div>
+                          actor={actor}
+                          contentLang={contentLang}
+                          onClick={(actorId) => navigate(`/actor/${actorId}`)}
+                        />
                       ))}
                       </ScrollTouch>
                     </div>

@@ -152,6 +152,7 @@
 }
 
 .profile-avatar-wrap {
+  position: relative;
   flex-shrink: 0;
   width: 72px;
   height: 72px;
@@ -164,10 +165,26 @@
   overflow: hidden;
 }
 
+.profile-avatar-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.profile-avatar-skeleton .loader-skeleton {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50%;
+}
+
 .profile-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.profile-avatar-img.is-loading {
+  opacity: 0;
 }
 
 .profile-avatar-icon {

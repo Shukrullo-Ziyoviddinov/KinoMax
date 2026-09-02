@@ -82,6 +82,7 @@ const Triller = () => {
                   key={item.trillerId || item.id}
                   item={item}
                   onClick={setSelected}
+                  isDataLoading={loading}
                 />
               ))}
         </HorizontalScroll>

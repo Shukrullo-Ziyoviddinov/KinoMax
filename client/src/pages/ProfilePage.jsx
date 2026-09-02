@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import ProfileEditModal from '../components/Profile/ProfileEditModal';
+import ProfileAvatar from '../components/Profile/ProfileAvatar';
 import LoaderSkeleton from '../components/LoaderSkeleton/LoaderSkeleton';
 import ProfileLanguageModal from '../components/Profile/ProfileLanguageModal';
 import ProfileContactModal from '../components/Profile/ProfileContactModal';
@@ -164,24 +165,7 @@ const ProfilePage = () => {
               <LoaderSkeleton variant="profile-top" className="profile-page-top-skeleton" />
             ) : (
             <>
-            <div className="profile-avatar-wrap" aria-label={t('profile.uploadPhoto')}>
-              {profile.avatar ? (
-                <img src={profile.avatar} alt="" className="profile-avatar-img" />
-              ) : (
-                <svg
-                  className="profile-avatar-icon"
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              )}
-            </div>
+            <ProfileAvatar src={profile.avatar} ariaLabel={t('profile.uploadPhoto')} />
             <div className="profile-info">
               <div className="profile-name">
                 {t('profile.name')}: {profile.name || t('profile.name')}
